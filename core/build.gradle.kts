@@ -4,7 +4,7 @@
 }
 
 android {
-    namespace = "bas.orellana.apppair.core"
+    namespace = "bas.orellana.gastostracker.core"
     compileSdk = 36
 
     defaultConfig {

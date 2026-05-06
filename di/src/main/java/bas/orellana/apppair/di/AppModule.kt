@@ -1,4 +1,4 @@
-package bas.orellana.apppair.di
+package bas.orellana.gastostracker.di
 
 import org.koin.dsl.module
 

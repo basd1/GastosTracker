@@ -1,4 +1,4 @@
-package bas.orellana.apppair.presentation.ui.screen
+package bas.orellana.gastostracker.presentation.ui.screen
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,9 +27,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import bas.orellana.apppair.domain.model.GastoModel
-import bas.orellana.apppair.presentation.state.HomeState
-import bas.orellana.apppair.presentation.viewmodel.HomeViewModel
+import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.presentation.state.HomeState
+import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 

@@ -1,6 +1,6 @@
-package bas.orellana.apppair.presentation.state
+package bas.orellana.gastostracker.presentation.state
 
-import bas.orellana.apppair.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.GastoModel
 
 data class HomeState(
     val gastos: List<GastoModel> = emptyList(),

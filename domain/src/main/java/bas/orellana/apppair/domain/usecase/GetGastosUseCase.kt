@@ -1,7 +1,7 @@
-package bas.orellana.apppair.domain.usecase
+package bas.orellana.gastostracker.domain.usecase
 
-import bas.orellana.apppair.domain.model.GastoModel
-import bas.orellana.apppair.domain.repository.GastoRepository
+import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.repository.GastoRepository
 import kotlinx.coroutines.flow.Flow
 
 class GetGastosUseCase(private val repository: GastoRepository) {

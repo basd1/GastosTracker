@@ -5,7 +5,7 @@
 }
 
 android {
-    namespace = "bas.orellana.apppair.navigation"
+    namespace = "bas.orellana.gastostracker.navigation"
     compileSdk = 36
 
     defaultConfig {

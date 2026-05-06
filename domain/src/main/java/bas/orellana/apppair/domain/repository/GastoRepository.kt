@@ -1,6 +1,6 @@
-package bas.orellana.apppair.domain.repository
+package bas.orellana.gastostracker.domain.repository
 
-import bas.orellana.apppair.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.GastoModel
 import kotlinx.coroutines.flow.Flow
 
 interface GastoRepository {

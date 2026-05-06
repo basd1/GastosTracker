@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AppPairTest"
+rootProject.name = "GastosTracker"
 include(":app")
 include(":domain")
 include(":data")

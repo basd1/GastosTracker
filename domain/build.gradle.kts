@@ -4,7 +4,7 @@
 }
 
 android {
-    namespace = "bas.orellana.apppair.domain"
+    namespace = "bas.orellana.gastostracker.domain"
     compileSdk = 36
 
     defaultConfig {

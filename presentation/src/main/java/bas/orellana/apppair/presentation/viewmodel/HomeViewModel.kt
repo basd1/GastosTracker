@@ -1,9 +1,9 @@
-package bas.orellana.apppair.presentation.viewmodel
+package bas.orellana.gastostracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import bas.orellana.apppair.domain.usecase.GetGastosUseCase
-import bas.orellana.apppair.presentation.state.HomeState
+import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.presentation.state.HomeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

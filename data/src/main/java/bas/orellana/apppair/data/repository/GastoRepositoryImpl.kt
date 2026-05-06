@@ -1,8 +1,8 @@
-package bas.orellana.apppair.data.repository
+package bas.orellana.gastostracker.data.repository
 
-import bas.orellana.apppair.data.cache.GastoCache
-import bas.orellana.apppair.domain.model.GastoModel
-import bas.orellana.apppair.domain.repository.GastoRepository
+import bas.orellana.gastostracker.data.cache.GastoCache
+import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.repository.GastoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 

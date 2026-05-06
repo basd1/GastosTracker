@@ -1,12 +1,12 @@
-package bas.orellana.apppair.presentation.navigation
+package bas.orellana.gastostracker.presentation.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import bas.orellana.apppair.navigation.NavRoutes
-import bas.orellana.apppair.presentation.ui.screen.HomeScreen
-import bas.orellana.apppair.presentation.ui.screen.SplashScreen
+import bas.orellana.gastostracker.navigation.NavRoutes
+import bas.orellana.gastostracker.presentation.ui.screen.HomeScreen
+import bas.orellana.gastostracker.presentation.ui.screen.SplashScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController) {

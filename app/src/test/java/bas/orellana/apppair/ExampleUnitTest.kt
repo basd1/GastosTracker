@@ -1,4 +1,4 @@
-package bas.orellana.apppair
+package bas.orellana.gastostracker
 
 import org.junit.Test
 

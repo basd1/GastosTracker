@@ -1,4 +1,4 @@
-package bas.orellana.apppair.domain.model
+package bas.orellana.gastostracker.domain.model
 
 import java.time.LocalDate
 

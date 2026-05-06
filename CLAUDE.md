@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 ./gradlew testDebugUnitTest                    # Run unit tests (JVM)
 ./gradlew connectedAndroidTest                 # Run instrumented tests (requires device/emulator)
-./gradlew testDebugUnitTest --tests "bas.orellana.apppair.ExampleUnitTest"  # Run a single test class
+./gradlew testDebugUnitTest --tests "bas.orellana.gastostracker.ExampleUnitTest"  # Run a single test class
 ```
 
 ## Lint
@@ -35,7 +35,7 @@ This is a minimal Android starter project using **Jetpack Compose** and **Materi
 
 ## Key Configuration
 
-- **Package:** `bas.orellana.apppair`
+- **Package:** `bas.orellana.gastostracker`
 - **Compile/Target SDK:** 36 | **Min SDK:** 33
 - **Kotlin:** 2.0.21 | **Compose BOM:** 2024.09.00 | **AGP:** 8.13.2
 - Dependencies are managed via the version catalog at `gradle/libs.versions.toml`.

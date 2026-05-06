@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "bas.orellana.apppair"
+    namespace = "bas.orellana.gastostracker"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "bas.orellana.apppair"
+        applicationId = "bas.orellana.gastostracker"
         minSdk = 33
         targetSdk = 36
         versionCode = 1

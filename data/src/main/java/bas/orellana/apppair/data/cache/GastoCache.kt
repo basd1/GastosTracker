@@ -1,6 +1,6 @@
-package bas.orellana.apppair.data.cache
+package bas.orellana.gastostracker.data.cache
 
-import bas.orellana.apppair.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.GastoModel
 import java.time.LocalDate
 
 object GastoCache {

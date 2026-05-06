@@ -1,4 +1,4 @@
-package bas.orellana.apppair.presentation.ui.screen
+package bas.orellana.gastostracker.presentation.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
-import bas.orellana.apppair.navigation.NavRoutes
+import bas.orellana.gastostracker.navigation.NavRoutes
 import kotlinx.coroutines.delay
 
 @Composable
@@ -29,7 +29,7 @@ fun SplashScreen(navController: NavHostController) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "AppPair",
+            text = "GastosTracker",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onPrimary

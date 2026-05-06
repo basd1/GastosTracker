@@ -1,4 +1,4 @@
-package bas.orellana.apppair.navigation
+package bas.orellana.gastostracker.navigation
 
 object NavRoutes {
     const val SPLASH = "splash"

@@ -43,6 +43,8 @@ android {
 
 dependencies {
     implementation(project(":di"))
+    implementation(project(":domain"))
+    implementation(project(":data"))
     implementation(project(":presentation"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -55,6 +57,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
+    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.kotlinx.coroutines)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

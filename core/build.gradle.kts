@@ -5,7 +5,7 @@
 
 android {
     namespace = "bas.orellana.apppair.core"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 33

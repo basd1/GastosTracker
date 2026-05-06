@@ -5,7 +5,7 @@
 
 android {
     namespace = "bas.orellana.apppair.data"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 33
@@ -23,4 +23,5 @@ android {
 
 dependencies {
     implementation(project(":domain"))
+    implementation(libs.kotlinx.coroutines)
 }

@@ -6,7 +6,7 @@
 
 android {
     namespace = "bas.orellana.apppair.navigation"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 33

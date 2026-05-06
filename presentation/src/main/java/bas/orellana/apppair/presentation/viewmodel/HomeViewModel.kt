@@ -2,12 +2,14 @@ package bas.orellana.gastostracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.presentation.state.HomeState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
@@ -39,5 +41,9 @@ class HomeViewModel(
                     )
                 }
         }
+    }
+
+    fun addGasto(gasto: GastoModel) {
+        _state.update { it.copy(gastos = listOf(gasto) + it.gastos) }
     }
 }

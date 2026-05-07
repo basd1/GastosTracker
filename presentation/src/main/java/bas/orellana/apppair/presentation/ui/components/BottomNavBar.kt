@@ -1,7 +1,9 @@
 package bas.orellana.gastostracker.presentation.ui.components
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -9,32 +11,49 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 import bas.orellana.gastostracker.navigation.NavRoutes
 
-val bottomNavItems = listOf(
-    NavRoutes.GREEN_SCREEN,
-    NavRoutes.HOME,
-    NavRoutes.BLUE_SCREEN
-)
-
 @Composable
 fun BottomNavBar(navController: NavController) {
     val currentRoute = navController.currentDestination?.route
 
     NavigationBar {
-        bottomNavItems.forEachIndexed { index, route ->
-            NavigationBarItem(
-                icon = { },
-                label = { },
-                selected = currentRoute == route,
-                onClick = {
-                    if (currentRoute != route) {
-                        navController.navigate(route) {
-                            popUpTo(NavRoutes.HOME) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Star, contentDescription = null) },
+            selected = currentRoute == NavRoutes.GREEN_SCREEN,
+            onClick = {
+                if (currentRoute != NavRoutes.GREEN_SCREEN) {
+                    navController.navigate(NavRoutes.GREEN_SCREEN) {
+                        popUpTo(NavRoutes.HOME) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
-            )
-        }
+            }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Home, contentDescription = null) },
+            selected = currentRoute == NavRoutes.HOME,
+            onClick = {
+                if (currentRoute != NavRoutes.HOME) {
+                    navController.navigate(NavRoutes.HOME) {
+                        popUpTo(NavRoutes.HOME) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.FavoriteBorder, contentDescription = null) },
+            selected = currentRoute == NavRoutes.BLUE_SCREEN,
+            onClick = {
+                if (currentRoute != NavRoutes.BLUE_SCREEN) {
+                    navController.navigate(NavRoutes.BLUE_SCREEN) {
+                        popUpTo(NavRoutes.HOME) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            }
+        )
     }
 }

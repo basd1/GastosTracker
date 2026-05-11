@@ -5,6 +5,6 @@ import kotlinx.coroutines.flow.Flow
 
 interface CategoriasRepository {
     fun getCategoriasPersonalizadas(): Flow<List<CategoriaPersonalizada>>
-    suspend fun addCategoriaPersonalizada(nombre: String)
+    suspend fun addCategoriaPersonalizada(nombre: String, color: Long)
     suspend fun deleteCategoriaPersonalizada(id: String)
 }

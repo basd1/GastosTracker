@@ -1,5 +1,8 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,11 +12,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,8 +37,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.AssistChip
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,11 +75,13 @@ fun HomeScreen(
     val state by viewModel.state.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showManageCategoriasDialog by remember { mutableStateOf(false) }
     var concepto by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
     var categoriaSeleccionada by remember { mutableStateOf<Categoria?>(null) }
     var categoriaPersonalizadaSeleccionada by remember { mutableStateOf<String?>(null) }
     var nuevaCategoria by remember { mutableStateOf("") }
+    var colorSeleccionado by remember { mutableStateOf(Categoria.PALETA_COLORES_PERSONALIZADOS.first()) }
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     Scaffold(
@@ -123,7 +133,32 @@ fun HomeScreen(
         SettingsDialog(
             isDarkTheme = isDarkTheme,
             onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
+            onManageCategorias = {
+                showSettingsDialog = false
+                showManageCategoriasDialog = true
+            },
             onDismiss = { showSettingsDialog = false }
+        )
+    }
+
+    if (showManageCategoriasDialog) {
+        ManageCategoriasDialog(
+            categoriasPersonalizadas = categoriasPersonalizadas,
+            colorSeleccionado = colorSeleccionado,
+            nuevaCategoria = nuevaCategoria,
+            onColorSeleccionado = { colorSeleccionado = it },
+            onNuevaCategoriaChange = { nuevaCategoria = it },
+            onAddCategoria = {
+                viewModel.addCategoriaPersonalizada(nuevaCategoria, colorSeleccionado)
+                nuevaCategoria = ""
+                colorSeleccionado = Categoria.PALETA_COLORES_PERSONALIZADOS.first()
+            },
+            onDeleteCategoria = { viewModel.deleteCategoriaPersonalizada(it) },
+            onDismiss = {
+                showManageCategoriasDialog = false
+                nuevaCategoria = ""
+                colorSeleccionado = Categoria.PALETA_COLORES_PERSONALIZADOS.first()
+            }
         )
     }
 
@@ -134,20 +169,16 @@ fun HomeScreen(
             categoriaSeleccionada = categoriaSeleccionada,
             categoriaPersonalizadaSeleccionada = categoriaPersonalizadaSeleccionada,
             categoriasPersonalizadas = categoriasPersonalizadas,
-            nuevaCategoria = nuevaCategoria,
             onConceptoChange = { concepto = it },
             onPrecioChange = { precio = it },
             onCategoriaChange = { categoriaSeleccionada = it },
             onCategoriaPersonalizadaChange = { categoriaPersonalizadaSeleccionada = it },
-            onNuevaCategoriaChange = { nuevaCategoria = it },
-            onAddCategoria = { viewModel.addCategoriaPersonalizada(it) },
             onSave = {
                 viewModel.saveGasto(concepto, precio, categoriaSeleccionada, categoriaPersonalizadaSeleccionada)
                 concepto = ""
                 precio = ""
                 categoriaSeleccionada = null
                 categoriaPersonalizadaSeleccionada = null
-                nuevaCategoria = ""
             },
             onDismiss = {
                 viewModel.hideAddGastoDialog()
@@ -155,7 +186,6 @@ fun HomeScreen(
                 precio = ""
                 categoriaSeleccionada = null
                 categoriaPersonalizadaSeleccionada = null
-                nuevaCategoria = ""
             }
         )
     }
@@ -282,6 +312,7 @@ private fun GastoItem(
 private fun SettingsDialog(
     isDarkTheme: Boolean,
     onToggleDarkTheme: () -> Unit,
+    onManageCategorias: () -> Unit,
     onDismiss: () -> Unit
 ) {
     BasicAlertDialog(onDismissRequest = onDismiss) {
@@ -317,6 +348,15 @@ private fun SettingsDialog(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onManageCategorias,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Administrar categorías")
+                }
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 Button(
@@ -338,13 +378,10 @@ private fun AddGastoDialog(
     categoriaSeleccionada: Categoria?,
     categoriaPersonalizadaSeleccionada: String?,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    nuevaCategoria: String,
     onConceptoChange: (String) -> Unit,
     onPrecioChange: (String) -> Unit,
     onCategoriaChange: (Categoria?) -> Unit,
     onCategoriaPersonalizadaChange: (String?) -> Unit,
-    onNuevaCategoriaChange: (String) -> Unit,
-    onAddCategoria: (String) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -402,12 +439,14 @@ private fun AddGastoDialog(
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         FilterChip(
+                            modifier = Modifier.weight(1f),
                             selected = categoriaSeleccionada == null && categoriaPersonalizadaSeleccionada == null,
                             onClick = {
                                 onCategoriaChange(null)
@@ -417,65 +456,50 @@ private fun AddGastoDialog(
                         )
                     }
 
-                    Categoria.entries.chunked(3).forEach { chunk ->
+                    Categoria.entries.chunked(2).forEach { chunk ->
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             chunk.forEach { categoria ->
                                 FilterChip(
+                                    modifier = Modifier.weight(1f),
                                     selected = categoriaSeleccionada == categoria,
                                     onClick = {
                                         onCategoriaChange(categoria)
                                         onCategoriaPersonalizadaChange(null)
                                     },
-                                    label = { Text(categoria.displayName) }
+                                    label = { Text(categoria.displayName) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Color(categoria.color),
+                                        containerColor = Color(categoria.color).copy(alpha = 0.3f)
+                                    )
                                 )
                             }
                         }
                     }
 
-                    categoriasPersonalizadas.chunked(3).forEach { chunk ->
+                    categoriasPersonalizadas.chunked(2).forEach { chunk ->
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             chunk.forEach { categoriaPersonalizada ->
                                 FilterChip(
+                                    modifier = Modifier.weight(1f),
                                     selected = categoriaPersonalizadaSeleccionada == categoriaPersonalizada.id,
                                     onClick = {
                                         onCategoriaChange(null)
                                         onCategoriaPersonalizadaChange(categoriaPersonalizada.id)
                                     },
-                                    label = { Text(categoriaPersonalizada.nombre) }
+                                    label = { Text(categoriaPersonalizada.nombre) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Color(categoriaPersonalizada.color),
+                                        containerColor = Color(categoriaPersonalizada.color).copy(alpha = 0.3f)
+                                    )
                                 )
                             }
                         }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = nuevaCategoria,
-                        onValueChange = onNuevaCategoriaChange,
-                        label = { Text("Nueva categoría") },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true
-                    )
-                    Button(
-                        onClick = {
-                            if (nuevaCategoria.isNotBlank()) {
-                                onAddCategoria(nuevaCategoria)
-                                onNuevaCategoriaChange("")
-                            }
-                        },
-                        enabled = nuevaCategoria.isNotBlank()
-                    ) {
-                        Text("+")
                     }
                 }
 
@@ -498,6 +522,150 @@ private fun AddGastoDialog(
                     ) {
                         Text("Guardar")
                     }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ManageCategoriasDialog(
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    colorSeleccionado: Long,
+    nuevaCategoria: String,
+    onColorSeleccionado: (Long) -> Unit,
+    onNuevaCategoriaChange: (String) -> Unit,
+    onAddCategoria: () -> Unit,
+    onDeleteCategoria: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Administrar categorías",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (categoriasPersonalizadas.isNotEmpty()) {
+                    Text(
+                        text = "Categorías existentes",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    LazyColumn(
+                        modifier = Modifier.height(150.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(categoriasPersonalizadas) { categoria ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        Color(categoria.color).copy(alpha = 0.2f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = categoria.nombre,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                IconButton(
+                                    onClick = { onDeleteCategoria(categoria.id) }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Eliminar",
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                Text(
+                    text = "Nueva categoría",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Selecciona un color",
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Categoria.PALETA_COLORES_PERSONALIZADOS.forEach { color ->
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color(color))
+                                .border(
+                                    width = if (color == colorSeleccionado) 3.dp else 0.dp,
+                                    color = if (color == colorSeleccionado) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                    shape = CircleShape
+                                )
+                                .clickable { onColorSeleccionado(color) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = nuevaCategoria,
+                        onValueChange = onNuevaCategoriaChange,
+                        label = { Text("Nombre") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    Button(
+                        onClick = onAddCategoria,
+                        enabled = nuevaCategoria.isNotBlank()
+                    ) {
+                        Text("+")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Cerrar")
                 }
             }
         }

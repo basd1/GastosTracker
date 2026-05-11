@@ -7,6 +7,7 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
+import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.presentation.state.HomeState
@@ -23,7 +24,8 @@ class HomeViewModel(
     private val getGastosUseCase: GetGastosUseCase,
     private val addGastoUseCase: AddGastoUseCase,
     private val getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
-    private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase
+    private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
+    private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -91,9 +93,16 @@ class HomeViewModel(
         }
     }
 
-    fun addCategoriaPersonalizada(nombre: String) {
+    fun addCategoriaPersonalizada(nombre: String, color: Long) {
         viewModelScope.launch {
-            addCategoriaPersonalizadaUseCase(nombre)
+            addCategoriaPersonalizadaUseCase(nombre, color)
+        }
+    }
+
+    fun deleteCategoriaPersonalizada(id: String) {
+        viewModelScope.launch {
+            deleteCategoriaPersonalizadaUseCase(id)
+            _categoriasPersonalizadas.value = _categoriasPersonalizadas.value.filter { it.id != id }
         }
     }
 }

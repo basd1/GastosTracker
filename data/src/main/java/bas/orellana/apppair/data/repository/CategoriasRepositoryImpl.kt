@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import kotlinx.coroutines.flow.Flow
@@ -26,11 +27,12 @@ class CategoriasRepositoryImpl(
         }
     }
 
-    override suspend fun addCategoriaPersonalizada(nombre: String) {
+    override suspend fun addCategoriaPersonalizada(nombre: String, color: Long) {
         val currentId = getNextId()
         val newCategoria = CategoriaPersonalizada(
             id = currentId,
-            nombre = nombre
+            nombre = nombre,
+            color = color
         )
 
         context.dataStore.edit { preferences ->
@@ -56,14 +58,24 @@ class CategoriasRepositoryImpl(
         return (maxId + 1).toString()
     }
 
+    private fun getRandomColor(): Long {
+        return Categoria.PALETA_COLORES_PERSONALIZADOS.random()
+    }
+
     private fun parseCategoriasFromJson(json: String): List<CategoriaPersonalizada> {
         return try {
             val jsonArray = JSONArray(json)
             (0 until jsonArray.length()).map { i ->
                 val obj = jsonArray.getJSONObject(i)
+                val color = try {
+                    obj.getLong("color")
+                } catch (e: Exception) {
+                    getRandomColor()
+                }
                 CategoriaPersonalizada(
                     id = obj.getString("id"),
-                    nombre = obj.getString("nombre")
+                    nombre = obj.getString("nombre"),
+                    color = color
                 )
             }
         } catch (e: Exception) {
@@ -77,6 +89,7 @@ class CategoriasRepositoryImpl(
             val obj = JSONObject()
             obj.put("id", categoria.id)
             obj.put("nombre", categoria.nombre)
+            obj.put("color", categoria.color)
             jsonArray.put(obj)
         }
         return jsonArray.toString()

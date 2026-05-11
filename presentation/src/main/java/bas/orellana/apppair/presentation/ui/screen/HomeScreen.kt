@@ -3,6 +3,8 @@ package bas.orellana.gastostracker.presentation.ui.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +32,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.AssistChip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Modifier
@@ -45,6 +49,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
@@ -65,6 +71,10 @@ fun HomeScreen(
     var showSettingsDialog by remember { mutableStateOf(false) }
     var concepto by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
+    var categoriaSeleccionada by remember { mutableStateOf<Categoria?>(null) }
+    var categoriaPersonalizadaSeleccionada by remember { mutableStateOf<String?>(null) }
+    var nuevaCategoria by remember { mutableStateOf("") }
+    val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     Scaffold(
         topBar = {
@@ -106,6 +116,7 @@ fun HomeScreen(
     ) { padding ->
         HomeContent(
             state = state,
+            categoriasPersonalizadas = categoriasPersonalizadas,
             modifier = Modifier.padding(padding)
         )
     }
@@ -122,17 +133,31 @@ fun HomeScreen(
         AddGastoDialog(
             concepto = concepto,
             precio = precio,
+            categoriaSeleccionada = categoriaSeleccionada,
+            categoriaPersonalizadaSeleccionada = categoriaPersonalizadaSeleccionada,
+            categoriasPersonalizadas = categoriasPersonalizadas,
+            nuevaCategoria = nuevaCategoria,
             onConceptoChange = { concepto = it },
             onPrecioChange = { precio = it },
+            onCategoriaChange = { categoriaSeleccionada = it },
+            onCategoriaPersonalizadaChange = { categoriaPersonalizadaSeleccionada = it },
+            onNuevaCategoriaChange = { nuevaCategoria = it },
+            onAddCategoria = { viewModel.addCategoriaPersonalizada(it) },
             onSave = {
-                viewModel.saveGasto(concepto, precio)
+                viewModel.saveGasto(concepto, precio, categoriaSeleccionada, categoriaPersonalizadaSeleccionada)
                 concepto = ""
                 precio = ""
+                categoriaSeleccionada = null
+                categoriaPersonalizadaSeleccionada = null
+                nuevaCategoria = ""
             },
             onDismiss = {
                 viewModel.hideAddGastoDialog()
                 concepto = ""
                 precio = ""
+                categoriaSeleccionada = null
+                categoriaPersonalizadaSeleccionada = null
+                nuevaCategoria = ""
             }
         )
     }
@@ -141,6 +166,7 @@ fun HomeScreen(
 @Composable
 private fun HomeContent(
     state: HomeState,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -165,14 +191,17 @@ private fun HomeContent(
                 )
             }
             else -> {
-                GastosList(gastos = state.gastos)
+                GastosList(gastos = state.gastos, categoriasPersonalizadas = categoriasPersonalizadas)
             }
         }
     }
 }
 
 @Composable
-private fun GastosList(gastos: List<GastoModel>) {
+private fun GastosList(
+    gastos: List<GastoModel>,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -181,14 +210,20 @@ private fun GastosList(gastos: List<GastoModel>) {
     ) {
         item { Spacer(modifier = Modifier.height(8.dp)) }
         items(gastos, key = { it.id }) { gasto ->
-            GastoItem(gasto = gasto)
+            GastoItem(
+                gasto = gasto,
+                categoriasPersonalizadas = categoriasPersonalizadas
+            )
         }
         item { Spacer(modifier = Modifier.height(8.dp)) }
     }
 }
 
 @Composable
-private fun GastoItem(gasto: GastoModel) {
+private fun GastoItem(
+    gasto: GastoModel,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>
+) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     Card(
@@ -213,9 +248,29 @@ private fun GastoItem(gasto: GastoModel) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                val nombreCategoria = when {
+                    gasto.categoria != null -> gasto.categoria?.displayName
+                    gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
+                    else -> null
+                }
+
+                if (nombreCategoria != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    AssistChip(
+                        onClick = { },
+                        label = {
+                            Text(
+                                text = nombreCategoria,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        },
+                        modifier = Modifier.height(24.dp)
+                    )
+                }
             }
             Text(
-                text = "$${String.format("%.2f", gasto.monto)}",
+                text = "€${String.format("%.2f", gasto.monto)}",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.error
@@ -277,13 +332,21 @@ private fun SettingsDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun AddGastoDialog(
     concepto: String,
     precio: String,
+    categoriaSeleccionada: Categoria?,
+    categoriaPersonalizadaSeleccionada: String?,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    nuevaCategoria: String,
     onConceptoChange: (String) -> Unit,
     onPrecioChange: (String) -> Unit,
+    onCategoriaChange: (Categoria?) -> Unit,
+    onCategoriaPersonalizadaChange: (String?) -> Unit,
+    onNuevaCategoriaChange: (String) -> Unit,
+    onAddCategoria: (String) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -303,7 +366,7 @@ private fun AddGastoDialog(
                     fontWeight = FontWeight.Bold
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 OutlinedTextField(
                     value = concepto,
@@ -313,7 +376,7 @@ private fun AddGastoDialog(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = precio,
@@ -326,10 +389,84 @@ private fun AddGastoDialog(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                    prefix = { Text("$") }
+                    prefix = { Text("€") }
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Categoría",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = categoriaSeleccionada == null && categoriaPersonalizadaSeleccionada == null,
+                        onClick = {
+                            onCategoriaChange(null)
+                            onCategoriaPersonalizadaChange(null)
+                        },
+                        label = { Text("Sin categoría") }
+                    )
+
+                    Categoria.entries.forEach { categoria ->
+                        FilterChip(
+                            selected = categoriaSeleccionada == categoria,
+                            onClick = {
+                                onCategoriaChange(categoria)
+                                onCategoriaPersonalizadaChange(null)
+                            },
+                            label = { Text(categoria.displayName) }
+                        )
+                    }
+
+                    categoriasPersonalizadas.forEach { categoriaPersonalizada ->
+                        FilterChip(
+                            selected = categoriaPersonalizadaSeleccionada == categoriaPersonalizada.id,
+                            onClick = {
+                                onCategoriaChange(null)
+                                onCategoriaPersonalizadaChange(categoriaPersonalizada.id)
+                            },
+                            label = { Text(categoriaPersonalizada.nombre) }
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = nuevaCategoria,
+                        onValueChange = onNuevaCategoriaChange,
+                        label = { Text("Nueva categoría") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true
+                    )
+                    Button(
+                        onClick = {
+                            if (nuevaCategoria.isNotBlank()) {
+                                onAddCategoria(nuevaCategoria)
+                                onNuevaCategoriaChange("")
+                            }
+                        },
+                        enabled = nuevaCategoria.isNotBlank()
+                    ) {
+                        Text("+")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

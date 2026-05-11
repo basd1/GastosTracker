@@ -439,14 +439,12 @@ private fun AddGastoDialog(
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         FilterChip(
-                            modifier = Modifier.weight(1f),
                             selected = categoriaSeleccionada == null && categoriaPersonalizadaSeleccionada == null,
                             onClick = {
                                 onCategoriaChange(null)
@@ -456,14 +454,12 @@ private fun AddGastoDialog(
                         )
                     }
 
-                    Categoria.entries.chunked(2).forEach { chunk ->
+                    Categoria.entries.chunked(5).forEach { chunk ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             chunk.forEach { categoria ->
                                 FilterChip(
-                                    modifier = Modifier.weight(1f),
                                     selected = categoriaSeleccionada == categoria,
                                     onClick = {
                                         onCategoriaChange(categoria)
@@ -479,14 +475,20 @@ private fun AddGastoDialog(
                         }
                     }
 
-                    categoriasPersonalizadas.chunked(2).forEach { chunk ->
+                    if (categoriasPersonalizadas.isNotEmpty()) {
+                        Text(
+                            text = "Personalizadas",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    categoriasPersonalizadas.chunked(5).forEach { chunk ->
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             chunk.forEach { categoriaPersonalizada ->
                                 FilterChip(
-                                    modifier = Modifier.weight(1f),
                                     selected = categoriaPersonalizadaSeleccionada == categoriaPersonalizada.id,
                                     onClick = {
                                         onCategoriaChange(null)
@@ -617,23 +619,29 @@ private fun ManageCategoriasDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Categoria.PALETA_COLORES_PERSONALIZADOS.forEach { color ->
-                        Box(
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(CircleShape)
-                                .background(Color(color))
-                                .border(
-                                    width = if (color == colorSeleccionado) 3.dp else 0.dp,
-                                    color = if (color == colorSeleccionado) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                    shape = CircleShape
+                    Categoria.PALETA_COLORES_PERSONALIZADOS.chunked(9).forEach { chunk ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            chunk.forEach { color ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(Color(color))
+                                        .border(
+                                            width = if (color == colorSeleccionado) 3.dp else 0.dp,
+                                            color = if (color == colorSeleccionado) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                            shape = CircleShape
+                                        )
+                                        .clickable { onColorSeleccionado(color) }
                                 )
-                                .clickable { onColorSeleccionado(color) }
-                        )
+                            }
+                        }
                     }
                 }
 

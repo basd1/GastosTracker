@@ -6,5 +6,7 @@ data class HomeState(
     val gastos: List<GastoModel> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val showAddGastoDialog: Boolean = false
+    val showAddGastoDialog: Boolean = false,
+    val showSettingsDialog: Boolean = false,
+    val showManageCategoriasDialog: Boolean = false
 )

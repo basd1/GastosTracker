@@ -3,8 +3,6 @@ package bas.orellana.gastostracker.presentation.ui.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -332,7 +330,7 @@ private fun SettingsDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddGastoDialog(
     concepto: String,
@@ -402,40 +400,55 @@ private fun AddGastoDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                FlowRow(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FilterChip(
-                        selected = categoriaSeleccionada == null && categoriaPersonalizadaSeleccionada == null,
-                        onClick = {
-                            onCategoriaChange(null)
-                            onCategoriaPersonalizadaChange(null)
-                        },
-                        label = { Text("Sin categoría") }
-                    )
-
-                    Categoria.entries.forEach { categoria ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         FilterChip(
-                            selected = categoriaSeleccionada == categoria,
+                            selected = categoriaSeleccionada == null && categoriaPersonalizadaSeleccionada == null,
                             onClick = {
-                                onCategoriaChange(categoria)
+                                onCategoriaChange(null)
                                 onCategoriaPersonalizadaChange(null)
                             },
-                            label = { Text(categoria.displayName) }
+                            label = { Text("Sin categoría") }
                         )
                     }
 
-                    categoriasPersonalizadas.forEach { categoriaPersonalizada ->
-                        FilterChip(
-                            selected = categoriaPersonalizadaSeleccionada == categoriaPersonalizada.id,
-                            onClick = {
-                                onCategoriaChange(null)
-                                onCategoriaPersonalizadaChange(categoriaPersonalizada.id)
-                            },
-                            label = { Text(categoriaPersonalizada.nombre) }
-                        )
+                    Categoria.entries.chunked(3).forEach { chunk ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            chunk.forEach { categoria ->
+                                FilterChip(
+                                    selected = categoriaSeleccionada == categoria,
+                                    onClick = {
+                                        onCategoriaChange(categoria)
+                                        onCategoriaPersonalizadaChange(null)
+                                    },
+                                    label = { Text(categoria.displayName) }
+                                )
+                            }
+                        }
+                    }
+
+                    categoriasPersonalizadas.chunked(3).forEach { chunk ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            chunk.forEach { categoriaPersonalizada ->
+                                FilterChip(
+                                    selected = categoriaPersonalizadaSeleccionada == categoriaPersonalizada.id,
+                                    onClick = {
+                                        onCategoriaChange(null)
+                                        onCategoriaPersonalizadaChange(categoriaPersonalizada.id)
+                                    },
+                                    label = { Text(categoriaPersonalizada.nombre) }
+                                )
+                            }
+                        }
                     }
                 }
 

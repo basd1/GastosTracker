@@ -254,8 +254,15 @@ private fun GastoItem(
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
+    val colorFondo = when {
+        gasto.categoria != null -> Color(gasto.categoria!!.color).copy(alpha = 0.15f)
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color).copy(alpha = 0.15f) } ?: Color.Transparent
+        else -> Color.Transparent
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = colorFondo),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(

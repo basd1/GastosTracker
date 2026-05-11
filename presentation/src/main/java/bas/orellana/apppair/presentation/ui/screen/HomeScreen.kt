@@ -29,7 +29,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -61,6 +63,8 @@ fun HomeScreen(
     val state by viewModel.state.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var concepto by remember { mutableStateOf("") }
+    var precio by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -87,7 +91,7 @@ fun HomeScreen(
                 contentAlignment = Alignment.BottomCenter
             ) {
                 ExtendedFloatingActionButton(
-                    onClick = { },
+                    onClick = { viewModel.showAddGastoDialog() },
                     containerColor = Color(0xFF2E7D32),
                     contentColor = Color.White,
                     shape = RoundedCornerShape(28.dp),
@@ -111,6 +115,25 @@ fun HomeScreen(
             isDarkTheme = isDarkTheme,
             onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
             onDismiss = { showSettingsDialog = false }
+        )
+    }
+
+    if (state.showAddGastoDialog) {
+        AddGastoDialog(
+            concepto = concepto,
+            precio = precio,
+            onConceptoChange = { concepto = it },
+            onPrecioChange = { precio = it },
+            onSave = {
+                viewModel.saveGasto(concepto, precio)
+                concepto = ""
+                precio = ""
+            },
+            onDismiss = {
+                viewModel.hideAddGastoDialog()
+                concepto = ""
+                precio = ""
+            }
         )
     }
 }
@@ -248,6 +271,83 @@ private fun SettingsDialog(
                     modifier = Modifier.align(Alignment.End)
                 ) {
                     Text("Cerrar")
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddGastoDialog(
+    concepto: String,
+    precio: String,
+    onConceptoChange: (String) -> Unit,
+    onPrecioChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    BasicAlertDialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Text(
+                    text = "Añadir gasto",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                OutlinedTextField(
+                    value = concepto,
+                    onValueChange = onConceptoChange,
+                    label = { Text("Concepto") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = precio,
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                            onPrecioChange(newValue)
+                        }
+                    },
+                    label = { Text("Precio") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
+                    prefix = { Text("$") }
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Cancelar")
+                    }
+                    Button(
+                        onClick = onSave,
+                        enabled = concepto.isNotBlank() && precio.isNotBlank(),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Guardar")
+                    }
                 }
             }
         }

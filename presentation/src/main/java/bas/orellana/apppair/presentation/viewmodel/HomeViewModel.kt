@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.presentation.state.HomeState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,9 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.util.UUID
 
 class HomeViewModel(
-    private val getGastosUseCase: GetGastosUseCase
+    private val getGastosUseCase: GetGastosUseCase,
+    private val addGastoUseCase: AddGastoUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -43,7 +47,25 @@ class HomeViewModel(
         }
     }
 
-    fun addGasto(gasto: GastoModel) {
-        _state.update { it.copy(gastos = listOf(gasto) + it.gastos) }
+    fun showAddGastoDialog() {
+        _state.update { it.copy(showAddGastoDialog = true) }
+    }
+
+    fun hideAddGastoDialog() {
+        _state.update { it.copy(showAddGastoDialog = false) }
+    }
+
+    fun saveGasto(nombre: String, precio: String) {
+        val monto = precio.toDoubleOrNull() ?: 0.0
+        val gasto = GastoModel(
+            id = UUID.randomUUID().toString(),
+            nombre = nombre,
+            monto = monto,
+            fecha = LocalDate.now()
+        )
+        viewModelScope.launch {
+            addGastoUseCase(gasto)
+            _state.update { it.copy(gastos = listOf(gasto) + it.gastos, showAddGastoDialog = false) }
+        }
     }
 }

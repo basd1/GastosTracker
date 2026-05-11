@@ -19,7 +19,7 @@ import org.koin.dsl.module
 
 val appModule = module {
     single<CategoriasRepository> { CategoriasRepositoryImpl(androidContext()) }
-    single<GastoRepository> { GastoRepositoryImpl() }
+    single<GastoRepository> { GastoRepositoryImpl(androidContext()) }
     single { PreferencesRepository(androidContext()) }
 
     factory { GetGastosUseCase(get()) }

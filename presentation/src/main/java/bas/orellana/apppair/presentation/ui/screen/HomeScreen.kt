@@ -1,5 +1,6 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -255,7 +256,7 @@ private fun GastoItem(
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
     val colorFondo = when {
-        gasto.categoria != null -> Color(gasto.categoria!!.color).copy(alpha = 0.15f)
+        gasto.categoria != null -> Color(gasto.categoria!!.color).copy(alpha = 0.35f)
         gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color).copy(alpha = 0.15f) } ?: Color.Transparent
         else -> Color.Transparent
     }
@@ -263,7 +264,7 @@ private fun GastoItem(
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = colorFondo),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = BorderStroke(1.dp, Color.Black)
     ) {
         Row(
             modifier = Modifier

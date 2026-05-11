@@ -89,7 +89,8 @@ class HomeViewModel(
         )
         viewModelScope.launch {
             addGastoUseCase(gasto)
-            _state.update { it.copy(gastos = listOf(gasto) + it.gastos, showAddGastoDialog = false) }
+            _state.update { it.copy(showAddGastoDialog = false) }
+            loadGastos()
         }
     }
 

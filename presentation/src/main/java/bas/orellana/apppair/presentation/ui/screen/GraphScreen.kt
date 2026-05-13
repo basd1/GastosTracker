@@ -13,8 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -175,8 +175,10 @@ fun GraphScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    LazyColumn(
+                    LazyVerticalGrid(
+                        columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
                         modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(categoriaData.values.sortedByDescending { it.porcentaje }) { data ->
@@ -197,12 +199,12 @@ fun GraphScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Text(
                                     text = data.nombre,
-                                    color = Color.White,
+                                    color = Color(0xFF1B5E20),
                                     modifier = Modifier.weight(1f)
                                 )
                                 Text(
                                     text = "${String.format("%.1f", data.porcentaje)}%",
-                                    color = Color.White,
+                                    color = Color(0xFF1B5E20),
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -239,34 +241,23 @@ private fun calcularPorcentajesPorCategoria(
         categoriaMontos[nombreCategoria] = (categoriaMontos[nombreCategoria] ?: 0.0) + gasto.monto
     }
 
-    val smallCategories = mutableMapOf<String, Double>()
     val result = mutableMapOf<String, CategoriaData>()
 
     categoriaMontos.forEach { (nombre, monto) ->
         val porcentaje = ((monto / total) * 100).toFloat()
 
-        if (porcentaje < 5f) {
-            smallCategories[nombre] = monto
-        } else {
-            val color = when {
-                gastos.any { it.categoria?.displayName == nombre } -> {
-                    val cat = gastos.first { it.categoria?.displayName == nombre }.categoria
-                    Color(cat!!.color)
-                }
-                else -> {
-                    val catPersonalizada = categoriasPersonalizadas.find { it.nombre == nombre }
-                    if (catPersonalizada != null) Color(catPersonalizada.color)
-                    else Color(0xFF90A4AE)
-                }
+        val color = when {
+            gastos.any { it.categoria?.displayName == nombre } -> {
+                val cat = gastos.first { it.categoria?.displayName == nombre }.categoria
+                Color(cat!!.color)
             }
-            result[nombre] = CategoriaData(nombre, porcentaje, color)
+            else -> {
+                val catPersonalizada = categoriasPersonalizadas.find { it.nombre == nombre }
+                if (catPersonalizada != null) Color(catPersonalizada.color)
+                else Color(0xFF90A4AE)
+            }
         }
-    }
-
-    if (smallCategories.isNotEmpty()) {
-        val smallTotal = smallCategories.values.sum()
-        val smallPorcentaje = ((smallTotal / total) * 100).toFloat()
-        result["Otros"] = CategoriaData("Otros", smallPorcentaje, Color(0xFF90A4AE))
+        result[nombre] = CategoriaData(nombre, porcentaje, color)
     }
 
     return result

@@ -17,6 +17,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,6 +94,9 @@ fun GraphScreen(
     ) {
         Scaffold(
             containerColor = Color.Transparent,
+            topBar = {
+                GraphTopAppBar(onSettingsClick = {})
+            },
             bottomBar = { BottomNavBar(navController = navController) }
         ) { paddingValues ->
             Column(
@@ -128,11 +137,11 @@ fun GraphScreen(
                     )
 
                     Box(
-                        modifier = Modifier.size(220.dp),
+                        modifier = Modifier.size(280.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        androidx.compose.foundation.Canvas(
-                            modifier = Modifier.size(200.dp)
+                        Canvas(
+                            modifier = Modifier.size(260.dp)
                         ) {
                             var startAngle = -90f
                             categoriaData.forEach { (_, data) ->
@@ -175,7 +184,7 @@ fun GraphScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.White.copy(alpha = 0.15f))
+                                    .background(Color.White.copy(alpha = 0.5f))
                                     .padding(12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -230,23 +239,34 @@ private fun calcularPorcentajesPorCategoria(
         categoriaMontos[nombreCategoria] = (categoriaMontos[nombreCategoria] ?: 0.0) + gasto.monto
     }
 
+    val smallCategories = mutableMapOf<String, Double>()
     val result = mutableMapOf<String, CategoriaData>()
 
     categoriaMontos.forEach { (nombre, monto) ->
-        val color = when {
-            gastos.any { it.categoria?.displayName == nombre } -> {
-                val cat = gastos.first { it.categoria?.displayName == nombre }.categoria
-                Color(cat!!.color)
-            }
-            else -> {
-                val catPersonalizada = categoriasPersonalizadas.find { it.nombre == nombre }
-                if (catPersonalizada != null) Color(catPersonalizada.color)
-                else Color(0xFF90A4AE)
-            }
-        }
-
         val porcentaje = ((monto / total) * 100).toFloat()
-        result[nombre] = CategoriaData(nombre, porcentaje, color)
+
+        if (porcentaje < 5f) {
+            smallCategories[nombre] = monto
+        } else {
+            val color = when {
+                gastos.any { it.categoria?.displayName == nombre } -> {
+                    val cat = gastos.first { it.categoria?.displayName == nombre }.categoria
+                    Color(cat!!.color)
+                }
+                else -> {
+                    val catPersonalizada = categoriasPersonalizadas.find { it.nombre == nombre }
+                    if (catPersonalizada != null) Color(catPersonalizada.color)
+                    else Color(0xFF90A4AE)
+                }
+            }
+            result[nombre] = CategoriaData(nombre, porcentaje, color)
+        }
+    }
+
+    if (smallCategories.isNotEmpty()) {
+        val smallTotal = smallCategories.values.sum()
+        val smallPorcentaje = ((smallTotal / total) * 100).toFloat()
+        result["Otros"] = CategoriaData("Otros", smallPorcentaje, Color(0xFF90A4AE))
     }
 
     return result
@@ -259,4 +279,77 @@ private fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float):
         blue = colorFrom.blue + (colorTo.blue - colorFrom.blue) * fraction,
         alpha = colorFrom.alpha + (colorTo.alpha - colorFrom.alpha) * fraction
     )
+}
+
+@Composable
+private fun GraphTopAppBar(
+    onSettingsClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
+            .background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFF1B5E20),
+                        Color(0xFF2E7D32),
+                        Color(0xFF4CAF50)
+                    )
+                )
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.15f),
+                            Color.Transparent
+                        ),
+                        center = Offset(0f, 0f),
+                        radius = 200f
+                    )
+                )
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 24.dp, start = 20.dp, end = 16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "📊",
+                        style = TextStyle(fontSize = 28.sp)
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                    Text(
+                        text = "Gráfico",
+                        style = TextStyle(
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                }
+                IconButton(onClick = onSettingsClick) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Settings,
+                        contentDescription = "Configuración",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
 }

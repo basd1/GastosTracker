@@ -1,7 +1,6 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -76,7 +75,7 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            WaveTopAppBar(
+            GradientTopAppBar(
                 onSettingsClick = { viewModel.showSettingsDialog() }
             )
         },
@@ -301,7 +300,7 @@ private fun GastoItem(
 }
 
 @Composable
-private fun WaveTopAppBar(
+private fun GradientTopAppBar(
     onSettingsClick: () -> Unit
 ) {
     Box(
@@ -310,51 +309,29 @@ private fun WaveTopAppBar(
             .height(100.dp)
             .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
             .background(
-                brush = Brush.verticalGradient(
+                brush = Brush.linearGradient(
                     colors = listOf(
                         Color(0xFF1B5E20),
-                        Color(0xFF2E7D32)
+                        Color(0xFF2E7D32),
+                        Color(0xFF4CAF50)
                     )
                 )
             )
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-        ) {
-            Canvas(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                val width = size.width
-                val height = size.height
-                val waveHeight = 20.dp.toPx()
-
-                val path = Path().apply {
-                    moveTo(0f, height - waveHeight)
-                    quadraticBezierTo(
-                        width / 4,
-                        height - waveHeight - 15.dp.toPx(),
-                        width / 2,
-                        height - waveHeight
+                .fillMaxSize()
+                .background(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.15f),
+                            Color.Transparent
+                        ),
+                        center = Offset(0f, 0f),
+                        radius = 200f
                     )
-                    quadraticBezierTo(
-                        width * 3 / 4,
-                        height - waveHeight + 15.dp.toPx(),
-                        width,
-                        height - waveHeight
-                    )
-                    lineTo(width, height)
-                    lineTo(0f, height)
-                    close()
-                }
-
-                drawPath(
-                    path = path,
-                    color = Color(0xFF43A047).copy(alpha = 0.5f)
                 )
-            }
-        }
+        )
 
         Box(
             modifier = Modifier

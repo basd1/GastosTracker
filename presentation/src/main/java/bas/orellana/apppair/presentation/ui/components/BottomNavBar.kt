@@ -44,10 +44,10 @@ fun BottomNavBar(navController: NavController) {
         )
         NavigationBarItem(
             icon = { Icon(Icons.Default.FavoriteBorder, contentDescription = null) },
-            selected = currentRoute == NavRoutes.BLUE_SCREEN,
+            selected = currentRoute == NavRoutes.GRAPH_SCREEN,
             onClick = {
-                if (currentRoute != NavRoutes.BLUE_SCREEN) {
-                    navController.navigate(NavRoutes.BLUE_SCREEN) {
+                if (currentRoute != NavRoutes.GRAPH_SCREEN) {
+                    navController.navigate(NavRoutes.GRAPH_SCREEN) {
                         popUpTo(NavRoutes.HOME) { saveState = true }
                         launchSingleTop = true
                         restoreState = true

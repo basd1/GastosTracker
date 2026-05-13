@@ -4,5 +4,5 @@ object NavRoutes {
     const val SPLASH = "splash"
     const val GREEN_SCREEN = "green_screen"
     const val HOME = "home"
-    const val BLUE_SCREEN = "blue_screen"
+    const val GRAPH_SCREEN = "graph_screen"
 }

@@ -41,6 +41,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.navigation.NavController
@@ -73,7 +79,42 @@ fun HomeScreen(
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
-    Scaffold(
+    val animatedColors = rememberInfiniteTransition(label = "gradient")
+    val progress by animatedColors.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 15000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradientFloat"
+    )
+
+    val backgroundColor1 = interpolateColor(
+        colorFrom = Color(0xFFE8F5E9),
+        colorTo = Color(0xFFE3F2FD),
+        fraction = progress
+    )
+    val backgroundColor2 = interpolateColor(
+        colorFrom = Color(0xFFE0F2F1),
+        colorTo = Color(0xFFF1F8E9),
+        fraction = progress
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        backgroundColor1.copy(alpha = 0.3f),
+                        backgroundColor2.copy(alpha = 0.2f)
+                    )
+                )
+            )
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
         topBar = {
             GradientTopAppBar(
                 onSettingsClick = { viewModel.showSettingsDialog() }
@@ -162,6 +203,7 @@ fun HomeScreen(
                 onDismiss = { viewModel.hideManageCategoriasDialog() }
             )
         }
+    }
     }
 }
 
@@ -370,4 +412,13 @@ private fun GradientTopAppBar(
             }
         }
     }
+}
+
+private fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float): Color {
+    return Color(
+        red = colorFrom.red + (colorTo.red - colorFrom.red) * fraction,
+        green = colorFrom.green + (colorTo.green - colorFrom.green) * fraction,
+        blue = colorFrom.blue + (colorTo.blue - colorFrom.blue) * fraction,
+        alpha = colorFrom.alpha + (colorTo.alpha - colorFrom.alpha) * fraction
+    )
 }

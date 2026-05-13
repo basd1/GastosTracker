@@ -91,13 +91,13 @@ fun HomeScreen(
     )
 
     val backgroundColor1 = interpolateColor(
-        colorFrom = Color(0xFFE8F5E9),
-        colorTo = Color(0xFFE3F2FD),
+        colorFrom = Color(0xFF81C784),
+        colorTo = Color(0xFF64B5F6),
         fraction = progress
     )
     val backgroundColor2 = interpolateColor(
-        colorFrom = Color(0xFFE0F2F1),
-        colorTo = Color(0xFFF1F8E9),
+        colorFrom = Color(0xFF4DB6AC),
+        colorTo = Color(0xFFAED581),
         fraction = progress
     )
 
@@ -107,8 +107,8 @@ fun HomeScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        backgroundColor1.copy(alpha = 0.3f),
-                        backgroundColor2.copy(alpha = 0.2f)
+                        backgroundColor1.copy(alpha = 0.4f),
+                        backgroundColor2.copy(alpha = 0.3f)
                     )
                 )
             )

@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -274,15 +275,36 @@ private fun GastoItem(
     )
 
     val colorFondo = when {
-        gasto.categoria != null -> Color(gasto.categoria!!.color).copy(alpha = 0.35f)
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color).copy(alpha = 0.15f) } ?: Color.Transparent
-        else -> Color.Transparent
+        gasto.categoria != null -> Color(gasto.categoria!!.color)
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color.White
+        else -> Color.White
     }
 
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
-            Box(modifier = Modifier.fillMaxSize())
+            val dismissDirection = dismissState.dismissDirection
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        if (dismissDirection == SwipeToDismissBoxValue.EndToStart) Color(0xFFEEEEEE)
+                        else Color.Transparent,
+                        RoundedCornerShape(8.dp)
+                    )
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                if (dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = Color.DarkGray,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
         },
         enableDismissFromStartToEnd = false
     ) {

@@ -42,6 +42,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -246,6 +252,32 @@ private fun GastoItem(
         else -> Color.White
     }
 
+    val animatedColors = rememberInfiniteTransition(label = "itemGradient")
+    val progress by animatedColors.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "itemGradientFloat"
+    )
+
+    val lighterColor = Color(
+        red = (colorFondo.red + 0.3f).coerceAtMost(1f),
+        green = (colorFondo.green + 0.3f).coerceAtMost(1f),
+        blue = (colorFondo.blue + 0.3f).coerceAtMost(1f),
+        alpha = colorFondo.alpha
+    )
+    val darkerColor = Color(
+        red = (colorFondo.red - 0.2f).coerceAtLeast(0f),
+        green = (colorFondo.green - 0.2f).coerceAtLeast(0f),
+        blue = (colorFondo.blue - 0.2f).coerceAtLeast(0f),
+        alpha = colorFondo.alpha
+    )
+    val gradientColor1 = interpolateColor(colorFrom = lighterColor, colorTo = colorFondo, fraction = progress)
+    val gradientColor2 = interpolateColor(colorFrom = colorFondo, colorTo = darkerColor, fraction = progress)
+
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
@@ -275,8 +307,13 @@ private fun GastoItem(
         enableDismissFromStartToEnd = false
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = colorFondo),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(gradientColor1, gradientColor2)
+                    )
+                ),
             border = BorderStroke(1.dp, Color.Black)
         ) {
             Row(
@@ -400,5 +437,14 @@ private fun GradientTopAppBar(
             }
         }
     }
+}
+
+private fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float): Color {
+    return Color(
+        red = colorFrom.red + (colorTo.red - colorFrom.red) * fraction,
+        green = colorFrom.green + (colorTo.green - colorFrom.green) * fraction,
+        blue = colorFrom.blue + (colorTo.blue - colorFrom.blue) * fraction,
+        alpha = colorFrom.alpha + (colorTo.alpha - colorFrom.alpha) * fraction
+    )
 }
 

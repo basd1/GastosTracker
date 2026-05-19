@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import bas.orellana.gastostracker.domain.model.Categoria
@@ -66,7 +67,8 @@ fun AddGastoDialog(
                     onValueChange = onConceptoChange,
                     label = { Text("Concepto") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -81,7 +83,10 @@ fun AddGastoDialog(
                     label = { Text("Precio") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        capitalization = KeyboardCapitalization.Sentences
+                    ),
                     prefix = { Text("€") }
                 )
 

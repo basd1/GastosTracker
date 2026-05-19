@@ -85,7 +85,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(if (isDarkTheme) Color(0xFF121212) else Color.White)
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -313,8 +313,7 @@ private fun GastoItem(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            border = BorderStroke(1.dp, Color.Black)
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
         ) {
             Box(
                 modifier = Modifier

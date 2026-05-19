@@ -122,6 +122,7 @@ fun HomeScreen(
             gastos = state.gastos,
             isLoading = state.isLoading,
             categoriasPersonalizadas = categoriasPersonalizadas,
+            isDarkTheme = isDarkTheme,
             onDelete = { viewModel.deleteGasto(it) },
             modifier = Modifier.padding(paddingValues)
         )
@@ -186,6 +187,7 @@ private fun GastosList(
     gastos: List<GastoModel>,
     isLoading: Boolean,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    isDarkTheme: Boolean,
     onDelete: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -219,6 +221,7 @@ private fun GastosList(
                 GastoItem(
                     gasto = gasto,
                     categoriasPersonalizadas = categoriasPersonalizadas,
+                    isDarkTheme = isDarkTheme,
                     onDelete = onDelete
                 )
             }
@@ -232,6 +235,7 @@ private fun GastosList(
 private fun GastoItem(
     gasto: GastoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    isDarkTheme: Boolean,
     onDelete: (String) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -288,7 +292,7 @@ private fun GastoItem(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        if (dismissDirection == SwipeToDismissBoxValue.EndToStart) Color(0xFFEEEEEE)
+                        if (dismissDirection == SwipeToDismissBoxValue.EndToStart) Color.Transparent
                         else Color.Transparent,
                         RoundedCornerShape(8.dp)
                     )
@@ -299,7 +303,7 @@ private fun GastoItem(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Eliminar",
-                        tint = Color.DarkGray,
+                        tint = Color(0xFFE53935),
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -333,12 +337,12 @@ private fun GastoItem(
                             text = gasto.nombre,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = if (isDarkTheme) Color.White else Color.Black
                         )
                         Text(
                             text = gasto.fecha.format(dateFormatter),
                             style = MaterialTheme.typography.labelMedium,
-                            color = Color.White.copy(alpha = 0.7f)
+                            color = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f)
                         )
 
                         val nombreCategoria = when {
@@ -359,11 +363,11 @@ private fun GastoItem(
                                 },
                                 modifier = Modifier.height(28.dp),
                                 colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = Color.White.copy(alpha = 0.25f),
-                                    labelColor = Color.White
+                                    containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.1f),
+                                    labelColor = if (isDarkTheme) Color.White else Color.Black
                                 ),
                                 border = AssistChipDefaults.assistChipBorder(
-                                    borderColor = Color.White.copy(alpha = 0.5f),
+                                    borderColor = if (isDarkTheme) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.3f),
                                     enabled = true
                                 )
                             )
@@ -373,7 +377,7 @@ private fun GastoItem(
                         text = "€${String.format("%.2f", gasto.monto)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = if (isDarkTheme) Color.White else Color.Black
                     )
                 }
             }

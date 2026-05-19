@@ -64,6 +64,7 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -248,8 +249,8 @@ private fun GastoItem(
 
     val colorFondo = when {
         gasto.categoria != null -> Color(gasto.categoria!!.color)
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color.White
-        else -> Color.White
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF607D8B)
+        else -> Color(0xFF607D8B)
     }
 
     val animatedColors = rememberInfiniteTransition(label = "itemGradient")
@@ -307,60 +308,74 @@ private fun GastoItem(
         enableDismissFromStartToEnd = false
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(gradientColor1, gradientColor2)
-                    )
-                ),
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
             border = BorderStroke(1.dp, Color.Black)
         ) {
-            Row(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = gasto.nombre,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        text = gasto.fecha.format(dateFormatter),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    val nombreCategoria = when {
-                        gasto.categoria != null -> gasto.categoria?.displayName
-                        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
-                        else -> null
-                    }
-
-                    if (nombreCategoria != null) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        AssistChip(
-                            onClick = { },
-                            label = {
-                                Text(
-                                    text = nombreCategoria,
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            },
-                            modifier = Modifier.height(24.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(gradientColor1, gradientColor2)
                         )
+                    )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = gasto.nombre,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = gasto.fecha.format(dateFormatter),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+
+                        val nombreCategoria = when {
+                            gasto.categoria != null -> gasto.categoria?.displayName
+                            gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
+                            else -> null
+                        }
+
+                        if (nombreCategoria != null) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            AssistChip(
+                                onClick = { },
+                                label = {
+                                    Text(
+                                        text = nombreCategoria,
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                },
+                                modifier = Modifier.height(28.dp),
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = Color.White.copy(alpha = 0.25f),
+                                    labelColor = Color.White
+                                ),
+                                border = AssistChipDefaults.assistChipBorder(
+                                    borderColor = Color.White.copy(alpha = 0.5f),
+                                    enabled = true
+                                )
+                            )
+                        }
                     }
+                    Text(
+                        text = "€${String.format("%.2f", gasto.monto)}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                 }
-                Text(
-                    text = "€${String.format("%.2f", gasto.monto)}",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error
-                )
             }
         }
     }

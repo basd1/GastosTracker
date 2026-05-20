@@ -57,6 +57,7 @@ import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
+import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
@@ -93,6 +94,8 @@ fun HomeScreen(
             containerColor = Color.Transparent,
         topBar = {
             GradientTopAppBar(
+                emoji = "💰",
+                title = "Gastos",
                 onSettingsClick = { viewModel.showSettingsDialog() }
             )
         },
@@ -396,79 +399,7 @@ private fun GastoItem(
 }
 
 @Composable
-private fun GradientTopAppBar(
-    onSettingsClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFF1B5E20),
-                        Color(0xFF2E7D32),
-                        Color(0xFF4CAF50)
-                    )
-                )
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.15f),
-                            Color.Transparent
-                        ),
-                        center = Offset(0f, 0f),
-                        radius = 200f
-                    )
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp, start = 20.dp, end = 16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "💰",
-                        style = TextStyle(fontSize = 28.sp)
-                    )
-                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                    Text(
-                        text = "Gastos",
-                        style = TextStyle(
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Configuración",
-                        tint = Color.White
-                    )
-                }
-            }
-        }
-    }
-}
-
-private fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float): Color {
+internal fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float): Color {
     return Color(
         red = colorFrom.red + (colorTo.red - colorFrom.red) * fraction,
         green = colorFrom.green + (colorTo.green - colorFrom.green) * fraction,

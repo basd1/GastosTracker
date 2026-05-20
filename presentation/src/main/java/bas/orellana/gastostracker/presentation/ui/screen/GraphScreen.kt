@@ -1,5 +1,7 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,33 +15,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,55 +47,51 @@ import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
+import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+
+private enum class PeriodFilter {
+    THIS_MONTH, LAST_3_MONTHS, ALL
+}
 
 @Composable
 fun GraphScreen(
     navController: NavController,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
+    val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
-    val animatedColors = rememberInfiniteTransition(label = "gradient")
-    val progress by animatedColors.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "gradientFloat"
-    )
+    var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
 
-    val backgroundColor1 = interpolateColor(
-        colorFrom = Color(0xFF81C784),
-        colorTo = Color(0xFF64B5F6),
-        fraction = progress
-    )
-    val backgroundColor2 = interpolateColor(
-        colorFrom = Color(0xFF4DB6AC),
-        colorTo = Color(0xFFAED581),
-        fraction = progress
-    )
+    val filteredGastos = remember(state.gastos, selectedPeriod) {
+        filterGastosByPeriod(state.gastos, selectedPeriod)
+    }
+
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
+    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+    val surfaceBg = if (isDarkTheme) Color(0xFF121212) else Color.White
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        backgroundColor1.copy(alpha = 0.4f),
-                        backgroundColor2.copy(alpha = 0.3f)
-                    )
-                )
-            )
+            .background(surfaceBg)
     ) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                GraphTopAppBar(onSettingsClick = {})
+                GradientTopAppBar(
+                    emoji = "\uD83D\uDCCA",
+                    title = "Gr\u00E1fico",
+                    onSettingsClick = { }
+                )
             },
             bottomBar = { BottomNavBar(navController = navController) }
         ) { paddingValues ->
@@ -103,116 +99,483 @@ fun GraphScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Text(
-                    text = "Distribución de Gastos",
-                    style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                PeriodFilterChips(
+                    selectedPeriod = selectedPeriod,
+                    onPeriodChange = { selectedPeriod = it },
+                    textColor = textColor,
+                    cardBg = cardBg
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                if (state.gastos.isEmpty()) {
+                if (filteredGastos.isEmpty()) {
                     Box(
                         modifier = Modifier
-                            .size(200.dp)
-                            .clip(CircleShape)
-                            .background(Color.White.copy(alpha = 0.3f)),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No hay gastos",
-                            color = Color.White.copy(alpha = 0.7f),
+                            text = if (state.gastos.isEmpty()) "No hay gastos registrados"
+                                   else "No hay gastos en este per\u00EDodo",
+                            color = mutedTextColor,
                             fontSize = 16.sp
                         )
                     }
                 } else {
-                    val totalGastos = state.gastos.sumOf { it.monto }
-                    val categoriaData = calcularPorcentajesPorCategoria(
-                        state.gastos,
-                        categoriasPersonalizadas
-                    )
-
-                    Box(
-                        modifier = Modifier.size(280.dp),
-                        contentAlignment = Alignment.Center
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Canvas(
-                            modifier = Modifier.size(260.dp)
-                        ) {
-                            var startAngle = -90f
-                            categoriaData.forEach { (_, data) ->
-                                val sweepAngle = (data.porcentaje / 100f) * 360f
-                                drawArc(
-                                    color = data.color,
-                                    startAngle = startAngle,
-                                    sweepAngle = sweepAngle,
-                                    useCenter = true
+                        item {
+                            SummaryCards(
+                                gastos = filteredGastos,
+                                selectedPeriod = selectedPeriod,
+                                categoriasPersonalizadas = categoriasPersonalizadas,
+                                textColor = textColor,
+                                mutedTextColor = mutedTextColor,
+                                cardBg = cardBg
+                            )
+                        }
+
+                        item {
+                            DonutChart(
+                                gastos = filteredGastos,
+                                categoriasPersonalizadas = categoriasPersonalizadas,
+                                textColor = textColor,
+                                mutedTextColor = mutedTextColor
+                            )
+                        }
+
+                        item {
+                            LegendSection(
+                                gastos = filteredGastos,
+                                categoriasPersonalizadas = categoriasPersonalizadas,
+                                textColor = textColor,
+                                mutedTextColor = mutedTextColor,
+                                cardBg = cardBg
+                            )
+                        }
+
+                        if (selectedPeriod == PeriodFilter.THIS_MONTH) {
+                            item {
+                                DailyBarChart(
+                                    gastos = filteredGastos,
+                                    categoriasPersonalizadas = categoriasPersonalizadas,
+                                    textColor = textColor,
+                                    mutedTextColor = mutedTextColor,
+                                    cardBg = cardBg
                                 )
-                                startAngle += sweepAngle
                             }
                         }
 
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "Total",
-                                fontSize = 12.sp,
-                                color = Color.White.copy(alpha = 0.7f)
-                            )
-                            Text(
-                                text = "€${String.format("%.2f", totalGastos)}",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White
-                            )
+                        item { Spacer(modifier = Modifier.height(8.dp)) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PeriodFilterChips(
+    selectedPeriod: PeriodFilter,
+    onPeriodChange: (PeriodFilter) -> Unit,
+    textColor: Color,
+    cardBg: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        PeriodFilter.entries.forEach { period ->
+            val label = when (period) {
+                PeriodFilter.THIS_MONTH -> "Este mes"
+                PeriodFilter.LAST_3_MONTHS -> "3 meses"
+                PeriodFilter.ALL -> "Total"
+            }
+            FilterChip(
+                selected = selectedPeriod == period,
+                onClick = { onPeriodChange(period) },
+                label = {
+                    Text(
+                        text = label,
+                        fontSize = 13.sp,
+                        fontWeight = if (selectedPeriod == period) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = cardBg,
+                    selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f),
+                    labelColor = textColor,
+                    selectedLabelColor = Color.White
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    borderColor = textColor.copy(alpha = 0.2f),
+                    selectedBorderColor = Color(0xFF2E7D32),
+                    enabled = true,
+                    selected = selectedPeriod == period
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryCards(
+    gastos: List<GastoModel>,
+    selectedPeriod: PeriodFilter,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    textColor: Color,
+    mutedTextColor: Color,
+    cardBg: Color
+) {
+    val total = gastos.sumOf { it.monto }
+
+    val topCategoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
+        .values.maxByOrNull { it.porcentaje }
+
+    val daysInPeriod = when (selectedPeriod) {
+        PeriodFilter.THIS_MONTH -> {
+            val now = LocalDate.now()
+            val startOfMonth = now.withDayOfMonth(1)
+            ChronoUnit.DAYS.between(startOfMonth, now).toInt() + 1
+        }
+        PeriodFilter.LAST_3_MONTHS -> {
+            val now = LocalDate.now()
+            val start = now.minusMonths(3)
+            ChronoUnit.DAYS.between(start, now).toInt() + 1
+        }
+        PeriodFilter.ALL -> {
+            if (gastos.isEmpty()) 1
+            else ChronoUnit.DAYS.between(gastos.minOf { it.fecha }, LocalDate.now()).toInt() + 1
+        }
+    }
+    val dailyAvg = if (daysInPeriod > 0) total / daysInPeriod else 0.0
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SummaryCard(
+            title = "Total",
+            value = "\u20AC${String.format("%.2f", total)}",
+            modifier = Modifier.weight(1f),
+            textColor = textColor,
+            mutedTextColor = mutedTextColor,
+            cardBg = cardBg
+        )
+        SummaryCard(
+            title = "Top categor\u00EDa",
+            value = topCategoriaData?.let { "${it.nombre} ${String.format("%.0f", it.porcentaje)}%" } ?: "-",
+            modifier = Modifier.weight(1f),
+            textColor = textColor,
+            mutedTextColor = mutedTextColor,
+            cardBg = cardBg
+        )
+        SummaryCard(
+            title = "Media/d\u00EDa",
+            value = "\u20AC${String.format("%.2f", dailyAvg)}",
+            modifier = Modifier.weight(1f),
+            textColor = textColor,
+            mutedTextColor = mutedTextColor,
+            cardBg = cardBg
+        )
+    }
+}
+
+@Composable
+private fun SummaryCard(
+    title: String,
+    value: String,
+    modifier: Modifier,
+    textColor: Color,
+    mutedTextColor: Color,
+    cardBg: Color
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = title,
+                fontSize = 11.sp,
+                color = mutedTextColor
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun DonutChart(
+    gastos: List<GastoModel>,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    textColor: Color,
+    mutedTextColor: Color
+) {
+    val total = gastos.sumOf { it.monto }
+    val categoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
+    val sortedData = categoriaData.values.sortedByDescending { it.porcentaje }
+
+    val animationProgress by animateFloatAsState(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = 800),
+        label = "donut"
+    )
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(260.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.size(260.dp)) {
+                var startAngle = -90f
+                sortedData.forEach { data ->
+                    val sweepAngle = (data.porcentaje / 100f) * 360f * animationProgress
+                    drawArc(
+                        color = data.color,
+                        startAngle = startAngle,
+                        sweepAngle = sweepAngle,
+                        useCenter = true
+                    )
+                    startAngle += (data.porcentaje / 100f) * 360f
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Total",
+                    fontSize = 12.sp,
+                    color = mutedTextColor
+                )
+                Text(
+                    text = "\u20AC${String.format("%.2f", total)}",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LegendSection(
+    gastos: List<GastoModel>,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    textColor: Color,
+    mutedTextColor: Color,
+    cardBg: Color
+) {
+    val categoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
+    val sortedData = categoriaData.values.sortedByDescending { it.porcentaje }
+    val total = gastos.sumOf { it.monto }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        sortedData.forEach { data ->
+            val monto = total * (data.porcentaje / 100f)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(data.color)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = data.nombre,
+                        color = textColor,
+                        fontSize = 14.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "\u20AC${String.format("%.2f", monto)}",
+                        color = textColor,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${String.format("%.1f", data.porcentaje)}%",
+                        color = mutedTextColor,
+                        fontSize = 13.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .background(cardBg)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(data.porcentaje / 100f)
+                            .height(3.dp)
+                            .background(data.color)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DailyBarChart(
+    gastos: List<GastoModel>,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    textColor: Color,
+    mutedTextColor: Color,
+    cardBg: Color
+) {
+    val gastosPorDia = gastos.groupBy { it.fecha }
+    val now = LocalDate.now()
+    val startOfMonth = now.withDayOfMonth(1)
+    val daysInMonth = now.lengthOfMonth()
+    val maxGasto = gastosPorDia.values.maxOfOrNull { dayGastos -> dayGastos.sumOf { it.monto } } ?: 1.0
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp)
+        ) {
+            Text(
+                text = "Gastos diarios",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (gastosPorDia.isEmpty()) {
+                Text(
+                    text = "No hay datos diarios",
+                    color = mutedTextColor,
+                    fontSize = 12.sp
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                ) {
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        val barCount = daysInMonth
+                        val spacing = size.width / barCount
+                        val maxHeight = size.height - 20f
+
+                        for (day in 0 until daysInMonth) {
+                            val date = startOfMonth.plusDays(day.toLong())
+                            val dayGastos = gastosPorDia[date]
+                            val dayTotal = dayGastos?.sumOf { it.monto } ?: 0.0
+                            val barHeight = if (maxGasto > 0) (dayTotal / maxGasto * maxHeight).toFloat() else 0f
+
+                            val barColor = if (dayGastos != null && dayGastos.isNotEmpty()) {
+                                obtenerColorCategoria(dayGastos.first(), categoriasPersonalizadas)
+                            } else {
+                                Color.Transparent
+                            }
+
+                            val x = spacing * day + 4f
+                            val barW = (spacing - 8f).coerceAtLeast(2f)
+
+                            if (dayTotal > 0) {
+                                drawRect(
+                                    color = barColor,
+                                    topLeft = Offset(x, size.height - barHeight),
+                                    size = Size(barW, barHeight)
+                                )
+                            }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    LazyVerticalGrid(
-                        columns = androidx.compose.foundation.lazy.grid.GridCells.Fixed(2),
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(categoriaData.values.sortedByDescending { it.porcentaje }) { data ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.White.copy(alpha = 0.5f))
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(data.color)
-                                )
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text(
-                                    text = data.nombre,
-                                    color = Color(0xFF1B5E20),
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = "${String.format("%.1f", data.porcentaje)}%",
-                                    color = Color(0xFF1B5E20),
-                                    fontWeight = FontWeight.Bold
-                                )
+                    if (daysInMonth <= 14) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            for (day in 0 until daysInMonth) {
+                                val date = startOfMonth.plusDays(day.toLong())
+                                val isRelevant = day == 0 || day == daysInMonth - 1 ||
+                                    date.dayOfWeek.value == 1
+                                if (isRelevant || daysInMonth <= 7) {
+                                    Text(
+                                        text = "${date.dayOfMonth}",
+                                        fontSize = 8.sp,
+                                        color = mutedTextColor
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private fun obtenerColorCategoria(gasto: GastoModel, categoriasPersonalizadas: List<CategoriaPersonalizada>): Color {
+    return when {
+        gasto.categoria != null -> Color(gasto.categoria!!.color)
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas
+            .find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF90A4AE)
+        else -> Color(0xFF90A4AE)
+    }
+}
+
+private fun filterGastosByPeriod(gastos: List<GastoModel>, period: PeriodFilter): List<GastoModel> {
+    val now = LocalDate.now()
+    return when (period) {
+        PeriodFilter.THIS_MONTH -> {
+            val startOfMonth = now.withDayOfMonth(1)
+            gastos.filter { !it.fecha.isBefore(startOfMonth) && !it.fecha.isAfter(now) }
+        }
+        PeriodFilter.LAST_3_MONTHS -> {
+            val start = now.minusMonths(3)
+            gastos.filter { !it.fecha.isBefore(start) && !it.fecha.isAfter(now) }
+        }
+        PeriodFilter.ALL -> gastos
     }
 }
 
@@ -261,86 +624,4 @@ private fun calcularPorcentajesPorCategoria(
     }
 
     return result
-}
-
-private fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float): Color {
-    return Color(
-        red = colorFrom.red + (colorTo.red - colorFrom.red) * fraction,
-        green = colorFrom.green + (colorTo.green - colorFrom.green) * fraction,
-        blue = colorFrom.blue + (colorTo.blue - colorFrom.blue) * fraction,
-        alpha = colorFrom.alpha + (colorTo.alpha - colorFrom.alpha) * fraction
-    )
-}
-
-@Composable
-private fun GraphTopAppBar(
-    onSettingsClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFF1B5E20),
-                        Color(0xFF2E7D32),
-                        Color(0xFF4CAF50)
-                    )
-                )
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.15f),
-                            Color.Transparent
-                        ),
-                        center = Offset(0f, 0f),
-                        radius = 200f
-                    )
-                )
-        )
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 24.dp, start = 20.dp, end = 16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "📊",
-                        style = TextStyle(fontSize = 28.sp)
-                    )
-                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
-                    Text(
-                        text = "Gráfico",
-                        style = TextStyle(
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Default.Settings,
-                        contentDescription = "Configuración",
-                        tint = Color.White
-                    )
-                }
-            }
-        }
-    }
 }

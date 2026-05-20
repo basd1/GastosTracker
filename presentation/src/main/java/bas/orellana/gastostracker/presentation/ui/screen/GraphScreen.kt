@@ -48,6 +48,8 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
+import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -66,6 +68,7 @@ fun GraphScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
+    val manageCategoriasState by viewModel.manageCategoriasState.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
@@ -88,9 +91,10 @@ fun GraphScreen(
             containerColor = Color.Transparent,
             topBar = {
                 GradientTopAppBar(
+                    icon = null,
                     emoji = "\uD83D\uDCCA",
                     title = "Gr\u00E1fico",
-                    onSettingsClick = { }
+                    onSettingsClick = { viewModel.showSettingsDialog() }
                 )
             },
             bottomBar = { BottomNavBar(navController = navController) }
@@ -174,6 +178,34 @@ fun GraphScreen(
                     }
                 }
             }
+        }
+
+        if (state.showSettingsDialog) {
+            SettingsDialog(
+                isDarkTheme = isDarkTheme,
+                onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
+                onManageCategorias = { viewModel.showManageCategoriasDialog() },
+                onDismiss = { viewModel.hideSettingsDialog() }
+            )
+        }
+
+        if (state.showManageCategoriasDialog) {
+            ManageCategoriasDialog(
+                categoriasPersonalizadas = categoriasPersonalizadas,
+                colorSeleccionado = manageCategoriasState.colorSeleccionado,
+                nuevaCategoria = manageCategoriasState.nuevaCategoria,
+                onColorSeleccionado = { viewModel.updateColorSeleccionado(it) },
+                onNuevaCategoriaChange = { viewModel.updateNuevaCategoria(it) },
+                onAddCategoria = {
+                    viewModel.addCategoriaPersonalizada(
+                        manageCategoriasState.nuevaCategoria,
+                        manageCategoriasState.colorSeleccionado
+                    )
+                    viewModel.resetManageCategoriasState()
+                },
+                onDeleteCategoria = { viewModel.deleteCategoriaPersonalizada(it) },
+                onDismiss = { viewModel.hideManageCategoriasDialog() }
+            )
         }
     }
 }

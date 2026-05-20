@@ -1,6 +1,15 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -14,48 +23,42 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavController
+import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
-import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
@@ -63,14 +66,9 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
-import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import org.koin.androidx.compose.koinViewModel
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +92,6 @@ fun HomeScreen(
             containerColor = Color.Transparent,
         topBar = {
             GradientTopAppBar(
-                emoji = "💰",
                 title = "Gastos",
                 onSettingsClick = { viewModel.showSettingsDialog() }
             )
@@ -118,7 +115,7 @@ fun HomeScreen(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                    Text("Añadir gasto", style = TextStyle(fontSize = 18.sp))
+                    Text("Añadir gasto", fontSize = 18.sp)
                 }
             }
         }
@@ -199,6 +196,10 @@ private fun GastosList(
     onEdit: (GastoModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
+    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+
     if (isLoading) {
         Box(
             modifier = modifier.fillMaxSize(),
@@ -211,30 +212,127 @@ private fun GastosList(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "No hay gastos todavía",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp),
+                    tint = mutedTextColor
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "No hay gastos todavía",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = textColor
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Pulsa + para añadir tu primer gasto",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = mutedTextColor
+                )
+            }
         }
     } else {
+        val now = LocalDate.now()
+        val gastosDelMes = gastos.filter {
+            it.fecha.year == now.year && it.fecha.month == now.month
+        }
+        val totalMes = gastosDelMes.sumOf { it.monto }
+        val maxMonto = gastos.maxOf { it.monto }
+
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            items(gastos, key = { it.id }) { gasto ->
-                GastoItem(
-                    gasto = gasto,
-                    categoriasPersonalizadas = categoriasPersonalizadas,
-                    isDarkTheme = isDarkTheme,
-                    onDelete = onDelete,
-                    onEdit = onEdit
+            item {
+                SummaryHeader(
+                    totalMes = totalMes,
+                    cantidad = gastosDelMes.size,
+                    textColor = textColor,
+                    mutedTextColor = mutedTextColor,
+                    cardBg = cardBg
                 )
             }
-            item { Spacer(modifier = Modifier.height(8.dp)) }
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+            items(gastos, key = { it.id }) { gasto ->
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = tween(300)) +
+                            slideInVertically(
+                                animationSpec = tween(300),
+                                initialOffsetY = { it / 2 }
+                            ),
+                    exit = fadeOut(animationSpec = tween(200))
+                ) {
+                    GastoItem(
+                        gasto = gasto,
+                        categoriasPersonalizadas = categoriasPersonalizadas,
+                        isDarkTheme = isDarkTheme,
+                        totalMes = totalMes,
+                        maxMonto = maxMonto,
+                        onDelete = onDelete,
+                        onEdit = onEdit
+                    )
+                }
+            }
+            item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun SummaryHeader(
+    totalMes: Double,
+    cantidad: Int,
+    textColor: Color,
+    mutedTextColor: Color,
+    cardBg: Color
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Gastos del mes",
+                    fontSize = 13.sp,
+                    color = mutedTextColor
+                )
+                Text(
+                    text = "\u20AC${String.format("%.2f", totalMes)}",
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
+                )
+            }
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = "$cantidad ${if (cantidad == 1) "gasto" else "gastos"}",
+                    fontSize = 13.sp,
+                    color = mutedTextColor
+                )
+                val media = if (cantidad > 0) totalMes / cantidad else 0.0
+                Text(
+                    text = "media \u20AC${String.format("%.2f", media)}",
+                    fontSize = 13.sp,
+                    color = mutedTextColor
+                )
+            }
         }
     }
 }
@@ -245,6 +343,8 @@ private fun GastoItem(
     gasto: GastoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
+    totalMes: Double,
+    maxMonto: Double,
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit
 ) {
@@ -293,6 +393,14 @@ private fun GastoItem(
     val gradientColor1 = interpolateColor(colorFrom = lighterColor, colorTo = colorFondo, fraction = progress)
     val gradientColor2 = interpolateColor(colorFrom = colorFondo, colorTo = darkerColor, fraction = progress)
 
+    val nombreCategoria = when {
+        gasto.categoria != null -> gasto.categoria?.displayName
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
+        else -> null
+    }
+
+    val barFraction = if (maxMonto > 0) (gasto.monto / maxMonto).toFloat().coerceIn(0f, 1f) else 0f
+
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
@@ -338,60 +446,66 @@ private fun GastoItem(
                         onLongClick = { onEdit(gasto) }
                     )
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (nombreCategoria != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .clip(CircleShape)
+                                            .background(colorFondo)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = nombreCategoria,
+                                        fontSize = 12.sp,
+                                        color = if (isDarkTheme) Color.White.copy(alpha = 0.75f) else Color.Black.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = gasto.nombre,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = if (isDarkTheme) Color.White else Color.Black
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = gasto.fecha.format(dateFormatter),
+                                fontSize = 12.sp,
+                                color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
+                            )
+                        }
                         Text(
-                            text = gasto.nombre,
-                            style = MaterialTheme.typography.titleLarge,
+                            text = "\u20AC${String.format("%.2f", gasto.monto)}",
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (isDarkTheme) Color.White else Color.Black
                         )
-                        Text(
-                            text = gasto.fecha.format(dateFormatter),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f)
-                        )
-
-                        val nombreCategoria = when {
-                            gasto.categoria != null -> gasto.categoria?.displayName
-                            gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
-                            else -> null
-                        }
-
-                        if (nombreCategoria != null) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            AssistChip(
-                                onClick = { },
-                                label = {
-                                    Text(
-                                        text = nombreCategoria,
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
-                                },
-                                modifier = Modifier.height(28.dp),
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.25f) else Color.Black.copy(alpha = 0.1f),
-                                    labelColor = if (isDarkTheme) Color.White else Color.Black
-                                ),
-                                border = AssistChipDefaults.assistChipBorder(
-                                    borderColor = if (isDarkTheme) Color.White.copy(alpha = 0.5f) else Color.Black.copy(alpha = 0.3f),
-                                    enabled = true
-                                )
-                            )
-                        }
                     }
-                    Text(
-                        text = "€${String.format("%.2f", gasto.monto)}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isDarkTheme) Color.White else Color.Black
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(Color.Black.copy(alpha = 0.08f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(barFraction)
+                                .height(3.dp)
+                                .background(Color.White.copy(alpha = 0.5f))
+                        )
+                    }
                 }
             }
         }

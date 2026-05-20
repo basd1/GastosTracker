@@ -11,6 +11,7 @@ import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.presentation.state.AddGastoState
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
@@ -26,6 +27,7 @@ import java.util.UUID
 class HomeViewModel(
     private val getGastosUseCase: GetGastosUseCase,
     private val addGastoUseCase: AddGastoUseCase,
+    private val updateGastoUseCase: UpdateGastoUseCase,
     private val deleteGastoUseCase: DeleteGastoUseCase,
     private val getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
     private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
@@ -80,6 +82,18 @@ class HomeViewModel(
     }
 
     fun showAddGastoDialog() {
+        _addGastoState.value = AddGastoState()
+        _state.update { it.copy(showAddGastoDialog = true) }
+    }
+
+    fun showEditGastoDialog(gasto: GastoModel) {
+        _addGastoState.value = AddGastoState(
+            concepto = gasto.nombre,
+            precio = gasto.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
+            categoriaSeleccionada = gasto.categoria,
+            categoriaPersonalizadaSeleccionada = gasto.categoriaPersonalizadaId,
+            gastoToEdit = gasto
+        )
         _state.update { it.copy(showAddGastoDialog = true) }
     }
 
@@ -105,16 +119,30 @@ class HomeViewModel(
 
     fun saveGasto(nombre: String, precio: String, categoria: Categoria?, categoriaPersonalizadaId: String?) {
         val monto = precio.toDoubleOrNull() ?: 0.0
-        val gasto = GastoModel(
-            id = UUID.randomUUID().toString(),
-            nombre = nombre,
-            monto = monto,
-            fecha = LocalDate.now(),
-            categoria = categoria,
-            categoriaPersonalizadaId = categoriaPersonalizadaId
-        )
+        val gastoToEdit = _addGastoState.value.gastoToEdit
+        val gasto = if (gastoToEdit != null) {
+            gastoToEdit.copy(
+                nombre = nombre,
+                monto = monto,
+                categoria = categoria,
+                categoriaPersonalizadaId = categoriaPersonalizadaId
+            )
+        } else {
+            GastoModel(
+                id = UUID.randomUUID().toString(),
+                nombre = nombre,
+                monto = monto,
+                fecha = LocalDate.now(),
+                categoria = categoria,
+                categoriaPersonalizadaId = categoriaPersonalizadaId
+            )
+        }
         viewModelScope.launch {
-            addGastoUseCase(gasto)
+            if (gastoToEdit != null) {
+                updateGastoUseCase(gasto)
+            } else {
+                addGastoUseCase(gasto)
+            }
             _state.update { it.copy(showAddGastoDialog = false) }
             loadGastos()
         }

@@ -12,6 +12,7 @@ import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
@@ -26,10 +27,11 @@ val appModule = module {
     factory { GetGastosUseCase(get()) }
     factory { AddGastoUseCase(get()) }
     factory { DeleteGastoUseCase(get()) }
+    factory { UpdateGastoUseCase(get()) }
     factory { GetCategoriasPersonalizadasUseCase(get()) }
     factory { AddCategoriaPersonalizadaUseCase(get()) }
     factory { DeleteCategoriaPersonalizadaUseCase(get()) }
 
-    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
 }

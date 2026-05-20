@@ -1,7 +1,9 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -124,6 +126,7 @@ fun HomeScreen(
             categoriasPersonalizadas = categoriasPersonalizadas,
             isDarkTheme = isDarkTheme,
             onDelete = { viewModel.deleteGasto(it) },
+            onEdit = { viewModel.showEditGastoDialog(it) },
             modifier = Modifier.padding(paddingValues)
         )
 
@@ -134,6 +137,7 @@ fun HomeScreen(
                 categoriaSeleccionada = addGastoState.categoriaSeleccionada,
                 categoriaPersonalizadaSeleccionada = addGastoState.categoriaPersonalizadaSeleccionada,
                 categoriasPersonalizadas = categoriasPersonalizadas,
+                gastoToEdit = addGastoState.gastoToEdit,
                 onConceptoChange = { viewModel.updateAddGastoConcepto(it) },
                 onPrecioChange = { viewModel.updateAddGastoPrecio(it) },
                 onCategoriaChange = { viewModel.updateAddGastoCategoria(it) },
@@ -189,6 +193,7 @@ private fun GastosList(
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
     onDelete: (String) -> Unit,
+    onEdit: (GastoModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (isLoading) {
@@ -222,7 +227,8 @@ private fun GastosList(
                     gasto = gasto,
                     categoriasPersonalizadas = categoriasPersonalizadas,
                     isDarkTheme = isDarkTheme,
-                    onDelete = onDelete
+                    onDelete = onDelete,
+                    onEdit = onEdit
                 )
             }
             item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -230,13 +236,14 @@ private fun GastosList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun GastoItem(
     gasto: GastoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
-    onDelete: (String) -> Unit
+    onDelete: (String) -> Unit,
+    onEdit: (GastoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
@@ -322,6 +329,10 @@ private fun GastoItem(
                         brush = Brush.verticalGradient(
                             colors = listOf(gradientColor1, gradientColor2)
                         )
+                    )
+                    .combinedClickable(
+                        onClick = { },
+                        onLongClick = { onEdit(gasto) }
                     )
             ) {
                 Row(

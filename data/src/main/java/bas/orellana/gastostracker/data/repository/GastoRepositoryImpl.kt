@@ -37,6 +37,18 @@ class GastoRepositoryImpl(
         }
     }
 
+    override suspend fun updateGasto(gasto: GastoModel) {
+        context.dataStore.edit { preferences ->
+            val json = preferences[GASTOS_KEY] ?: "[]"
+            val gastos = parseGastosFromJson(json).toMutableList()
+            val index = gastos.indexOfFirst { it.id == gasto.id }
+            if (index != -1) {
+                gastos[index] = gasto
+                preferences[GASTOS_KEY] = gastosToJson(gastos)
+            }
+        }
+    }
+
     override suspend fun deleteGasto(id: String) {
         context.dataStore.edit { preferences ->
             val json = preferences[GASTOS_KEY] ?: "[]"

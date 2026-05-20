@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
+import bas.orellana.gastostracker.domain.model.GastoModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,6 +39,7 @@ fun AddGastoDialog(
     categoriaSeleccionada: Categoria?,
     categoriaPersonalizadaSeleccionada: String?,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    gastoToEdit: GastoModel?,
     onConceptoChange: (String) -> Unit,
     onPrecioChange: (String) -> Unit,
     onCategoriaChange: (Categoria?) -> Unit,
@@ -56,7 +58,7 @@ fun AddGastoDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Añadir gasto",
+                    text = if (gastoToEdit != null) "Editar gasto" else "Añadir gasto",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -195,7 +197,7 @@ fun AddGastoDialog(
                         enabled = concepto.isNotBlank() && precio.isNotBlank(),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Guardar")
+                        Text(if (gastoToEdit != null) "Actualizar" else "Guardar")
                     }
                 }
             }

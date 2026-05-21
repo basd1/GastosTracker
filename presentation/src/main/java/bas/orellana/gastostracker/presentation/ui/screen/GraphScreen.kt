@@ -4,6 +4,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +21,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,6 +54,7 @@ import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
@@ -57,7 +63,7 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 private enum class PeriodFilter {
-    THIS_MONTH, LAST_3_MONTHS, ALL
+    THIS_MONTH, LAST_3_MONTHS, ALL, SPECIFIC_MONTH
 }
 
 @Composable
@@ -72,9 +78,12 @@ fun GraphScreen(
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
+    var selectedMonth by remember { mutableStateOf(LocalDate.now().monthValue) }
+    var selectedYear by remember { mutableStateOf(LocalDate.now().year) }
+    var showMonthPicker by remember { mutableStateOf(false) }
 
-    val filteredGastos = remember(state.gastos, selectedPeriod) {
-        filterGastosByPeriod(state.gastos, selectedPeriod)
+    val filteredGastos = remember(state.gastos, selectedPeriod, selectedMonth, selectedYear) {
+        filterGastosByPeriod(state.gastos, selectedPeriod, selectedMonth, selectedYear)
     }
 
     val textColor = if (isDarkTheme) Color.White else Color.Black
@@ -107,7 +116,16 @@ fun GraphScreen(
             ) {
                 PeriodFilterChips(
                     selectedPeriod = selectedPeriod,
-                    onPeriodChange = { selectedPeriod = it },
+                    selectedMonth = selectedMonth,
+                    selectedYear = selectedYear,
+                    onPeriodChange = { period ->
+                        selectedPeriod = period
+                        if (period != PeriodFilter.SPECIFIC_MONTH) {
+                            selectedMonth = LocalDate.now().monthValue
+                            selectedYear = LocalDate.now().year
+                        }
+                    },
+                    onMonthClick = { showMonthPicker = true },
                     textColor = textColor,
                     cardBg = cardBg
                 )
@@ -136,6 +154,8 @@ fun GraphScreen(
                             SummaryCards(
                                 gastos = filteredGastos,
                                 selectedPeriod = selectedPeriod,
+                                selectedMonth = selectedMonth,
+                                selectedYear = selectedYear,
                                 categoriasPersonalizadas = categoriasPersonalizadas,
                                 textColor = textColor,
                                 mutedTextColor = mutedTextColor,
@@ -162,7 +182,7 @@ fun GraphScreen(
                             )
                         }
 
-                        if (selectedPeriod == PeriodFilter.THIS_MONTH) {
+                        if (selectedPeriod == PeriodFilter.THIS_MONTH || selectedPeriod == PeriodFilter.SPECIFIC_MONTH) {
                             item {
                                 DailyBarChart(
                                     gastos = filteredGastos,
@@ -178,6 +198,20 @@ fun GraphScreen(
                     }
                 }
             }
+        }
+
+        if (showMonthPicker) {
+            MonthYearPickerDialog(
+                currentMonth = selectedMonth,
+                currentYear = selectedYear,
+                onConfirm = { month, year ->
+                    selectedMonth = month
+                    selectedYear = year
+                    selectedPeriod = PeriodFilter.SPECIFIC_MONTH
+                    showMonthPicker = false
+                },
+                onDismiss = { showMonthPicker = false }
+            )
         }
 
         if (state.showSettingsDialog) {
@@ -213,19 +247,28 @@ fun GraphScreen(
 @Composable
 private fun PeriodFilterChips(
     selectedPeriod: PeriodFilter,
+    selectedMonth: Int,
+    selectedYear: Int,
     onPeriodChange: (PeriodFilter) -> Unit,
+    onMonthClick: () -> Unit,
     textColor: Color,
     cardBg: Color
 ) {
+    val monthNames = listOf(
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    )
+
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        PeriodFilter.entries.forEach { period ->
+        PeriodFilter.entries.filter { it != PeriodFilter.SPECIFIC_MONTH }.forEach { period ->
             val label = when (period) {
                 PeriodFilter.THIS_MONTH -> "Este mes"
                 PeriodFilter.LAST_3_MONTHS -> "3 meses"
                 PeriodFilter.ALL -> "Total"
+                PeriodFilter.SPECIFIC_MONTH -> ""
             }
             FilterChip(
                 selected = selectedPeriod == period,
@@ -251,6 +294,37 @@ private fun PeriodFilterChips(
                 )
             )
         }
+
+        Card(
+            modifier = Modifier.clickable(onClick = onMonthClick),
+            colors = CardDefaults.cardColors(
+                containerColor = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH)
+                    Color(0xFF2E7D32).copy(alpha = 0.3f) else cardBg
+            ),
+            shape = RoundedCornerShape(8.dp),
+            border = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH)
+                androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E7D32))
+            else null
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "${monthNames[selectedMonth - 1]} $selectedYear",
+                    fontSize = 13.sp,
+                    fontWeight = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) FontWeight.Bold else FontWeight.Normal,
+                    color = textColor
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Seleccionar mes",
+                    tint = textColor.copy(alpha = 0.6f),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
     }
 }
 
@@ -258,6 +332,8 @@ private fun PeriodFilterChips(
 private fun SummaryCards(
     gastos: List<GastoModel>,
     selectedPeriod: PeriodFilter,
+    selectedMonth: Int = LocalDate.now().monthValue,
+    selectedYear: Int = LocalDate.now().year,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     textColor: Color,
     mutedTextColor: Color,
@@ -278,6 +354,10 @@ private fun SummaryCards(
             val now = LocalDate.now()
             val start = now.minusMonths(3)
             ChronoUnit.DAYS.between(start, now).toInt() + 1
+        }
+        PeriodFilter.SPECIFIC_MONTH -> {
+            val daysInMonth = java.time.YearMonth.of(selectedYear, selectedMonth).lengthOfMonth()
+            daysInMonth
         }
         PeriodFilter.ALL -> {
             if (gastos.isEmpty()) 1
@@ -596,7 +676,12 @@ private fun obtenerColorCategoria(gasto: GastoModel, categoriasPersonalizadas: L
     }
 }
 
-private fun filterGastosByPeriod(gastos: List<GastoModel>, period: PeriodFilter): List<GastoModel> {
+private fun filterGastosByPeriod(
+    gastos: List<GastoModel>,
+    period: PeriodFilter,
+    selectedMonth: Int = LocalDate.now().monthValue,
+    selectedYear: Int = LocalDate.now().year
+): List<GastoModel> {
     val now = LocalDate.now()
     return when (period) {
         PeriodFilter.THIS_MONTH -> {
@@ -608,6 +693,9 @@ private fun filterGastosByPeriod(gastos: List<GastoModel>, period: PeriodFilter)
             gastos.filter { !it.fecha.isBefore(start) && !it.fecha.isAfter(now) }
         }
         PeriodFilter.ALL -> gastos
+        PeriodFilter.SPECIFIC_MONTH -> {
+            gastos.filter { it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear }
+        }
     }
 }
 

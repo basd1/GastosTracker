@@ -49,7 +49,10 @@ import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddIngresoDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.GreenViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
@@ -58,11 +61,15 @@ import java.time.format.DateTimeFormatter
 fun GreenScreen(
     navController: NavController,
     viewModel: GreenViewModel = koinViewModel(),
+    homeViewModel: HomeViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addIngresoState by viewModel.addIngresoState.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+    val categoriasPersonalizadas by homeViewModel.categoriasPersonalizadas.collectAsState()
+    val manageCategoriasState by homeViewModel.manageCategoriasState.collectAsState()
+    val homeState by homeViewModel.state.collectAsState()
 
     Box(
         modifier = Modifier
@@ -73,8 +80,10 @@ fun GreenScreen(
             containerColor = Color.Transparent,
             topBar = {
                 GradientTopAppBar(
+                    icon = null,
+                    emoji = "\uD83D\uDCB0",
                     title = "Balance",
-                    onSettingsClick = { }
+                    onSettingsClick = { viewModel.showSettingsDialog() }
                 )
             },
             bottomBar = {
@@ -135,6 +144,34 @@ fun GreenScreen(
                         viewModel.resetAddIngresoState()
                     },
                     onDismiss = { viewModel.hideAddIngresoDialog() }
+                )
+            }
+
+            if (state.showSettingsDialog) {
+                SettingsDialog(
+                    isDarkTheme = isDarkTheme,
+                    onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
+                    onManageCategorias = { homeViewModel.showManageCategoriasDialog() },
+                    onDismiss = { viewModel.hideSettingsDialog() }
+                )
+            }
+
+            if (homeState.showManageCategoriasDialog) {
+                ManageCategoriasDialog(
+                    categoriasPersonalizadas = categoriasPersonalizadas,
+                    colorSeleccionado = manageCategoriasState.colorSeleccionado,
+                    nuevaCategoria = manageCategoriasState.nuevaCategoria,
+                    onColorSeleccionado = { homeViewModel.updateColorSeleccionado(it) },
+                    onNuevaCategoriaChange = { homeViewModel.updateNuevaCategoria(it) },
+                    onAddCategoria = {
+                        homeViewModel.addCategoriaPersonalizada(
+                            manageCategoriasState.nuevaCategoria,
+                            manageCategoriasState.colorSeleccionado
+                        )
+                        homeViewModel.resetManageCategoriasState()
+                    },
+                    onDeleteCategoria = { homeViewModel.deleteCategoriaPersonalizada(it) },
+                    onDismiss = { homeViewModel.hideManageCategoriasDialog() }
                 )
             }
         }

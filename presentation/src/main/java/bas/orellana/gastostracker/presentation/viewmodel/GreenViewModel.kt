@@ -109,6 +109,14 @@ class GreenViewModel(
         }
     }
 
+    fun showSettingsDialog() {
+        _state.update { it.copy(showSettingsDialog = true) }
+    }
+
+    fun hideSettingsDialog() {
+        _state.update { it.copy(showSettingsDialog = false) }
+    }
+
     fun resetAddIngresoState() {
         _addIngresoState.value = AddIngresoState()
     }

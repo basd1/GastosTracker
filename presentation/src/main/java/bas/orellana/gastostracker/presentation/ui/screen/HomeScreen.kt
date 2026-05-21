@@ -1,18 +1,11 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -48,8 +40,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -244,7 +234,6 @@ private fun GastosList(
             it.fecha.year == now.year && it.fecha.month == now.month
         }
         val totalMes = gastosDelMes.sumOf { it.monto }
-        val maxMonto = gastos.maxOf { it.monto }
 
         LazyColumn(
             modifier = modifier
@@ -284,8 +273,6 @@ private fun GastosList(
                         gasto = gasto,
                         categoriasPersonalizadas = categoriasPersonalizadas,
                         isDarkTheme = isDarkTheme,
-                        totalMes = totalMes,
-                        maxMonto = maxMonto,
                         onDelete = onDelete,
                         onEdit = onEdit
                     )
@@ -396,18 +383,28 @@ private fun SummaryHeader(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun GastoItem(
     gasto: GastoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
-    totalMes: Double,
-    maxMonto: Double,
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    val categoriaColor = when {
+        gasto.categoria != null -> Color(gasto.categoria!!.color)
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF607D8B)
+        else -> Color(0xFF607D8B)
+    }
+
+    val nombreCategoria = when {
+        gasto.categoria != null -> gasto.categoria?.displayName
+        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
+        else -> null
+    }
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
@@ -420,51 +417,10 @@ private fun GastoItem(
         }
     )
 
-    val colorFondo = when {
-        gasto.categoria != null -> Color(gasto.categoria!!.color)
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF607D8B)
-        else -> Color(0xFF607D8B)
-    }
-
-    val animatedColors = rememberInfiniteTransition(label = "itemGradient")
-    val progress by animatedColors.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "itemGradientFloat"
-    )
-
-    val lighterColor = Color(
-        red = (colorFondo.red + 0.3f).coerceAtMost(1f),
-        green = (colorFondo.green + 0.3f).coerceAtMost(1f),
-        blue = (colorFondo.blue + 0.3f).coerceAtMost(1f),
-        alpha = colorFondo.alpha
-    )
-    val darkerColor = Color(
-        red = (colorFondo.red - 0.2f).coerceAtLeast(0f),
-        green = (colorFondo.green - 0.2f).coerceAtLeast(0f),
-        blue = (colorFondo.blue - 0.2f).coerceAtLeast(0f),
-        alpha = colorFondo.alpha
-    )
-    val gradientColor1 = interpolateColor(colorFrom = lighterColor, colorTo = colorFondo, fraction = progress)
-    val gradientColor2 = interpolateColor(colorFrom = colorFondo, colorTo = darkerColor, fraction = progress)
-
-    val nombreCategoria = when {
-        gasto.categoria != null -> gasto.categoria?.displayName
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
-        else -> null
-    }
-
-    val barFraction = if (maxMonto > 0) (gasto.monto / maxMonto).toFloat().coerceIn(0f, 1f) else 0f
-
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
             val dismissDirection = dismissState.dismissDirection
-
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -490,94 +446,59 @@ private fun GastoItem(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+            colors = CardDefaults.cardColors(
+                containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+            )
         ) {
-            Box(
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(gradientColor1, gradientColor2)
-                        )
-                    )
-                    .combinedClickable(
-                        onClick = { },
-                        onLongClick = { onEdit(gasto) }
-                    )
+                    .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (nombreCategoria != null) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(10.dp)
-                                            .clip(CircleShape)
-                                            .background(colorFondo)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = nombreCategoria,
-                                        fontSize = 12.sp,
-                                        color = if (isDarkTheme) Color.White.copy(alpha = 0.75f) else Color.Black.copy(alpha = 0.7f)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = gasto.nombre,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = if (isDarkTheme) Color.White else Color.Black
-                            )
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = gasto.fecha.format(dateFormatter),
-                                fontSize = 12.sp,
-                                color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
-                            )
-                        }
-                        Text(
-                            text = "\u20AC${String.format("%.2f", gasto.monto)}",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isDarkTheme) Color.White else Color.Black
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .background(Color.Black.copy(alpha = 0.08f))
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(barFraction)
-                                .height(3.dp)
-                                .background(Color.White.copy(alpha = 0.5f))
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(categoriaColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "\u20AC",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = categoriaColor
+                    )
                 }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    if (nombreCategoria != null) {
+                        Text(
+                            text = nombreCategoria,
+                            fontSize = 12.sp,
+                            color = if (isDarkTheme) Color.White.copy(alpha = 0.65f) else Color.Black.copy(alpha = 0.55f)
+                        )
+                        Spacer(modifier = Modifier.height(1.dp))
+                    }
+                    Text(
+                        text = gasto.nombre,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
+                    Text(
+                        text = gasto.fecha.format(dateFormatter),
+                        fontSize = 12.sp,
+                        color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
+                    )
+                }
+                Text(
+                    text = "\u20AC${String.format("%.2f", gasto.monto)}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = categoriaColor
+                )
             }
         }
     }
-}
-
-@Composable
-internal fun interpolateColor(colorFrom: Color, colorTo: Color, fraction: Float): Color {
-    return Color(
-        red = colorFrom.red + (colorTo.red - colorFrom.red) * fraction,
-        green = colorFrom.green + (colorTo.green - colorFrom.green) * fraction,
-        blue = colorFrom.blue + (colorTo.blue - colorFrom.blue) * fraction,
-        alpha = colorFrom.alpha + (colorTo.alpha - colorFrom.alpha) * fraction
-    )
 }
 

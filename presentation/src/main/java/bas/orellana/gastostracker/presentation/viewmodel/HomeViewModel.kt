@@ -227,9 +227,11 @@ class HomeViewModel(
 
         val currentByCategory = mutableMapOf<String, MutableList<GastoModel>>()
         currentMonth.forEach { gasto ->
+            val cat = gasto.categoria
+            val catPersonalizadaId = gasto.categoriaPersonalizadaId
             val key = when {
-                gasto.categoria != null -> "enum:${gasto.categoria.name}"
-                gasto.categoriaPersonalizadaId != null -> "custom:${gasto.categoriaPersonalizadaId}"
+                cat != null -> "enum:${cat.name}"
+                catPersonalizadaId != null -> "custom:$catPersonalizadaId"
                 else -> "sin_categoria"
             }
             currentByCategory.getOrPut(key) { mutableListOf() }.add(gasto)
@@ -237,9 +239,11 @@ class HomeViewModel(
 
         val previousByCategory = mutableMapOf<String, MutableList<GastoModel>>()
         previousMonthGastos.forEach { gasto ->
+            val cat = gasto.categoria
+            val catPersonalizadaId = gasto.categoriaPersonalizadaId
             val key = when {
-                gasto.categoria != null -> "enum:${gasto.categoria.name}"
-                gasto.categoriaPersonalizadaId != null -> "custom:${gasto.categoriaPersonalizadaId}"
+                cat != null -> "enum:${cat.name}"
+                catPersonalizadaId != null -> "custom:$catPersonalizadaId"
                 else -> "sin_categoria"
             }
             previousByCategory.getOrPut(key) { mutableListOf() }.add(gasto)

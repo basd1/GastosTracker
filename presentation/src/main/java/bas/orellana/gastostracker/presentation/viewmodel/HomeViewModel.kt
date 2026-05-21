@@ -63,7 +63,8 @@ class HomeViewModel(
                     )
                 }
                 .collect { gastos ->
-                    val alerts = calculateAlerts(gastos, _categoriasPersonalizadas.value)
+                    val allAlerts = calculateAlerts(gastos, _categoriasPersonalizadas.value)
+                    val alerts = allAlerts.filter { it.categoriaNombre !in _state.value.dismissedAlertKeys }
                     _state.value = _state.value.copy(
                         gastos = gastos,
                         isLoading = false,
@@ -81,7 +82,8 @@ class HomeViewModel(
                 .collect { categorias ->
                     _categoriasPersonalizadas.value = categorias
                     val currentGastos = _state.value.gastos
-                    val alerts = calculateAlerts(currentGastos, categorias)
+                    val allAlerts = calculateAlerts(currentGastos, categorias)
+                    val alerts = allAlerts.filter { it.categoriaNombre !in _state.value.dismissedAlertKeys }
                     _state.update { it.copy(alerts = alerts) }
                 }
         }
@@ -212,6 +214,15 @@ class HomeViewModel(
         _manageCategoriasState.value = ManageCategoriasState()
     }
 
+    fun dismissAlert(categoriaNombre: String) {
+        _state.update {
+            it.copy(
+                dismissedAlertKeys = it.dismissedAlertKeys + categoriaNombre,
+                alerts = it.alerts.filter { a -> a.categoriaNombre != categoriaNombre }
+            )
+        }
+    }
+
     private fun calculateAlerts(
         gastos: List<GastoModel>,
         categoriasPersonalizadas: List<CategoriaPersonalizada>
@@ -254,7 +265,7 @@ class HomeViewModel(
             val currentTotal = currentGastos.sumOf { it.monto }
             val previousTotal = previousByCategory[key]?.sumOf { it.monto } ?: 0.0
 
-            if (currentTotal > previousTotal) {
+            if (previousTotal > 0 && currentTotal > previousTotal) {
                 val (nombre, color) = when {
                     key.startsWith("enum:") -> {
                         val enumName = key.removePrefix("enum:")

@@ -16,5 +16,6 @@ data class HomeState(
     val showAddGastoDialog: Boolean = false,
     val showSettingsDialog: Boolean = false,
     val showManageCategoriasDialog: Boolean = false,
-    val alerts: List<CategoryAlert> = emptyList()
+    val alerts: List<CategoryAlert> = emptyList(),
+    val dismissedAlertKeys: Set<String> = emptySet()
 )

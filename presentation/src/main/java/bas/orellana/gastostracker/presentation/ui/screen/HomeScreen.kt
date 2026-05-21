@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -119,6 +120,7 @@ fun HomeScreen(
             alerts = state.alerts,
             onDelete = { viewModel.deleteGasto(it) },
             onEdit = { viewModel.showEditGastoDialog(it) },
+            onDismissAlert = { viewModel.dismissAlert(it) },
             modifier = Modifier.padding(paddingValues)
         )
 
@@ -187,6 +189,7 @@ private fun GastosList(
     alerts: List<CategoryAlert> = emptyList(),
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit,
+    onDismissAlert: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val textColor = if (isDarkTheme) Color.White else Color.Black
@@ -254,7 +257,8 @@ private fun GastosList(
                 item {
                     AlertsSection(
                         alerts = alerts,
-                        isDarkTheme = isDarkTheme
+                        isDarkTheme = isDarkTheme,
+                        onDismissAlert = onDismissAlert
                     )
                 }
             }
@@ -286,7 +290,8 @@ private fun GastosList(
 @Composable
 private fun AlertsSection(
     alerts: List<CategoryAlert>,
-    isDarkTheme: Boolean
+    isDarkTheme: Boolean,
+    onDismissAlert: (String) -> Unit = {}
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -303,7 +308,7 @@ private fun AlertsSection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
+                        .padding(start = 12.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -323,6 +328,14 @@ private fun AlertsSection(
                             text = "Este mes: \u20AC${String.format("%.2f", alert.gastoActual)}  |  Mes pasado: \u20AC${String.format("%.2f", alert.gastoAnterior)}",
                             fontSize = 12.sp,
                             color = Color(0xFFBF360C)
+                        )
+                    }
+                    IconButton(onClick = { onDismissAlert(alert.categoriaNombre) }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Descartar",
+                            tint = Color(0xFFBF360C),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }

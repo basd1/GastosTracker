@@ -59,6 +59,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
@@ -125,6 +126,7 @@ fun HomeScreen(
             isLoading = state.isLoading,
             categoriasPersonalizadas = categoriasPersonalizadas,
             isDarkTheme = isDarkTheme,
+            alerts = state.alerts,
             onDelete = { viewModel.deleteGasto(it) },
             onEdit = { viewModel.showEditGastoDialog(it) },
             modifier = Modifier.padding(paddingValues)
@@ -192,6 +194,7 @@ private fun GastosList(
     isLoading: Boolean,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
+    alerts: List<CategoryAlert> = emptyList(),
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit,
     modifier: Modifier = Modifier
@@ -258,6 +261,14 @@ private fun GastosList(
                     cardBg = cardBg
                 )
             }
+            if (alerts.isNotEmpty()) {
+                item {
+                    AlertsSection(
+                        alerts = alerts,
+                        isDarkTheme = isDarkTheme
+                    )
+                }
+            }
             item { Spacer(modifier = Modifier.height(4.dp)) }
             items(gastos, key = { it.id }) { gasto ->
                 AnimatedVisibility(
@@ -281,6 +292,54 @@ private fun GastosList(
                 }
             }
             item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun AlertsSection(
+    alerts: List<CategoryAlert>,
+    isDarkTheme: Boolean
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        alerts.forEach { alert ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFFF3E0)
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "\u26A0\uFE0F",
+                        fontSize = 18.sp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Has gastado m\u00E1s en ${alert.categoriaNombre} que el mes pasado",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFE65100)
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Este mes: \u20AC${String.format("%.2f", alert.gastoActual)}  |  Mes pasado: \u20AC${String.format("%.2f", alert.gastoAnterior)}",
+                            fontSize = 12.sp,
+                            color = Color(0xFFBF360C)
+                        )
+                    }
+                }
+            }
         }
     }
 }

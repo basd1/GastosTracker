@@ -13,6 +13,7 @@ import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseC
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.presentation.state.AddGastoState
+import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,10 +63,12 @@ class HomeViewModel(
                     )
                 }
                 .collect { gastos ->
+                    val alerts = calculateAlerts(gastos, _categoriasPersonalizadas.value)
                     _state.value = _state.value.copy(
                         gastos = gastos,
                         isLoading = false,
-                        error = null
+                        error = null,
+                        alerts = alerts
                     )
                 }
         }
@@ -77,6 +80,9 @@ class HomeViewModel(
                 .catch { }
                 .collect { categorias ->
                     _categoriasPersonalizadas.value = categorias
+                    val currentGastos = _state.value.gastos
+                    val alerts = calculateAlerts(currentGastos, categorias)
+                    _state.update { it.copy(alerts = alerts) }
                 }
         }
     }
@@ -204,5 +210,71 @@ class HomeViewModel(
 
     fun resetManageCategoriasState() {
         _manageCategoriasState.value = ManageCategoriasState()
+    }
+
+    private fun calculateAlerts(
+        gastos: List<GastoModel>,
+        categoriasPersonalizadas: List<CategoriaPersonalizada>
+    ): List<CategoryAlert> {
+        val now = LocalDate.now()
+        val currentMonth = gastos.filter {
+            it.fecha.year == now.year && it.fecha.month == now.month
+        }
+        val previousMonth = now.minusMonths(1)
+        val previousMonthGastos = gastos.filter {
+            it.fecha.year == previousMonth.year && it.fecha.month == previousMonth.month
+        }
+
+        val currentByCategory = mutableMapOf<String, MutableList<GastoModel>>()
+        currentMonth.forEach { gasto ->
+            val key = when {
+                gasto.categoria != null -> "enum:${gasto.categoria.name}"
+                gasto.categoriaPersonalizadaId != null -> "custom:${gasto.categoriaPersonalizadaId}"
+                else -> "sin_categoria"
+            }
+            currentByCategory.getOrPut(key) { mutableListOf() }.add(gasto)
+        }
+
+        val previousByCategory = mutableMapOf<String, MutableList<GastoModel>>()
+        previousMonthGastos.forEach { gasto ->
+            val key = when {
+                gasto.categoria != null -> "enum:${gasto.categoria.name}"
+                gasto.categoriaPersonalizadaId != null -> "custom:${gasto.categoriaPersonalizadaId}"
+                else -> "sin_categoria"
+            }
+            previousByCategory.getOrPut(key) { mutableListOf() }.add(gasto)
+        }
+
+        val alerts = mutableListOf<CategoryAlert>()
+        currentByCategory.forEach { (key, currentGastos) ->
+            val currentTotal = currentGastos.sumOf { it.monto }
+            val previousTotal = previousByCategory[key]?.sumOf { it.monto } ?: 0.0
+
+            if (currentTotal > previousTotal) {
+                val (nombre, color) = when {
+                    key.startsWith("enum:") -> {
+                        val enumName = key.removePrefix("enum:")
+                        val cat = Categoria.entries.find { it.name == enumName }
+                        cat?.displayName to (cat?.color ?: 0xFF607D8B)
+                    }
+                    key.startsWith("custom:") -> {
+                        val customId = key.removePrefix("custom:")
+                        val cat = categoriasPersonalizadas.find { it.id == customId }
+                        cat?.nombre to (cat?.color ?: 0xFF607D8B)
+                    }
+                    else -> "Sin categoría" to 0xFF607D8B
+                }
+                alerts.add(
+                    CategoryAlert(
+                        categoriaNombre = nombre ?: "Sin categoría",
+                        categoriaColor = color ?: 0xFF607D8B,
+                        gastoActual = currentTotal,
+                        gastoAnterior = previousTotal
+                    )
+                )
+            }
+        }
+
+        return alerts
     }
 }

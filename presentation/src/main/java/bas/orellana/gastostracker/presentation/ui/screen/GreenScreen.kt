@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,6 +52,7 @@ import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddIngresoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.GreenViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
@@ -115,18 +118,36 @@ fun GreenScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
+                val filteredIngresos = state.ingresos.filter {
+                    it.fecha.monthValue == state.selectedMonth && it.fecha.year == state.selectedYear
+                }
+
                 BalanceHeader(
                     totalIngresos = state.totalIngresosMes,
                     totalGastos = state.totalGastosMes,
-                    isDarkTheme = isDarkTheme
+                    selectedMonth = state.selectedMonth,
+                    selectedYear = state.selectedYear,
+                    isDarkTheme = isDarkTheme,
+                    onMonthClick = { viewModel.showMonthPicker() }
                 )
 
                 IngresosList(
-                    ingresos = state.ingresos,
+                    ingresos = filteredIngresos,
                     isLoading = state.isLoading,
                     isDarkTheme = isDarkTheme,
                     onDelete = { viewModel.deleteIngreso(it) },
                     modifier = Modifier.weight(1f)
+                )
+            }
+
+            if (state.showMonthPicker) {
+                MonthYearPickerDialog(
+                    currentMonth = state.selectedMonth,
+                    currentYear = state.selectedYear,
+                    onConfirm = { month, year ->
+                        viewModel.updateSelectedMonth(month, year)
+                    },
+                    onDismiss = { viewModel.hideMonthPicker() }
                 )
             }
 
@@ -182,19 +203,60 @@ fun GreenScreen(
 private fun BalanceHeader(
     totalIngresos: Double,
     totalGastos: Double,
-    isDarkTheme: Boolean
+    selectedMonth: Int,
+    selectedYear: Int,
+    isDarkTheme: Boolean,
+    onMonthClick: () -> Unit = {}
 ) {
     val balance = totalIngresos - totalGastos
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
     val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+    val monthNames = listOf(
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    )
+    val monthLabel = "${monthNames[selectedMonth - 1]} $selectedYear"
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Card(
+                modifier = Modifier.clickable(onClick = onMonthClick),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.05f)
+                ),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = monthLabel,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = textColor
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = "Cambiar mes",
+                        tint = mutedTextColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)

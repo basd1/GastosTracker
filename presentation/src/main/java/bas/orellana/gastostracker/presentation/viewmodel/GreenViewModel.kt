@@ -2,8 +2,6 @@ package bas.orellana.gastostracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import bas.orellana.gastostracker.domain.model.GastoModel
-import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
@@ -45,8 +43,10 @@ class GreenViewModel(
                     _state.value = _state.value.copy(isLoading = false)
                 }
                 .collect { ingresos ->
+                    val selectedMonth = _state.value.selectedMonth
+                    val selectedYear = _state.value.selectedYear
                     val totalIngresosMes = ingresos.filter {
-                        it.fecha.year == LocalDate.now().year && it.fecha.month == LocalDate.now().month
+                        it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear
                     }.sumOf { it.monto }
                     _state.value = _state.value.copy(
                         ingresos = ingresos,
@@ -62,8 +62,10 @@ class GreenViewModel(
             getGastosUseCase()
                 .catch { }
                 .collect { gastos ->
+                    val selectedMonth = _state.value.selectedMonth
+                    val selectedYear = _state.value.selectedYear
                     val totalGastosMes = gastos.filter {
-                        it.fecha.year == LocalDate.now().year && it.fecha.month == LocalDate.now().month
+                        it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear
                     }.sumOf { it.monto }
                     _state.update { it.copy(totalGastosMes = totalGastosMes) }
                 }
@@ -77,6 +79,30 @@ class GreenViewModel(
 
     fun hideAddIngresoDialog() {
         _state.update { it.copy(showAddIngresoDialog = false) }
+    }
+
+    fun showSettingsDialog() {
+        _state.update { it.copy(showSettingsDialog = true) }
+    }
+
+    fun hideSettingsDialog() {
+        _state.update { it.copy(showSettingsDialog = false) }
+    }
+
+    fun showMonthPicker() {
+        _state.update { it.copy(showMonthPicker = true) }
+    }
+
+    fun hideMonthPicker() {
+        _state.update { it.copy(showMonthPicker = false) }
+    }
+
+    fun updateSelectedMonth(month: Int, year: Int) {
+        _state.update {
+            it.copy(selectedMonth = month, selectedYear = year, showMonthPicker = false)
+        }
+        loadIngresos()
+        loadGastos()
     }
 
     fun updateConcepto(concepto: String) {
@@ -107,14 +133,6 @@ class GreenViewModel(
             deleteIngresoUseCase(id)
             _state.update { state -> state.copy(ingresos = state.ingresos.filter { it.id != id }) }
         }
-    }
-
-    fun showSettingsDialog() {
-        _state.update { it.copy(showSettingsDialog = true) }
-    }
-
-    fun hideSettingsDialog() {
-        _state.update { it.copy(showSettingsDialog = false) }
     }
 
     fun resetAddIngresoState() {

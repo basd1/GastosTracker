@@ -163,6 +163,25 @@ class HomeViewModel(
         }
     }
 
+    fun seedTestAhorroData() {
+        viewModelScope.launch {
+            val montos = listOf(200.0, 350.0, 150.0, 400.0, 250.0, 300.0, 180.0, 420.0, 310.0, 275.0, 500.0, 380.0)
+            val now = LocalDate.now()
+            montos.forEachIndexed { index, monto ->
+                val gasto = GastoModel(
+                    id = UUID.randomUUID().toString(),
+                    nombre = "Ahorro ${index + 1}",
+                    monto = monto,
+                    fecha = now.minusMonths(11 - index.toLong()),
+                    categoria = Categoria.AHORRO,
+                    categoriaPersonalizadaId = null
+                )
+                addGastoUseCase(gasto)
+            }
+            loadGastos()
+        }
+    }
+
     fun addCategoriaPersonalizada(nombre: String, color: Long) {
         viewModelScope.launch {
             addCategoriaPersonalizadaUseCase(nombre, color)

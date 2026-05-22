@@ -24,6 +24,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -199,6 +201,24 @@ fun GraphScreen(
                         item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
                 }
+
+                Button(
+                    onClick = { viewModel.seedTestAhorroData() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFFD700).copy(alpha = 0.3f)
+                    )
+                ) {
+                    Text(
+                        text = "\uD83D\uDCB0 Generar datos de prueba AHORRO",
+                        fontSize = 14.sp,
+                        color = textColor
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 

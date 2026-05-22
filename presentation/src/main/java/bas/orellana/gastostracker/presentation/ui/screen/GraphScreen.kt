@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,14 +40,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
@@ -84,6 +81,14 @@ fun GraphScreen(
 
     val filteredGastos = remember(state.gastos, selectedPeriod, selectedMonth, selectedYear) {
         filterGastosByPeriod(state.gastos, selectedPeriod, selectedMonth, selectedYear)
+    }
+
+    val gastosSinAhorro = remember(filteredGastos) {
+        filteredGastos.filter { it.categoria != Categoria.AHORRO }
+    }
+
+    val gastosAhorro = remember(filteredGastos) {
+        filteredGastos.filter { it.categoria == Categoria.AHORRO }
     }
 
     val textColor = if (isDarkTheme) Color.White else Color.Black
@@ -132,7 +137,7 @@ fun GraphScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                if (filteredGastos.isEmpty()) {
+                if (gastosSinAhorro.isEmpty() && gastosAhorro.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize(),
@@ -152,7 +157,7 @@ fun GraphScreen(
                     ) {
                         item {
                             SummaryCards(
-                                gastos = filteredGastos,
+                                gastos = gastosSinAhorro,
                                 selectedPeriod = selectedPeriod,
                                 selectedMonth = selectedMonth,
                                 selectedYear = selectedYear,
@@ -165,7 +170,7 @@ fun GraphScreen(
 
                         item {
                             DonutChart(
-                                gastos = filteredGastos,
+                                gastos = gastosSinAhorro,
                                 categoriasPersonalizadas = categoriasPersonalizadas,
                                 textColor = textColor,
                                 mutedTextColor = mutedTextColor
@@ -174,7 +179,7 @@ fun GraphScreen(
 
                         item {
                             LegendSection(
-                                gastos = filteredGastos,
+                                gastos = gastosSinAhorro,
                                 categoriasPersonalizadas = categoriasPersonalizadas,
                                 textColor = textColor,
                                 mutedTextColor = mutedTextColor,
@@ -182,16 +187,13 @@ fun GraphScreen(
                             )
                         }
 
-                        if (selectedPeriod == PeriodFilter.THIS_MONTH || selectedPeriod == PeriodFilter.SPECIFIC_MONTH) {
-                            item {
-                                DailyBarChart(
-                                    gastos = filteredGastos,
-                                    categoriasPersonalizadas = categoriasPersonalizadas,
-                                    textColor = textColor,
-                                    mutedTextColor = mutedTextColor,
-                                    cardBg = cardBg
-                                )
-                            }
+                        item {
+                            MonthlySavingsLineChart(
+                                gastos = gastosAhorro,
+                                textColor = textColor,
+                                mutedTextColor = mutedTextColor,
+                                cardBg = cardBg
+                            )
                         }
 
                         item { Spacer(modifier = Modifier.height(8.dp)) }
@@ -563,19 +565,40 @@ private fun LegendSection(
     }
 }
 
+private data class MonthlySaving(
+    val year: Int,
+    val month: Int,
+    val label: String,
+    val amount: Double
+)
+
 @Composable
-private fun DailyBarChart(
+private fun MonthlySavingsLineChart(
     gastos: List<GastoModel>,
-    categoriasPersonalizadas: List<CategoriaPersonalizada>,
     textColor: Color,
     mutedTextColor: Color,
     cardBg: Color
 ) {
-    val gastosPorDia = gastos.groupBy { it.fecha }
-    val now = LocalDate.now()
-    val startOfMonth = now.withDayOfMonth(1)
-    val daysInMonth = now.lengthOfMonth()
-    val maxGasto = gastosPorDia.values.maxOfOrNull { dayGastos -> dayGastos.sumOf { it.monto } } ?: 1.0
+    val monthNames = listOf(
+        "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+        "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+    )
+
+    val monthlyData = remember(gastos) {
+        gastos
+            .groupBy { it.fecha.year * 12 + it.fecha.month }
+            .map { (key, items) ->
+                val year = key / 12
+                val month = key % 12
+                MonthlySaving(
+                    year = year,
+                    month = month,
+                    label = "${monthNames[month - 1]} $year",
+                    amount = items.sumOf { it.monto }
+                )
+            }
+            .sortedBy { it.year * 12 + it.month }
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -588,79 +611,127 @@ private fun DailyBarChart(
                 .padding(12.dp)
         ) {
             Text(
-                text = "Gastos diarios",
+                text = "Ahorro mensual",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = textColor
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (gastosPorDia.isEmpty()) {
+            if (monthlyData.isEmpty()) {
                 Text(
-                    text = "No hay datos diarios",
+                    text = "No hay datos de ahorro",
                     color = mutedTextColor,
                     fontSize = 12.sp
                 )
             } else {
+                val ahorroColor = Color(0xFFFFD700)
+                val maxAmount = monthlyData.maxOf { it.amount }.coerceAtLeast(1.0)
+                val chartHeight = 160.dp
+                val bottomMargin = 32.dp
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(120.dp)
+                        .height(chartHeight + bottomMargin)
                 ) {
+                    val canvasHeight = chartHeight.toPx()
+                    val bottomMarginPx = bottomMargin.toPx()
+
                     Canvas(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .fillMaxWidth()
+                            .height(chartHeight)
                     ) {
-                        val barCount = daysInMonth
-                        val spacing = size.width / barCount
-                        val maxHeight = size.height - 20f
-
-                        for (day in 0 until daysInMonth) {
-                            val date = startOfMonth.plusDays(day.toLong())
-                            val dayGastos = gastosPorDia[date]
-                            val dayTotal = dayGastos?.sumOf { it.monto } ?: 0.0
-                            val barHeight = if (maxGasto > 0) (dayTotal / maxGasto * maxHeight).toFloat() else 0f
-
-                            val barColor = if (dayGastos != null && dayGastos.isNotEmpty()) {
-                                obtenerColorCategoria(dayGastos.first(), categoriasPersonalizadas)
-                            } else {
-                                Color.Transparent
+                        if (monthlyData.size == 1) {
+                            val x = size.width / 2f
+                            val y = ((1f - (monthlyData[0].amount / maxAmount).toFloat()) * (size.height - 10f)) + 5f
+                            drawCircle(
+                                color = ahorroColor,
+                                radius = 6.dp.toPx(),
+                                center = Offset(x, y)
+                            )
+                            drawCircle(
+                                color = Color.White,
+                                radius = 3.dp.toPx(),
+                                center = Offset(x, y)
+                            )
+                        } else if (monthlyData.size >= 2) {
+                            val stepX = size.width / (monthlyData.size - 1).coerceAtLeast(1)
+                            val points = monthlyData.mapIndexed { index, data ->
+                                val x = stepX * index
+                                val y = ((1f - (data.amount / maxAmount).toFloat()) * (size.height - 10f)) + 5f
+                                Offset(x, y)
                             }
 
-                            val x = spacing * day + 4f
-                            val barW = (spacing - 8f).coerceAtLeast(2f)
+                            for (i in 0 until points.size - 1) {
+                                drawLine(
+                                    color = ahorroColor,
+                                    start = points[i],
+                                    end = points[i + 1],
+                                    strokeWidth = 3.dp.toPx()
+                                )
+                            }
 
-                            if (dayTotal > 0) {
-                                drawRect(
-                                    color = barColor,
-                                    topLeft = Offset(x, size.height - barHeight),
-                                    size = Size(barW, barHeight)
+                            points.forEach { point ->
+                                drawCircle(
+                                    color = ahorroColor,
+                                    radius = 6.dp.toPx(),
+                                    center = point
+                                )
+                                drawCircle(
+                                    color = Color.White,
+                                    radius = 3.dp.toPx(),
+                                    center = point
                                 )
                             }
                         }
                     }
 
-                    if (daysInMonth <= 14) {
+                    if (monthlyData.isNotEmpty()) {
                         Row(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
-                                .fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                                .fillMaxWidth()
+                                .padding(top = chartHeight.toPx().toDp()),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            for (day in 0 until daysInMonth) {
-                                val date = startOfMonth.plusDays(day.toLong())
-                                val isRelevant = day == 0 || day == daysInMonth - 1 ||
-                                    date.dayOfWeek.value == 1
-                                if (isRelevant || daysInMonth <= 7) {
-                                    Text(
-                                        text = "${date.dayOfMonth}",
-                                        fontSize = 8.sp,
-                                        color = mutedTextColor
-                                    )
-                                }
+                            val labelsToShow = if (monthlyData.size <= 6) monthlyData
+                            else monthlyData.filterIndexed { index, _ ->
+                                index == 0 || index == monthlyData.size - 1 || monthlyData[index].month == 1
+                            }
+                            labelsToShow.forEach { data ->
+                                Text(
+                                    text = data.label,
+                                    fontSize = 9.sp,
+                                    color = mutedTextColor,
+                                    maxLines = 1
+                                )
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                monthlyData.forEach { data ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = data.label,
+                            fontSize = 11.sp,
+                            color = mutedTextColor
+                        )
+                        Text(
+                            text = "\u20AC${String.format("%.2f", data.amount)}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = ahorroColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
                 }
             }
         }

@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavController
+import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
@@ -235,7 +236,7 @@ private fun GastosList(
     } else {
         val now = LocalDate.now()
         val gastosDelMes = gastos.filter {
-            it.fecha.year == now.year && it.fecha.month == now.month
+            it.fecha.year == now.year && it.fecha.month == now.month && it.categoria != Categoria.AHORRO
         }
         val totalMes = gastosDelMes.sumOf { it.monto }
 

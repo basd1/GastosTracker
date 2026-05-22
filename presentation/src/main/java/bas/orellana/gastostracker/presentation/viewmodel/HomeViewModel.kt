@@ -229,11 +229,11 @@ class HomeViewModel(
     ): List<CategoryAlert> {
         val now = LocalDate.now()
         val currentMonth = gastos.filter {
-            it.fecha.year == now.year && it.fecha.month == now.month
+            it.fecha.year == now.year && it.fecha.month == now.month && it.categoria != Categoria.AHORRO
         }
         val previousMonth = now.minusMonths(1)
         val previousMonthGastos = gastos.filter {
-            it.fecha.year == previousMonth.year && it.fecha.month == previousMonth.month
+            it.fecha.year == previousMonth.year && it.fecha.month == previousMonth.month && it.categoria != Categoria.AHORRO
         }
 
         val currentByCategory = mutableMapOf<String, MutableList<GastoModel>>()

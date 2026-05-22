@@ -125,6 +125,7 @@ fun GreenScreen(
                 BalanceHeader(
                     totalIngresos = state.totalIngresosMes,
                     totalGastos = state.totalGastosMes,
+                    totalAhorro = state.totalAhorroMes,
                     selectedMonth = state.selectedMonth,
                     selectedYear = state.selectedYear,
                     isDarkTheme = isDarkTheme,
@@ -203,6 +204,7 @@ fun GreenScreen(
 private fun BalanceHeader(
     totalIngresos: Double,
     totalGastos: Double,
+    totalAhorro: Double,
     selectedMonth: Int,
     selectedYear: Int,
     isDarkTheme: Boolean,
@@ -274,6 +276,15 @@ private fun BalanceHeader(
                 title = "Gastos",
                 amount = totalGastos,
                 color = Color(0xFFC62828),
+                textColor = textColor,
+                mutedTextColor = mutedTextColor,
+                cardBg = cardBg,
+                modifier = Modifier.weight(1f)
+            )
+            BalanceCard(
+                title = "Ahorro",
+                amount = totalAhorro,
+                color = Color(0xFFFFD700),
                 textColor = textColor,
                 mutedTextColor = mutedTextColor,
                 cardBg = cardBg,

@@ -12,5 +12,6 @@ data class GreenState(
     val selectedMonth: Int = LocalDate.now().monthValue,
     val selectedYear: Int = LocalDate.now().year,
     val totalIngresosMes: Double = 0.0,
-    val totalGastosMes: Double = 0.0
+    val totalGastosMes: Double = 0.0,
+    val totalAhorroMes: Double = 0.0
 )

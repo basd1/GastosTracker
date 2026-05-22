@@ -2,6 +2,7 @@ package bas.orellana.gastostracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
@@ -65,10 +66,14 @@ class GreenViewModel(
                 .collect { gastos ->
                     val selectedMonth = _state.value.selectedMonth
                     val selectedYear = _state.value.selectedYear
-                    val totalGastosMes = gastos.filter {
+                    val gastosDelMes = gastos.filter {
                         it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear
-                    }.sumOf { it.monto }
-                    _state.update { it.copy(totalGastosMes = totalGastosMes) }
+                    }
+                    val gastosSinAhorro = gastosDelMes.filter { it.categoria != Categoria.AHORRO }
+                    val ahorroDelMes = gastosDelMes.filter { it.categoria == Categoria.AHORRO }
+                    val totalGastosMes = gastosSinAhorro.sumOf { it.monto }
+                    val totalAhorroMes = ahorroDelMes.sumOf { it.monto }
+                    _state.update { it.copy(totalGastosMes = totalGastosMes, totalAhorroMes = totalAhorroMes) }
                 }
         }
     }

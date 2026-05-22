@@ -586,7 +586,7 @@ private fun MonthlySavingsLineChart(
 
     val monthlyData = remember(gastos) {
         gastos
-            .groupBy { it.fecha.year * 12 + (it.fecha.month - 1) }
+            .groupBy { it.fecha.year * 12 + (it.fecha.monthValue - 1) }
             .map { (key, items) ->
                 val year = key / 12
                 val month = key % 12

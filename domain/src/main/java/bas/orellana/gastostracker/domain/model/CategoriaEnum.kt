@@ -10,6 +10,7 @@ enum class Categoria(val displayName: String, val color: Long) {
     TECNOLOGIA("Tecnología", 0xFF4DD0E1),
     SERVICIOS("Servicios", 0xFF9575CD),
     REGALOS("Regalos", 0xFFF06292),
+    AHORRO("Ahorro", 0xFFFFD700),
     OTROS("Otros", 0xFF90A4AE);
 
     companion object {

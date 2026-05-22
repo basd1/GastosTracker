@@ -586,18 +586,18 @@ private fun MonthlySavingsLineChart(
 
     val monthlyData = remember(gastos) {
         gastos
-            .groupBy { it.fecha.year * 12 + it.fecha.month }
+            .groupBy { it.fecha.year * 12 + (it.fecha.month - 1) }
             .map { (key, items) ->
                 val year = key / 12
                 val month = key % 12
                 MonthlySaving(
                     year = year,
-                    month = month,
-                    label = "${monthNames[month - 1]} $year",
+                    month = month + 1,
+                    label = "${monthNames[month]} $year",
                     amount = items.sumOf { it.monto }
                 )
             }
-            .sortedBy { it.year * 12 + it.month }
+            .sortedBy { it.year * 12 + (it.month - 1) }
     }
 
     Card(
@@ -635,9 +635,6 @@ private fun MonthlySavingsLineChart(
                         .fillMaxWidth()
                         .height(chartHeight + bottomMargin)
                 ) {
-                    val canvasHeight = chartHeight.toPx()
-                    val bottomMarginPx = bottomMargin.toPx()
-
                     Canvas(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -693,7 +690,7 @@ private fun MonthlySavingsLineChart(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
-                                .padding(top = chartHeight.toPx().toDp()),
+                                .padding(top = chartHeight),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             val labelsToShow = if (monthlyData.size <= 6) monthlyData

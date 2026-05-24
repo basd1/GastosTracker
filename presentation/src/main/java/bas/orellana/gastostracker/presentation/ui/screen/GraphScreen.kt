@@ -137,7 +137,7 @@ fun GraphScreen(
                     cardBg = cardBg
                 )
 
-                Spacer(modifier = Modifier.height(12.dp)) //todo ver que pasa con el btn de generar gastos
+                Spacer(modifier = Modifier.height(12.dp))
 
                 if (gastosSinAhorro.isEmpty() && gastosAhorro.isEmpty()) {
                     Box(

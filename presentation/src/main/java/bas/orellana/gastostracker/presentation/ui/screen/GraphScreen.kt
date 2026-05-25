@@ -670,16 +670,20 @@ private fun MonthlySavingsLineChart(
                 val chartHeight = 160.dp
                 val bottomMargin = 32.dp
 
+                val horizontalPadding = 20.dp
+                val density = LocalDensity.current
+
                 var selectedIndex by remember { mutableStateOf(-1) }
                 var canvasWidth by remember { mutableStateOf(0f) }
-                val chartHeightPx = with(LocalDensity.current) { chartHeight.toPx() }
+                val chartHeightPx = with(density) { chartHeight.toPx() }
+                val horizontalPaddingPx = with(density) { horizontalPadding.toPx() }
 
-                val points = remember(monthlyData, canvasWidth, maxAmount) {
+                val points = remember(monthlyData, canvasWidth, maxAmount, horizontalPaddingPx) {
                     if (canvasWidth <= 0f || monthlyData.size < 2) emptyList()
                     else {
-                        val stepX = canvasWidth / (monthlyData.size - 1)
+                        val stepX = (canvasWidth - 2 * horizontalPaddingPx) / (monthlyData.size - 1)
                         monthlyData.mapIndexed { index, data ->
-                            val x = stepX * index
+                            val x = horizontalPaddingPx + stepX * index
                             val y = ((1f - (data.amount / maxAmount).toFloat()) * (chartHeightPx - 10f)) + 5f
                             Offset(x, y)
                         }
@@ -740,7 +744,8 @@ private fun MonthlySavingsLineChart(
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
-                                .padding(top = chartHeight),
+                                .padding(top = chartHeight)
+                                .padding(horizontal = horizontalPadding),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             val labelsToShow = if (monthlyData.size <= 6) monthlyData

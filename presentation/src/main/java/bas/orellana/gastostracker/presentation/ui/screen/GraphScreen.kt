@@ -6,6 +6,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,6 +61,7 @@ import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
+import kotlin.math.max
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -671,17 +674,25 @@ private fun MonthlySavingsLineChart(
                 val bottomMargin = 32.dp
 
                 val horizontalPadding = 20.dp
+                val minSpacing = 8.dp
                 val density = LocalDensity.current
 
                 var selectedIndex by remember { mutableStateOf(-1) }
-                var canvasWidth by remember { mutableStateOf(0f) }
+                var viewportWidth by remember { mutableStateOf(0f) }
                 val chartHeightPx = with(density) { chartHeight.toPx() }
                 val horizontalPaddingPx = with(density) { horizontalPadding.toPx() }
+                val minSpacingPx = with(density) { minSpacing.toPx() }
 
-                val points = remember(monthlyData, canvasWidth, maxAmount, horizontalPaddingPx) {
-                    if (canvasWidth <= 0f || monthlyData.size < 2) emptyList()
+                val totalChartWidthPx = remember(monthlyData.size, viewportWidth, minSpacingPx) {
+                    if (monthlyData.size < 2) viewportWidth.coerceAtLeast(1f)
+                    else max(viewportWidth, (monthlyData.size - 1) * minSpacingPx + 2 * horizontalPaddingPx)
+                }
+                val totalChartWidth = with(density) { totalChartWidthPx.toDp() }
+
+                val points = remember(monthlyData, totalChartWidthPx, maxAmount, horizontalPaddingPx) {
+                    if (totalChartWidthPx <= 0f || monthlyData.size < 2) emptyList()
                     else {
-                        val stepX = (canvasWidth - 2 * horizontalPaddingPx) / (monthlyData.size - 1)
+                        val stepX = (totalChartWidthPx - 2 * horizontalPaddingPx) / (monthlyData.size - 1)
                         monthlyData.mapIndexed { index, data ->
                             val x = horizontalPaddingPx + stepX * index
                             val y = ((1f - (data.amount / maxAmount).toFloat()) * (chartHeightPx - 10f)) + 5f
@@ -693,13 +704,14 @@ private fun MonthlySavingsLineChart(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .onSizeChanged { viewportWidth = it.width.toFloat() }
                         .height(chartHeight + bottomMargin)
                 ) {
                     Canvas(
                         modifier = Modifier
-                            .fillMaxWidth()
+                            .width(totalChartWidth)
                             .height(chartHeight)
-                            .onSizeChanged { canvasWidth = it.width.toFloat() }
                             .pointerInput(points) {
                                 detectTapGestures { tapOffset ->
                                     if (points.isNotEmpty()) {

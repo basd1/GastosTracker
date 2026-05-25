@@ -196,37 +196,39 @@ fun GraphScreen(
                             )
                         }
 
+                        item {
+                            MonthlySavingsLineChart(
+                                gastos = gastosAhorroTotal,
+                                textColor = textColor,
+                                mutedTextColor = mutedTextColor,
+                                cardBg = cardBg
+                            )
+                        }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    selectedPeriod = PeriodFilter.ALL
+                                    viewModel.seedTestAhorroData()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 32.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFFD700).copy(alpha = 0.3f)
+                                )
+                            ) {
+                                Text(
+                                    text = "\uD83D\uDCB0 Generar datos de prueba AHORRO",
+                                    fontSize = 14.sp,
+                                    color = textColor
+                                )
+                            }
+                        }
+
                         item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
                 }
-
-                MonthlySavingsLineChart(
-                    gastos = gastosAhorroTotal,
-                    textColor = textColor,
-                    mutedTextColor = mutedTextColor,
-                    cardBg = cardBg
-                )
-
-                Button(
-                    onClick = {
-                        selectedPeriod = PeriodFilter.ALL
-                        viewModel.seedTestAhorroData()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFFD700).copy(alpha = 0.3f)
-                    )
-                ) {
-                    Text(
-                        text = "\uD83D\uDCB0 Generar datos de prueba AHORRO",
-                        fontSize = 14.sp,
-                        color = textColor
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 

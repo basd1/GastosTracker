@@ -57,6 +57,12 @@ class GastoRepositoryImpl(
         }
     }
 
+    override suspend fun deleteAllGastos() {
+        context.dataStore.edit { preferences ->
+            preferences[GASTOS_KEY] = "[]"
+        }
+    }
+
     private fun parseGastosFromJson(json: String): List<GastoModel> {
         return try {
             val jsonArray = JSONArray(json)

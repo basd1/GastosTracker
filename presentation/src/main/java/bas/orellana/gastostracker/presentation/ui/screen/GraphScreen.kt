@@ -93,6 +93,10 @@ fun GraphScreen(
         filteredGastos.filter { it.categoria == Categoria.AHORRO }
     }
 
+    val gastosAhorroTotal = remember(state.gastos) {
+        state.gastos.filter { it.categoria == Categoria.AHORRO }
+    }
+
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
     val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
@@ -192,21 +196,22 @@ fun GraphScreen(
                             )
                         }
 
-                        item {
-                            MonthlySavingsLineChart(
-                                gastos = gastosAhorro,
-                                textColor = textColor,
-                                mutedTextColor = mutedTextColor,
-                                cardBg = cardBg
-                            )
-                        }
-
                         item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
                 }
 
+                MonthlySavingsLineChart(
+                    gastos = gastosAhorroTotal,
+                    textColor = textColor,
+                    mutedTextColor = mutedTextColor,
+                    cardBg = cardBg
+                )
+
                 Button(
-                    onClick = { viewModel.seedTestAhorroData() },
+                    onClick = {
+                        selectedPeriod = PeriodFilter.ALL
+                        viewModel.seedTestAhorroData()
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 32.dp),
@@ -608,7 +613,7 @@ private fun MonthlySavingsLineChart(
     )
 
     val monthlyData = remember(gastos) {
-        gastos
+        val sorted = gastos
             .groupBy { it.fecha.year * 12 + (it.fecha.monthValue - 1) }
             .map { (key, items) ->
                 val year = key / 12
@@ -621,6 +626,12 @@ private fun MonthlySavingsLineChart(
                 )
             }
             .sortedBy { it.year * 12 + (it.month - 1) }
+
+        var runningTotal = 0.0
+        sorted.map { data ->
+            runningTotal += data.amount
+            data.copy(amount = runningTotal)
+        }
     }
 
     Card(
@@ -634,7 +645,7 @@ private fun MonthlySavingsLineChart(
                 .padding(12.dp)
         ) {
             Text(
-                text = "Ahorro mensual",
+                text = "Ahorro acumulado",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = textColor

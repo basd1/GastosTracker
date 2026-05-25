@@ -24,11 +24,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -58,6 +63,7 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
+import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
@@ -79,6 +85,7 @@ fun GraphScreen(
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val addGastoState by viewModel.addGastoState.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
     val manageCategoriasState by viewModel.manageCategoriasState.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
@@ -87,6 +94,7 @@ fun GraphScreen(
     var selectedMonth by remember { mutableStateOf(LocalDate.now().monthValue) }
     var selectedYear by remember { mutableStateOf(LocalDate.now().year) }
     var showMonthPicker by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val filteredGastos = remember(state.gastos, selectedPeriod, selectedMonth, selectedYear) {
         filterGastosByPeriod(state.gastos, selectedPeriod, selectedMonth, selectedYear)
@@ -213,23 +221,44 @@ fun GraphScreen(
                         }
 
                         item {
-                            Button(
-                                onClick = {
-                                    selectedPeriod = PeriodFilter.ALL
-                                    viewModel.seedTestAhorroData()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 32.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFFFD700).copy(alpha = 0.3f)
-                                )
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text(
-                                    text = "\uD83D\uDCB0 Generar datos de prueba AHORRO",
-                                    fontSize = 14.sp,
-                                    color = textColor
-                                )
+                                Button(
+                                    onClick = { viewModel.showAddGastoDialog() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("A\u00F1adir gasto", fontSize = 15.sp)
+                                }
+                                Button(
+                                    onClick = {
+                                        selectedPeriod = PeriodFilter.ALL
+                                        viewModel.seedTestAhorro36Meses()
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.Refresh, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("A\u00F1adir datos 36 meses", fontSize = 15.sp)
+                                }
+                                Button(
+                                    onClick = { showDeleteConfirm = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Eliminar todos los gastos", fontSize = 15.sp)
+                                }
                             }
                         }
 
@@ -278,6 +307,54 @@ fun GraphScreen(
                 },
                 onDeleteCategoria = { viewModel.deleteCategoriaPersonalizada(it) },
                 onDismiss = { viewModel.hideManageCategoriasDialog() }
+            )
+        }
+
+        if (state.showAddGastoDialog) {
+            AddGastoDialog(
+                concepto = addGastoState.concepto,
+                precio = addGastoState.precio,
+                categoriaSeleccionada = addGastoState.categoriaSeleccionada,
+                categoriaPersonalizadaSeleccionada = addGastoState.categoriaPersonalizadaSeleccionada,
+                categoriasPersonalizadas = categoriasPersonalizadas,
+                gastoToEdit = addGastoState.gastoToEdit,
+                onConceptoChange = { viewModel.updateAddGastoConcepto(it) },
+                onPrecioChange = { viewModel.updateAddGastoPrecio(it) },
+                onCategoriaChange = { viewModel.updateAddGastoCategoria(it) },
+                onCategoriaPersonalizadaChange = { viewModel.updateAddGastoCategoriaPersonalizada(it) },
+                onSave = {
+                    viewModel.saveGasto(
+                        nombre = addGastoState.concepto,
+                        precio = addGastoState.precio,
+                        categoria = addGastoState.categoriaSeleccionada,
+                        categoriaPersonalizadaId = addGastoState.categoriaPersonalizadaSeleccionada
+                    )
+                    viewModel.resetAddGastoState()
+                },
+                onDismiss = { viewModel.hideAddGastoDialog() }
+            )
+        }
+
+        if (showDeleteConfirm) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirm = false },
+                title = { Text("Eliminar todos los gastos") },
+                text = { Text("\u00BFEst\u00E1s seguro? Esta acci\u00F3n no se puede deshacer.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            viewModel.deleteAllGastos()
+                            showDeleteConfirm = false
+                        }
+                    ) {
+                        Text("Eliminar", color = Color.Red)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirm = false }) {
+                        Text("Cancelar")
+                    }
+                }
             )
         }
     }

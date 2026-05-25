@@ -257,7 +257,7 @@ fun GraphScreen(
                                 ) {
                                     Icon(Icons.Default.Delete, contentDescription = null)
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Eliminar todos los gastos", fontSize = 15.sp)
+                                    Text("Eliminar todos los ahorros", fontSize = 15.sp)
                                 }
                             }
                         }
@@ -338,12 +338,12 @@ fun GraphScreen(
         if (showDeleteConfirm) {
             AlertDialog(
                 onDismissRequest = { showDeleteConfirm = false },
-                title = { Text("Eliminar todos los gastos") },
-                text = { Text("\u00BFEst\u00E1s seguro? Esta acci\u00F3n no se puede deshacer.") },
+                title = { Text("Eliminar todos los ahorros") },
+                text = { Text("Se eliminar\u00E1n todos los ahorros. \u00BFEst\u00E1s seguro?") },
                 confirmButton = {
                     TextButton(
                         onClick = {
-                            viewModel.deleteAllGastos()
+                            viewModel.deleteAllAhorros()
                             showDeleteConfirm = false
                         }
                     ) {

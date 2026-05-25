@@ -210,6 +210,14 @@ class HomeViewModel(
         }
     }
 
+    fun deleteAllAhorros() {
+        viewModelScope.launch {
+            val ahorros = _state.value.gastos.filter { it.categoria == Categoria.AHORRO }
+            ahorros.forEach { deleteGastoUseCase(it.id) }
+            loadGastos()
+        }
+    }
+
     fun addCategoriaPersonalizada(nombre: String, color: Long) {
         viewModelScope.launch {
             addCategoriaPersonalizadaUseCase(nombre, color)

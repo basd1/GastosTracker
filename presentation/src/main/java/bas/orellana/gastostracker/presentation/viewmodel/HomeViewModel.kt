@@ -8,6 +8,7 @@ import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
+import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
@@ -30,6 +31,7 @@ class HomeViewModel(
     private val addGastoUseCase: AddGastoUseCase,
     private val updateGastoUseCase: UpdateGastoUseCase,
     private val deleteGastoUseCase: DeleteGastoUseCase,
+    private val deleteAllGastosUseCase: DeleteAllGastosUseCase,
     private val getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
     private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
     private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase
@@ -178,6 +180,32 @@ class HomeViewModel(
                 )
                 addGastoUseCase(gasto)
             }
+            loadGastos()
+        }
+    }
+
+    fun seedTestAhorro36Meses() {
+        viewModelScope.launch {
+            val now = LocalDate.now()
+            (0 until 36).forEach { i ->
+                val monto = (100..600).random().toDouble()
+                val gasto = GastoModel(
+                    id = UUID.randomUUID().toString(),
+                    nombre = "Ahorro ${i + 1}",
+                    monto = monto,
+                    fecha = now.minusMonths(35 - i.toLong()),
+                    categoria = Categoria.AHORRO,
+                    categoriaPersonalizadaId = null
+                )
+                addGastoUseCase(gasto)
+            }
+            loadGastos()
+        }
+    }
+
+    fun deleteAllGastos() {
+        viewModelScope.launch {
+            deleteAllGastosUseCase()
             loadGastos()
         }
     }

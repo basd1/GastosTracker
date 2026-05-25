@@ -11,6 +11,7 @@ import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
+import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
@@ -33,6 +34,7 @@ val appModule = module {
     factory { GetGastosUseCase(get()) }
     factory { AddGastoUseCase(get()) }
     factory { DeleteGastoUseCase(get()) }
+    factory { DeleteAllGastosUseCase(get()) }
     factory { UpdateGastoUseCase(get()) }
     factory { GetCategoriasPersonalizadasUseCase(get()) }
     factory { AddCategoriaPersonalizadaUseCase(get()) }
@@ -43,7 +45,7 @@ val appModule = module {
     factory { AddIngresoUseCase(get()) }
     factory { DeleteIngresoUseCase(get()) }
 
-    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
     viewModel { GreenViewModel(get(), get(), get(), get()) }
 }

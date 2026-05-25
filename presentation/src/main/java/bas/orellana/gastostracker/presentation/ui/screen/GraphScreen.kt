@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -669,6 +670,22 @@ private fun MonthlySavingsLineChart(
                 val chartHeight = 160.dp
                 val bottomMargin = 32.dp
 
+                var selectedIndex by remember { mutableStateOf(-1) }
+                var canvasWidth by remember { mutableStateOf(0f) }
+                val chartHeightPx = with(LocalDensity.current) { chartHeight.toPx() }
+
+                val points = remember(monthlyData, canvasWidth, maxAmount) {
+                    if (canvasWidth <= 0f || monthlyData.size < 2) emptyList()
+                    else {
+                        val stepX = canvasWidth / (monthlyData.size - 1)
+                        monthlyData.mapIndexed { index, data ->
+                            val x = stepX * index
+                            val y = ((1f - (data.amount / maxAmount).toFloat()) * (chartHeightPx - 10f)) + 5f
+                            Offset(x, y)
+                        }
+                    }
+                }
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -678,28 +695,27 @@ private fun MonthlySavingsLineChart(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(chartHeight)
+                            .onSizeChanged { canvasWidth = it.width.toFloat() }
+                            .pointerInput(points) {
+                                detectTapGestures { tapOffset ->
+                                    if (points.isNotEmpty()) {
+                                        val threshold = 30.dp.toPx()
+                                        val touched = points.indexOfFirst {
+                                            (it - tapOffset).getDistance() <= threshold
+                                        }
+                                        selectedIndex = if (touched >= 0) touched else -1
+                                    }
+                                }
+                            }
                     ) {
                         if (monthlyData.size == 1) {
                             val x = size.width / 2f
                             val y = ((1f - (monthlyData[0].amount / maxAmount).toFloat()) * (size.height - 10f)) + 5f
-                            drawCircle(
-                                color = ahorroColor,
-                                radius = 6.dp.toPx(),
-                                center = Offset(x, y)
-                            )
-                            drawCircle(
-                                color = Color.White,
-                                radius = 3.dp.toPx(),
-                                center = Offset(x, y)
-                            )
-                        } else if (monthlyData.size >= 2) {
-                            val stepX = size.width / (monthlyData.size - 1).coerceAtLeast(1)
-                            val points = monthlyData.mapIndexed { index, data ->
-                                val x = stepX * index
-                                val y = ((1f - (data.amount / maxAmount).toFloat()) * (size.height - 10f)) + 5f
-                                Offset(x, y)
-                            }
-
+                            val radius = if (selectedIndex == 0) 10.dp.toPx() else 6.dp.toPx()
+                            val innerRadius = if (selectedIndex == 0) 5.dp.toPx() else 3.dp.toPx()
+                            drawCircle(color = ahorroColor, radius = radius, center = Offset(x, y))
+                            drawCircle(color = Color.White, radius = innerRadius, center = Offset(x, y))
+                        } else if (monthlyData.size >= 2 && points.isNotEmpty()) {
                             for (i in 0 until points.size - 1) {
                                 drawLine(
                                     color = ahorroColor,
@@ -709,17 +725,12 @@ private fun MonthlySavingsLineChart(
                                 )
                             }
 
-                            points.forEach { point ->
-                                drawCircle(
-                                    color = ahorroColor,
-                                    radius = 6.dp.toPx(),
-                                    center = point
-                                )
-                                drawCircle(
-                                    color = Color.White,
-                                    radius = 3.dp.toPx(),
-                                    center = point
-                                )
+                            points.forEachIndexed { index, point ->
+                                val isSelected = index == selectedIndex
+                                val radius = if (isSelected) 10.dp.toPx() else 6.dp.toPx()
+                                val innerRadius = if (isSelected) 5.dp.toPx() else 3.dp.toPx()
+                                drawCircle(color = ahorroColor, radius = radius, center = point)
+                                drawCircle(color = Color.White, radius = innerRadius, center = point)
                             }
                         }
                     }
@@ -750,24 +761,33 @@ private fun MonthlySavingsLineChart(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                monthlyData.forEach { data ->
+                val selectedData = if (selectedIndex in monthlyData.indices) monthlyData[selectedIndex] else null
+                if (selectedData != null) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = data.label,
-                            fontSize = 11.sp,
+                            text = selectedData.label,
+                            fontSize = 13.sp,
                             color = mutedTextColor
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "\u20AC${String.format("%.2f", data.amount)}",
-                            fontSize = 11.sp,
+                            text = "\u20AC${String.format("%.2f", selectedData.amount)}",
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = ahorroColor
                         )
                     }
-                    Spacer(modifier = Modifier.height(2.dp))
+                } else {
+                    Text(
+                        text = "Toca un punto para ver el valor",
+                        fontSize = 11.sp,
+                        color = mutedTextColor,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
                 }
             }
         }

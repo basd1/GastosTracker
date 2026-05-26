@@ -410,36 +410,36 @@ private fun PeriodFilterChips(
             )
         }
 
-        Card(
-            modifier = Modifier.clickable(onClick = onMonthClick),
-            colors = CardDefaults.cardColors(
-                containerColor = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH)
-                    Color(0xFF2E7D32).copy(alpha = 0.3f) else cardBg
-            ),
-            shape = RoundedCornerShape(8.dp),
-            border = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH)
-                androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E7D32))
-            else null
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        FilterChip(
+            selected = selectedPeriod == PeriodFilter.SPECIFIC_MONTH,
+            onClick = onMonthClick,
+            label = {
                 Text(
                     text = "${monthNames[selectedMonth - 1]} $selectedYear",
                     fontSize = 13.sp,
-                    fontWeight = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) FontWeight.Bold else FontWeight.Normal,
-                    color = textColor
+                    fontWeight = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) FontWeight.Bold else FontWeight.Normal
                 )
-                Spacer(modifier = Modifier.width(2.dp))
+            },
+            trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = "Seleccionar mes",
-                    tint = textColor.copy(alpha = 0.6f),
                     modifier = Modifier.size(18.dp)
                 )
-            }
-        }
+            },
+            colors = FilterChipDefaults.filterChipColors(
+                containerColor = cardBg,
+                selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f),
+                labelColor = textColor,
+                selectedLabelColor = Color.White
+            ),
+            border = FilterChipDefaults.filterChipBorder(
+                borderColor = textColor.copy(alpha = 0.2f),
+                selectedBorderColor = Color(0xFF2E7D32),
+                enabled = true,
+                selected = selectedPeriod == PeriodFilter.SPECIFIC_MONTH
+            )
+        )
     }
 }
 

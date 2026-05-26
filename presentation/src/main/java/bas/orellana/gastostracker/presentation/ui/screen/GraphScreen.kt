@@ -246,7 +246,7 @@ fun GraphScreen(
                                 ) {
                                     Icon(Icons.Default.Refresh, contentDescription = null)
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("A\u00F1adir datos 36 meses", fontSize = 15.sp)
+                                    Text("A\u00F1adir datos 45 meses", fontSize = 15.sp)
                                 }
                                 Button(
                                     onClick = { showDeleteConfirm = true },

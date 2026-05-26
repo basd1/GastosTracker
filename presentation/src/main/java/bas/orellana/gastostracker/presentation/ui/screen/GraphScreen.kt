@@ -751,7 +751,7 @@ private fun MonthlySavingsLineChart(
                 val bottomMargin = 32.dp
 
                 val horizontalPadding = 20.dp
-                val minSpacing = 8.dp
+                val minSpacing = 12.dp
                 val density = LocalDensity.current
 
                 var selectedIndex by remember { mutableStateOf(-1) }

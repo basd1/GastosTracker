@@ -67,7 +67,6 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
-import kotlin.math.max
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -751,7 +750,7 @@ private fun MonthlySavingsLineChart(
                 val bottomMargin = 32.dp
 
                 val horizontalPadding = 20.dp
-                val minSpacing = 12.dp
+                val minSpacing = 25.dp
                 val density = LocalDensity.current
 
                 var selectedIndex by remember { mutableStateOf(-1) }
@@ -760,9 +759,13 @@ private fun MonthlySavingsLineChart(
                 val horizontalPaddingPx = with(density) { horizontalPadding.toPx() }
                 val minSpacingPx = with(density) { minSpacing.toPx() }
 
-                val totalChartWidthPx = remember(monthlyData.size, viewportWidth, minSpacingPx) {
+                val totalChartWidthPx = remember(monthlyData.size, viewportWidth, minSpacingPx, horizontalPaddingPx) {
                     if (monthlyData.size < 2) viewportWidth.coerceAtLeast(1f)
-                    else max(viewportWidth, (monthlyData.size - 1) * minSpacingPx + 2 * horizontalPaddingPx)
+                    else {
+                        val fillSpacingPx = (viewportWidth - 2 * horizontalPaddingPx) / (monthlyData.size - 1).coerceAtLeast(1)
+                        val actualSpacingPx = maxOf(fillSpacingPx, minSpacingPx)
+                        (monthlyData.size - 1) * actualSpacingPx + 2 * horizontalPaddingPx
+                    }
                 }
                 val totalChartWidth = with(density) { totalChartWidthPx.toDp() }
 

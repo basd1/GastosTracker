@@ -184,16 +184,16 @@ class HomeViewModel(
         }
     }
 
-    fun seedTestAhorro36Meses() {
+    fun seedTestAhorro45Meses() {
         viewModelScope.launch {
             val now = LocalDate.now()
-            (0 until 36).forEach { i ->
+            (0 until 45).forEach { i ->
                 val monto = (100..600).random().toDouble()
                 val gasto = GastoModel(
                     id = UUID.randomUUID().toString(),
                     nombre = "Ahorro ${i + 1}",
                     monto = monto,
-                    fecha = now.minusMonths(35 - i.toLong()),
+                    fecha = now.minusMonths(44 - i.toLong()),
                     categoria = Categoria.AHORRO,
                     categoriaPersonalizadaId = null
                 )

@@ -238,7 +238,7 @@ fun GraphScreen(
                                 Button(
                                     onClick = {
                                         selectedPeriod = PeriodFilter.ALL
-                                        viewModel.seedTestAhorro36Meses()
+                                        viewModel.seedTestAhorro45Meses()
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
                                     shape = RoundedCornerShape(14.dp),

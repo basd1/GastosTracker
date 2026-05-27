@@ -32,15 +32,18 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,8 +54,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
@@ -126,7 +127,12 @@ fun HomeScreen(
             isDarkTheme = isDarkTheme,
             alerts = state.alerts,
             searchQuery = state.searchQuery,
+            filterCategoria = state.filterCategoria,
+            filterCategoriaPersonalizadaId = state.filterCategoriaPersonalizadaId,
             onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+            onFilterCategoria = { viewModel.updateFilterCategoria(it) },
+            onFilterCategoriaPersonalizada = { viewModel.updateFilterCategoriaPersonalizada(it) },
+            onClearFilters = { viewModel.clearFilters() },
             onDelete = { viewModel.deleteGasto(it) },
             onEdit = { viewModel.showEditGastoDialog(it) },
             onDismissAlert = { viewModel.dismissAlert(it) },
@@ -207,7 +213,12 @@ private fun GastosList(
     isDarkTheme: Boolean,
     alerts: List<CategoryAlert> = emptyList(),
     searchQuery: String = "",
+    filterCategoria: Categoria? = null,
+    filterCategoriaPersonalizadaId: String? = null,
     onSearchQueryChange: (String) -> Unit = {},
+    onFilterCategoria: (Categoria?) -> Unit = {},
+    onFilterCategoriaPersonalizada: (String?) -> Unit = {},
+    onClearFilters: () -> Unit = {},
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit,
     onDismissAlert: (String) -> Unit = {},
@@ -217,10 +228,11 @@ private fun GastosList(
     val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
     val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
 
-    val filteredGastos = if (searchQuery.isBlank()) {
-        gastos
-    } else {
-        gastos.filter { it.nombre.contains(searchQuery, ignoreCase = true) }
+    val filteredGastos = gastos.filter { gasto ->
+        val matchesSearch = searchQuery.isBlank() || gasto.nombre.contains(searchQuery, ignoreCase = true)
+        val matchesCategoria = filterCategoria == null || gasto.categoria == filterCategoria
+        val matchesPersonalizada = filterCategoriaPersonalizadaId == null || gasto.categoriaPersonalizadaId == filterCategoriaPersonalizadaId
+        matchesSearch && matchesCategoria && matchesPersonalizada
     }
 
     if (isLoading) {
@@ -311,10 +323,65 @@ private fun GastosList(
                     )
                 )
             }
-            if (filteredGastos.isEmpty() && searchQuery.isNotBlank()) {
+            item {
+                val hasActiveFilter = filterCategoria != null || filterCategoriaPersonalizadaId != null
+                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Categoria.entries.take(6).forEach { cat ->
+                            FilterChip(
+                                selected = filterCategoria == cat,
+                                onClick = {
+                                    if (filterCategoria == cat) onFilterCategoria(null)
+                                    else onFilterCategoria(cat)
+                                },
+                                label = { Text(cat.displayName, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
+                                    containerColor = cardBg
+                                )
+                            )
+                        }
+                    }
+                    if (categoriasPersonalizadas.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            categoriasPersonalizadas.take(4).forEach { cat ->
+                                FilterChip(
+                                    selected = filterCategoriaPersonalizadaId == cat.id,
+                                    onClick = {
+                                        if (filterCategoriaPersonalizadaId == cat.id) onFilterCategoriaPersonalizada(null)
+                                        else onFilterCategoriaPersonalizada(cat.id)
+                                    },
+                                    label = { Text(cat.nombre, fontSize = 11.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
+                                        containerColor = cardBg
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    if (hasActiveFilter) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(
+                            onClick = onClearFilters,
+                            modifier = Modifier.padding(0.dp)
+                        ) {
+                            Text("Limpiar filtros", fontSize = 12.sp, color = Color(0xFF2E7D32))
+                        }
+                    }
+                }
+            }
+            if (filteredGastos.isEmpty() && (searchQuery.isNotBlank() || filterCategoria != null || filterCategoriaPersonalizadaId != null)) {
                 item {
                     Text(
-                        text = "No se encontraron gastos con ese nombre",
+                        text = "No se encontraron gastos con esos criterios",
                         style = MaterialTheme.typography.bodyMedium,
                         color = mutedTextColor,
                         modifier = Modifier.padding(vertical = 16.dp)

@@ -324,6 +324,18 @@ class HomeViewModel(
         _state.update { it.copy(searchQuery = query) }
     }
 
+    fun updateFilterCategoria(categoria: Categoria?) {
+        _state.update { it.copy(filterCategoria = categoria, filterCategoriaPersonalizadaId = null) }
+    }
+
+    fun updateFilterCategoriaPersonalizada(id: String?) {
+        _state.update { it.copy(filterCategoriaPersonalizadaId = id, filterCategoria = null) }
+    }
+
+    fun clearFilters() {
+        _state.update { it.copy(filterCategoria = null, filterCategoriaPersonalizadaId = null, searchQuery = "") }
+    }
+
     fun dismissAlert(categoriaNombre: String) {
         _state.update {
             it.copy(

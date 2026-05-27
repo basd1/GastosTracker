@@ -1,5 +1,6 @@
 package bas.orellana.gastostracker.presentation.state
 
+import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.GastoModel
 
 data class CategoryAlert(
@@ -18,5 +19,7 @@ data class HomeState(
     val showManageCategoriasDialog: Boolean = false,
     val alerts: List<CategoryAlert> = emptyList(),
     val dismissedAlertKeys: Set<String> = emptySet(),
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val filterCategoria: Categoria? = null,
+    val filterCategoriaPersonalizadaId: String? = null
 )

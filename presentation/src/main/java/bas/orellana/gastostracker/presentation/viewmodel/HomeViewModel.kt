@@ -9,6 +9,7 @@ import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCas
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
@@ -34,6 +35,7 @@ class HomeViewModel(
     private val deleteAllGastosUseCase: DeleteAllGastosUseCase,
     private val getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
     private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
+    private val updateCategoriaPersonalizadaUseCase: UpdateCategoriaPersonalizadaUseCase,
     private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase
 ) : ViewModel() {
 
@@ -231,6 +233,48 @@ class HomeViewModel(
         viewModelScope.launch {
             deleteCategoriaPersonalizadaUseCase(id)
             _categoriasPersonalizadas.value = _categoriasPersonalizadas.value.filter { it.id != id }
+        }
+    }
+
+    fun showEditCategoriaDialog(categoria: CategoriaPersonalizada) {
+        _manageCategoriasState.update {
+            it.copy(
+                editCategoria = categoria,
+                editNombre = categoria.nombre,
+                editColor = categoria.color
+            )
+        }
+    }
+
+    fun updateEditNombre(nombre: String) {
+        _manageCategoriasState.update { it.copy(editNombre = nombre) }
+    }
+
+    fun updateEditColor(color: Long) {
+        _manageCategoriasState.update { it.copy(editColor = color) }
+    }
+
+    fun saveEditCategoria() {
+        val state = _manageCategoriasState.value
+        val categoria = state.editCategoria ?: return
+        val updated = categoria.copy(
+            nombre = state.editNombre,
+            color = state.editColor
+        )
+        viewModelScope.launch {
+            updateCategoriaPersonalizadaUseCase(updated)
+            _categoriasPersonalizadas.value = _categoriasPersonalizadas.value.map {
+                if (it.id == updated.id) updated else it
+            }
+            _manageCategoriasState.update {
+                it.copy(editCategoria = null, editNombre = "", editColor = Categoria.PALETA_COLORES_PERSONALIZADOS.first())
+            }
+        }
+    }
+
+    fun cancelEditCategoria() {
+        _manageCategoriasState.update {
+            it.copy(editCategoria = null, editNombre = "", editColor = Categoria.PALETA_COLORES_PERSONALIZADOS.first())
         }
     }
 

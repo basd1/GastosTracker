@@ -1,8 +1,10 @@
 package bas.orellana.gastostracker.presentation.ui.dialogs
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.BasicAlertDialog
@@ -27,28 +30,36 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ManageCategoriasDialog(
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     colorSeleccionado: Long,
     nuevaCategoria: String,
+    editCategoria: CategoriaPersonalizada?,
+    editNombre: String,
+    editColor: Long,
     onColorSeleccionado: (Long) -> Unit,
     onNuevaCategoriaChange: (String) -> Unit,
     onAddCategoria: () -> Unit,
     onDeleteCategoria: (String) -> Unit,
+    onEditCategoria: (CategoriaPersonalizada) -> Unit,
+    onEditNombreChange: (String) -> Unit,
+    onEditColorChange: (Long) -> Unit,
+    onSaveEdit: () -> Unit,
+    onCancelEdit: () -> Unit,
     onDismiss: () -> Unit
 ) {
     BasicAlertDialog(onDismissRequest = onDismiss) {
@@ -62,7 +73,7 @@ fun ManageCategoriasDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Administrar categorías",
+                    text = "Administrar categor\u00EDas",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -71,7 +82,7 @@ fun ManageCategoriasDialog(
 
                 if (categoriasPersonalizadas.isNotEmpty()) {
                     Text(
-                        text = "Categorías existentes",
+                        text = "Categor\u00EDas existentes",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -85,6 +96,10 @@ fun ManageCategoriasDialog(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .combinedClickable(
+                                        onClick = {},
+                                        onLongClick = { onEditCategoria(categoria) }
+                                    )
                                     .background(
                                         Color(categoria.color).copy(alpha = 0.2f),
                                         RoundedCornerShape(8.dp)
@@ -95,7 +110,8 @@ fun ManageCategoriasDialog(
                             ) {
                                 Text(
                                     text = categoria.nombre,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
                                     onClick = { onDeleteCategoria(categoria.id) }
@@ -113,8 +129,82 @@ fun ManageCategoriasDialog(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
+                if (editCategoria != null) {
+                    Text(
+                        text = "Editar categor\u00EDa",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Selecciona un color",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Categoria.PALETA_COLORES_PERSONALIZADOS.chunked(9).forEach { chunk ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                chunk.forEach { color ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(color))
+                                            .border(
+                                                width = if (color == editColor) 3.dp else 0.dp,
+                                                color = if (color == editColor) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                                shape = CircleShape
+                                            )
+                                            .clickable { onEditColorChange(color) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = editNombre,
+                            onValueChange = onEditNombreChange,
+                            label = { Text("Nombre") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                        )
+                        Button(
+                            onClick = onSaveEdit,
+                            enabled = editNombre.isNotBlank()
+                        ) {
+                            Text("Guardar")
+                        }
+                    }
+
+                    TextButton(
+                        onClick = onCancelEdit
+                    ) {
+                        Text("Cancelar edici\u00F3n", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
                 Text(
-                    text = "Nueva categoría",
+                    text = "Nueva categor\u00EDa",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

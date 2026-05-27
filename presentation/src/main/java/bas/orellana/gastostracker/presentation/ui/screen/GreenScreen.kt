@@ -187,6 +187,9 @@ fun GreenScreen(
                     categoriasPersonalizadas = categoriasPersonalizadas,
                     colorSeleccionado = manageCategoriasState.colorSeleccionado,
                     nuevaCategoria = manageCategoriasState.nuevaCategoria,
+                    editCategoria = manageCategoriasState.editCategoria,
+                    editNombre = manageCategoriasState.editNombre,
+                    editColor = manageCategoriasState.editColor,
                     onColorSeleccionado = { homeViewModel.updateColorSeleccionado(it) },
                     onNuevaCategoriaChange = { homeViewModel.updateNuevaCategoria(it) },
                     onAddCategoria = {
@@ -197,6 +200,11 @@ fun GreenScreen(
                         homeViewModel.resetManageCategoriasState()
                     },
                     onDeleteCategoria = { homeViewModel.deleteCategoriaPersonalizada(it) },
+                    onEditCategoria = { homeViewModel.showEditCategoriaDialog(it) },
+                    onEditNombreChange = { homeViewModel.updateEditNombre(it) },
+                    onEditColorChange = { homeViewModel.updateEditColor(it) },
+                    onSaveEdit = { homeViewModel.saveEditCategoria() },
+                    onCancelEdit = { homeViewModel.cancelEditCategoria() },
                     onDismiss = { homeViewModel.hideManageCategoriasDialog() }
                 )
             }

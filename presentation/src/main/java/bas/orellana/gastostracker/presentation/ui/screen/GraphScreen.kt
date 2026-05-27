@@ -295,6 +295,9 @@ fun GraphScreen(
                 categoriasPersonalizadas = categoriasPersonalizadas,
                 colorSeleccionado = manageCategoriasState.colorSeleccionado,
                 nuevaCategoria = manageCategoriasState.nuevaCategoria,
+                editCategoria = manageCategoriasState.editCategoria,
+                editNombre = manageCategoriasState.editNombre,
+                editColor = manageCategoriasState.editColor,
                 onColorSeleccionado = { viewModel.updateColorSeleccionado(it) },
                 onNuevaCategoriaChange = { viewModel.updateNuevaCategoria(it) },
                 onAddCategoria = {
@@ -305,6 +308,11 @@ fun GraphScreen(
                     viewModel.resetManageCategoriasState()
                 },
                 onDeleteCategoria = { viewModel.deleteCategoriaPersonalizada(it) },
+                onEditCategoria = { viewModel.showEditCategoriaDialog(it) },
+                onEditNombreChange = { viewModel.updateEditNombre(it) },
+                onEditColorChange = { viewModel.updateEditColor(it) },
+                onSaveEdit = { viewModel.saveEditCategoria() },
+                onCancelEdit = { viewModel.cancelEditCategoria() },
                 onDismiss = { viewModel.hideManageCategoriasDialog() }
             )
         }

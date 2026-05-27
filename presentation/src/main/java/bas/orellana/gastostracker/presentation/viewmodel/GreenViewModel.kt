@@ -89,6 +89,8 @@ class GreenViewModel(
         _addIngresoState.value = AddIngresoState(
             concepto = ingreso.nombre,
             monto = ingreso.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
+            categoriaSeleccionada = ingreso.categoria,
+            categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId,
             ingresoToEdit = ingreso
         )
         _state.update { it.copy(showAddIngresoDialog = true) }
@@ -130,20 +132,32 @@ class GreenViewModel(
         _addIngresoState.update { it.copy(monto = monto) }
     }
 
+    fun updateCategoria(categoria: Categoria?) {
+        _addIngresoState.update { it.copy(categoriaSeleccionada = categoria) }
+    }
+
+    fun updateCategoriaPersonalizada(id: String?) {
+        _addIngresoState.update { it.copy(categoriaPersonalizadaId = id) }
+    }
+
     fun saveIngreso(nombre: String, monto: String) {
         val montoDouble = monto.toDoubleOrNull() ?: 0.0
         val ingresoToEdit = _addIngresoState.value.ingresoToEdit
         val ingreso = if (ingresoToEdit != null) {
             ingresoToEdit.copy(
                 nombre = nombre,
-                monto = montoDouble
+                monto = montoDouble,
+                categoria = _addIngresoState.value.categoriaSeleccionada,
+                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId
             )
         } else {
             IngresoModel(
                 id = UUID.randomUUID().toString(),
                 nombre = nombre,
                 monto = montoDouble,
-                fecha = LocalDate.now()
+                fecha = LocalDate.now(),
+                categoria = _addIngresoState.value.categoriaSeleccionada,
+                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId
             )
         }
         viewModelScope.launch {

@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.data.repository
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import kotlinx.coroutines.flow.Flow
@@ -64,7 +65,9 @@ class IngresoRepositoryImpl(
                     id = obj.getString("id"),
                     nombre = obj.getString("nombre"),
                     monto = obj.getDouble("monto"),
-                    fecha = LocalDate.parse(obj.getString("fecha"))
+                    fecha = LocalDate.parse(obj.getString("fecha")),
+                    categoria = if (obj.has("categoria")) Categoria.valueOf(obj.getString("categoria")) else null,
+                    categoriaPersonalizadaId = obj.optString("categoriaPersonalizadaId", null)
                 )
             }
         } catch (e: Exception) {
@@ -80,6 +83,10 @@ class IngresoRepositoryImpl(
             obj.put("nombre", ingreso.nombre)
             obj.put("monto", ingreso.monto)
             obj.put("fecha", ingreso.fecha.toString())
+            val cat = ingreso.categoria
+            if (cat != null) obj.put("categoria", cat.name)
+            val catPersId = ingreso.categoriaPersonalizadaId
+            if (catPersId != null) obj.put("categoriaPersonalizadaId", catPersId)
             jsonArray.put(obj)
         }
         return jsonArray.toString()

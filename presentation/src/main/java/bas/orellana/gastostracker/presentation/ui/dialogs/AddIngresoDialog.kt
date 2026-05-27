@@ -2,6 +2,8 @@ package bas.orellana.gastostracker.presentation.ui.dialogs
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +14,8 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -23,16 +27,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddIngresoDialog(
     concepto: String,
     monto: String,
+    categoriaSeleccionada: Categoria?,
+    categoriaPersonalizadaId: String?,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
     ingresoToEdit: IngresoModel?,
     onConceptoChange: (String) -> Unit,
     onMontoChange: (String) -> Unit,
+    onCategoriaChange: (Categoria?) -> Unit,
+    onCategoriaPersonalizadaChange: (String?) -> Unit,
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -81,6 +93,65 @@ fun AddIngresoDialog(
                     ),
                     prefix = { Text("€") }
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Categoría",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                FilterChip(
+                    selected = categoriaSeleccionada == null && categoriaPersonalizadaId == null,
+                    onClick = {
+                        onCategoriaChange(null)
+                        onCategoriaPersonalizadaChange(null)
+                    },
+                    label = { Text("Sin categoría", fontSize = 11.sp) },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f)
+                    )
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Categoria.entries.filter { it != Categoria.AHORRO }.forEach { cat ->
+                        FilterChip(
+                            selected = categoriaSeleccionada == cat && categoriaPersonalizadaId == null,
+                            onClick = {
+                                onCategoriaChange(cat)
+                                onCategoriaPersonalizadaChange(null)
+                            },
+                            label = { Text(cat.displayName, fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(cat.color).copy(alpha = 0.3f)
+                            )
+                        )
+                    }
+                }
+                if (categoriasPersonalizadas.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        categoriasPersonalizadas.forEach { cat ->
+                            FilterChip(
+                                selected = categoriaPersonalizadaId == cat.id,
+                                onClick = {
+                                    onCategoriaPersonalizadaChange(cat.id)
+                                    onCategoriaChange(null)
+                                },
+                                label = { Text(cat.nombre, fontSize = 11.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = Color(cat.color).copy(alpha = 0.3f)
+                                )
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

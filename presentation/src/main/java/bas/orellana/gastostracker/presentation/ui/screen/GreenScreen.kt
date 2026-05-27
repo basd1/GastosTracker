@@ -49,6 +49,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
@@ -95,119 +97,149 @@ fun GreenScreen(
                 BottomNavBar(navController = navController)
             },
             floatingActionButton = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp, vertical = 8.dp),
-                    contentAlignment = Alignment.BottomCenter
+                AnimatedVisibility(
+                    visible = true,
+                    enter = slideInVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                    exit = fadeOut(animationSpec = tween(300))
                 ) {
                     ExtendedFloatingActionButton(
                         onClick = { viewModel.showAddIngresoDialog() },
-                        containerColor = Color(0xFF2E7D32),
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(28.dp),
-                        modifier = Modifier.padding(horizontal = 24.dp)
+                        containerColor = Color(0xFF4CAF50)
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.padding(horizontal = 4.dp))
-                        Text("Añadir ingreso", fontSize = 18.sp)
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Añadir ingreso",
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Ingreso",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) {
-                val filteredIngresos = state.ingresos.filter {
-                    it.fecha.monthValue == state.selectedMonth && it.fecha.year == state.selectedYear
+        ) { padding ->
+            if (state.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-
-                BalanceHeader(
-                    totalIngresos = state.totalIngresosMes,
-                    totalGastos = state.totalGastosMes,
-                    totalAhorro = state.totalAhorroMes,
-                    selectedMonth = state.selectedMonth,
-                    selectedYear = state.selectedYear,
-                    isDarkTheme = isDarkTheme,
-                    onMonthClick = { viewModel.showMonthPicker() }
-                )
-
-                IngresosList(
-                    ingresos = filteredIngresos,
-                    isLoading = state.isLoading,
-                    isDarkTheme = isDarkTheme,
-                    onDelete = { viewModel.deleteIngreso(it) },
-                    onEdit = { viewModel.showEditIngresoDialog(it) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            if (state.showMonthPicker) {
-                MonthYearPickerDialog(
-                    currentMonth = state.selectedMonth,
-                    currentYear = state.selectedYear,
-                    onConfirm = { month, year ->
-                        viewModel.updateSelectedMonth(month, year)
-                    },
-                    onDismiss = { viewModel.hideMonthPicker() }
-                )
-            }
-
-            if (state.showAddIngresoDialog) {
-                AddIngresoDialog(
-                    concepto = addIngresoState.concepto,
-                    monto = addIngresoState.monto,
-                    ingresoToEdit = addIngresoState.ingresoToEdit,
-                    onConceptoChange = { viewModel.updateConcepto(it) },
-                    onMontoChange = { viewModel.updateMonto(it) },
-                    onSave = {
-                        viewModel.saveIngreso(
-                            nombre = addIngresoState.concepto,
-                            monto = addIngresoState.monto
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    item {
+                        BalanceHeader(
+                            totalIngresos = state.totalIngresosMes,
+                            totalGastos = state.totalGastosMes,
+                            totalAhorro = state.totalAhorroMes,
+                            selectedMonth = state.selectedMonth,
+                            selectedYear = state.selectedYear,
+                            isDarkTheme = isDarkTheme,
+                            showMonthPicker = { viewModel.showMonthPicker() }
                         )
-                        viewModel.resetAddIngresoState()
-                    },
-                    onDismiss = { viewModel.hideAddIngresoDialog() }
-                )
-            }
+                    }
 
-            if (state.showSettingsDialog) {
-                SettingsDialog(
-                    isDarkTheme = isDarkTheme,
-                    onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
-                    onManageCategorias = { homeViewModel.showManageCategoriasDialog() },
-                    onDismiss = { viewModel.hideSettingsDialog() }
-                )
-            }
-
-            if (homeState.showManageCategoriasDialog) {
-                ManageCategoriasDialog(
-                    categoriasPersonalizadas = categoriasPersonalizadas,
-                    colorSeleccionado = manageCategoriasState.colorSeleccionado,
-                    nuevaCategoria = manageCategoriasState.nuevaCategoria,
-                    editCategoria = manageCategoriasState.editCategoria,
-                    editNombre = manageCategoriasState.editNombre,
-                    editColor = manageCategoriasState.editColor,
-                    onColorSeleccionado = { homeViewModel.updateColorSeleccionado(it) },
-                    onNuevaCategoriaChange = { homeViewModel.updateNuevaCategoria(it) },
-                    onAddCategoria = {
-                        homeViewModel.addCategoriaPersonalizada(
-                            manageCategoriasState.nuevaCategoria,
-                            manageCategoriasState.colorSeleccionado
+                    item {
+                        Text(
+                            text = "Ingresos (${state.ingresos.size})",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                            color = if (isDarkTheme) Color.White else Color.Black
                         )
-                        homeViewModel.resetManageCategoriasState()
-                    },
-                    onDeleteCategoria = { homeViewModel.deleteCategoriaPersonalizada(it) },
-                    onEditCategoria = { homeViewModel.showEditCategoriaDialog(it) },
-                    onEditNombreChange = { homeViewModel.updateEditNombre(it) },
-                    onEditColorChange = { homeViewModel.updateEditColor(it) },
-                    onSaveEdit = { homeViewModel.saveEditCategoria() },
-                    onCancelEdit = { homeViewModel.cancelEditCategoria() },
-                    onDismiss = { homeViewModel.hideManageCategoriasDialog() }
-                )
+                    }
+
+                    items(state.ingresos, key = { it.id }) { ingreso ->
+                        IngresoItem(
+                            ingreso = ingreso,
+                            categoriasPersonalizadas = categoriasPersonalizadas,
+                            isDarkTheme = isDarkTheme,
+                            onDelete = { viewModel.deleteIngreso(it) },
+                            onEdit = { viewModel.showEditIngresoDialog(it) }
+                        )
+                    }
+                }
             }
+        }
+
+        if (state.showMonthPicker) {
+            MonthYearPickerDialog(
+                currentMonth = state.selectedMonth,
+                currentYear = state.selectedYear,
+                onConfirm = { month, year ->
+                    viewModel.updateSelectedMonth(month, year)
+                },
+                onDismiss = { viewModel.hideMonthPicker() }
+            )
+        }
+
+        if (state.showAddIngresoDialog) {
+            AddIngresoDialog(
+                concepto = addIngresoState.concepto,
+                monto = addIngresoState.monto,
+                categoriaSeleccionada = addIngresoState.categoriaSeleccionada,
+                categoriaPersonalizadaId = addIngresoState.categoriaPersonalizadaId,
+                categoriasPersonalizadas = categoriasPersonalizadas,
+                ingresoToEdit = addIngresoState.ingresoToEdit,
+                onConceptoChange = { viewModel.updateConcepto(it) },
+                onMontoChange = { viewModel.updateMonto(it) },
+                onCategoriaChange = { viewModel.updateCategoria(it) },
+                onCategoriaPersonalizadaChange = { viewModel.updateCategoriaPersonalizada(it) },
+                onSave = {
+                    viewModel.saveIngreso(
+                        nombre = addIngresoState.concepto,
+                        monto = addIngresoState.monto
+                    )
+                    viewModel.resetAddIngresoState()
+                },
+                onDismiss = { viewModel.hideAddIngresoDialog() }
+            )
+        }
+
+        if (state.showSettingsDialog) {
+            SettingsDialog(
+                isDarkTheme = isDarkTheme,
+                onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
+                onManageCategorias = { homeViewModel.showManageCategoriasDialog() },
+                onDismiss = { viewModel.hideSettingsDialog() }
+            )
+        }
+
+        if (homeState.showManageCategoriasDialog) {
+            ManageCategoriasDialog(
+                categoriasPersonalizadas = categoriasPersonalizadas,
+                colorSeleccionado = manageCategoriasState.colorSeleccionado,
+                nuevaCategoria = manageCategoriasState.nuevaCategoria,
+                editCategoria = manageCategoriasState.editCategoria,
+                editNombre = manageCategoriasState.editNombre,
+                editColor = manageCategoriasState.editColor,
+                onColorSeleccionado = { homeViewModel.updateColorSeleccionado(it) },
+                onNuevaCategoriaChange = { homeViewModel.updateNuevaCategoria(it) },
+                onAddCategoria = {
+                    homeViewModel.addCategoriaPersonalizada(
+                        manageCategoriasState.nuevaCategoria,
+                        manageCategoriasState.colorSeleccionado
+                    )
+                    homeViewModel.resetManageCategoriasState()
+                },
+                onDeleteCategoria = { homeViewModel.deleteCategoriaPersonalizada(it) },
+                onEditCategoria = { homeViewModel.showEditCategoriaDialog(it) },
+                onEditNombreChange = { homeViewModel.updateEditNombre(it) },
+                onEditColorChange = { homeViewModel.updateEditColor(it) },
+                onSaveEdit = { homeViewModel.saveEditCategoria() },
+                onCancelEdit = { homeViewModel.cancelEditCategoria() },
+                onDismiss = { homeViewModel.hideManageCategoriasDialog() }
+            )
         }
     }
 }
@@ -220,248 +252,119 @@ private fun BalanceHeader(
     selectedMonth: Int,
     selectedYear: Int,
     isDarkTheme: Boolean,
-    onMonthClick: () -> Unit = {}
+    showMonthPicker: () -> Unit
 ) {
-    val balance = totalIngresos - totalGastos
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
-    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
-    val monthNames = listOf(
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    )
-    val monthLabel = "${monthNames[selectedMonth - 1]} $selectedYear"
 
-    Column(
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(bottom = 16.dp, top = 8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Card(
-                modifier = Modifier.clickable(onClick = onMonthClick),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.10f) else Color.Black.copy(alpha = 0.05f)
-                ),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = monthLabel,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = textColor
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = "Cambiar mes",
-                        tint = mutedTextColor,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            BalanceCard(
-                title = "Ingresos",
-                amount = totalIngresos,
-                color = Color(0xFF2E7D32),
-                textColor = textColor,
-                mutedTextColor = mutedTextColor,
-                cardBg = cardBg,
-                modifier = Modifier.weight(1f)
-            )
-            BalanceCard(
-                title = "Gastos",
-                amount = totalGastos,
-                color = Color(0xFFC62828),
-                textColor = textColor,
-                mutedTextColor = mutedTextColor,
-                cardBg = cardBg,
-                modifier = Modifier.weight(1f)
-            )
-            BalanceCard(
-                title = "Ahorro",
-                amount = totalAhorro,
-                color = Color(0xFFFFD700),
-                textColor = textColor,
-                mutedTextColor = mutedTextColor,
-                cardBg = cardBg,
-                modifier = Modifier.weight(1f)
-            )
-        }
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = if (balance >= 0) Color(0xFF2E7D32).copy(alpha = 0.15f) else Color(0xFFC62828).copy(alpha = 0.15f)
-            ),
-            shape = RoundedCornerShape(12.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .clickable { showMonthPicker() },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Text(
-                    text = "Balance neto",
-                    fontSize = 16.sp,
-                    color = mutedTextColor
+                val monthNames = listOf(
+                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
                 )
                 Text(
-                    text = "\u20AC${String.format("%.2f", balance)}",
-                    fontSize = 24.sp,
+                    text = "${monthNames[selectedMonth - 1]} $selectedYear",
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (balance >= 0) Color(0xFF2E7D32) else Color(0xFFC62828)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun BalanceCard(
-    title: String,
-    amount: Double,
-    color: Color,
-    textColor: Color,
-    mutedTextColor: Color,
-    cardBg: Color,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
-        ) {
-            Text(
-                text = title,
-                fontSize = 13.sp,
-                color = mutedTextColor
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "\u20AC${String.format("%.2f", amount)}",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
-    }
-}
-
-@Composable
-private fun IngresosList(
-    ingresos: List<IngresoModel>,
-    isLoading: Boolean,
-    isDarkTheme: Boolean,
-    onDelete: (String) -> Unit,
-    onEdit: (IngresoModel) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
-
-    if (isLoading) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-    } else if (ingresos.isEmpty()) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp),
-                    tint = mutedTextColor
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "No hay ingresos todavía",
-                    style = MaterialTheme.typography.titleMedium,
                     color = textColor
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Pulsa + para añadir tu primer ingreso",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = mutedTextColor
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Seleccionar mes",
+                    tint = textColor
                 )
             }
-        }
-    } else {
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            item {
-                Text(
-                    text = "Historial de ingresos",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = mutedTextColor,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(ingresos, key = { it.id }) { ingreso ->
-                AnimatedVisibility(
-                    visible = true,
-                    enter = fadeIn(animationSpec = tween(300)) +
-                            slideInVertically(
-                                animationSpec = tween(300),
-                                initialOffsetY = { it / 2 }
-                            ),
-                    exit = fadeOut(animationSpec = tween(200))
-                ) {
-                    IngresoItem(
-                        ingreso = ingreso,
-                        isDarkTheme = isDarkTheme,
-                        onDelete = onDelete,
-                        onEdit = onEdit
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "\u20AC${String.format("%.2f", totalIngresos)}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF4CAF50)
+                    )
+                    Text(
+                        text = "Ingresos",
+                        fontSize = 13.sp,
+                        color = textColor.copy(alpha = 0.7f)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "\u20AC${String.format("%.2f", totalGastos)}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE53935)
+                    )
+                    Text(
+                        text = "Gastos",
+                        fontSize = 13.sp,
+                        color = textColor.copy(alpha = 0.7f)
+                    )
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "\u20AC${String.format("%.2f", totalAhorro)}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFFF9800)
+                    )
+                    Text(
+                        text = "Ahorro",
+                        fontSize = 13.sp,
+                        color = textColor.copy(alpha = 0.7f)
                     )
                 }
             }
-            item { Spacer(modifier = Modifier.height(80.dp)) }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun IngresoItem(
     ingreso: IngresoModel,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
     onDelete: (String) -> Unit,
     onEdit: (IngresoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val greenColor = Color(0xFF4CAF50)
+    val categoria = ingreso.categoria
+
+    val categoryColor = when {
+        ingreso.categoriaPersonalizadaId != null -> {
+            categoriasPersonalizadas.find { it.id == ingreso.categoriaPersonalizadaId }?.let {
+                Color(it.color)
+            } ?: greenColor
+        }
+        categoria != null -> Color(categoria.color)
+        else -> greenColor
+    }
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
@@ -521,14 +424,14 @@ private fun IngresoItem(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(greenColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                        .background(categoryColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "+",
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
-                        color = greenColor
+                        color = categoryColor
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -539,11 +442,29 @@ private fun IngresoItem(
                         fontWeight = FontWeight.Medium,
                         color = if (isDarkTheme) Color.White else Color.Black
                     )
-                    Text(
-                        text = ingreso.fecha.format(dateFormatter),
-                        fontSize = 12.sp,
-                        color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = ingreso.fecha.format(dateFormatter),
+                            fontSize = 12.sp,
+                            color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
+                        )
+                        if (categoria != null || ingreso.categoriaPersonalizadaId != null) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(categoryColor, RoundedCornerShape(4.dp))
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = categoria?.displayName
+                                    ?: categoriasPersonalizadas.find { it.id == ingreso.categoriaPersonalizadaId }?.nombre
+                                    ?: "",
+                                fontSize = 11.sp,
+                                color = categoryColor
+                            )
+                        }
+                    }
                 }
                 Text(
                     text = "\u20AC${String.format("%.2f", ingreso.monto)}",

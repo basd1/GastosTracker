@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -36,9 +35,9 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -87,7 +86,7 @@ fun HomeScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isDarkTheme) Color(0xFF121212) else Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -109,13 +108,13 @@ fun HomeScreen(
             ) {
                 ExtendedFloatingActionButton(
                     onClick = { viewModel.showAddGastoDialog() },
-                    containerColor = Color(0xFF2E7D32),
-                    contentColor = Color.White,
-                    shape = RoundedCornerShape(28.dp),
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = MaterialTheme.shapes.large,
                     modifier = Modifier.padding(horizontal = 24.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text("Añadir gasto", fontSize = 18.sp)
                 }
             }
@@ -125,7 +124,6 @@ fun HomeScreen(
             gastos = state.gastos,
             isLoading = state.isLoading,
             categoriasPersonalizadas = categoriasPersonalizadas,
-            isDarkTheme = isDarkTheme,
             alerts = state.alerts,
             searchQuery = state.searchQuery,
             filterCategoria = state.filterCategoria,
@@ -213,7 +211,6 @@ private fun GastosList(
     gastos: List<GastoModel>,
     isLoading: Boolean,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    isDarkTheme: Boolean,
     alerts: List<CategoryAlert> = emptyList(),
     searchQuery: String = "",
     filterCategoria: Categoria? = null,
@@ -229,10 +226,6 @@ private fun GastosList(
     onDismissAlert: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
-    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
-
     val filteredGastos = gastos.filter { gasto ->
         val matchesSearch = searchQuery.isBlank() || gasto.nombre.contains(searchQuery, ignoreCase = true)
         val matchesCategoria = filterCategoria == null || gasto.categoria == filterCategoria
@@ -254,7 +247,7 @@ private fun GastosList(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator()
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
     } else if (gastos.isEmpty()) {
         Box(
@@ -268,19 +261,19 @@ private fun GastosList(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
                     modifier = Modifier.size(72.dp),
-                    tint = mutedTextColor
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "No hay gastos todavía",
                     style = MaterialTheme.typography.titleMedium,
-                    color = textColor
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Pulsa + para añadir tu primer gasto",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = mutedTextColor
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -300,17 +293,13 @@ private fun GastosList(
             item {
                 SummaryHeader(
                     totalMes = totalMes,
-                    cantidad = gastosDelMes.size,
-                    textColor = textColor,
-                    mutedTextColor = mutedTextColor,
-                    cardBg = cardBg
+                    cantidad = gastosDelMes.size
                 )
             }
             if (alerts.isNotEmpty()) {
                 item {
                     AlertsSection(
                         alerts = alerts,
-                        isDarkTheme = isDarkTheme,
                         onDismissAlert = onDismissAlert
                     )
                 }
@@ -326,8 +315,8 @@ private fun GastosList(
                             onClick = { onSortOrderChange(order) },
                             label = { Text(order.displayName, fontSize = 11.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f),
-                                containerColor = cardBg
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
                         )
                     }
@@ -346,12 +335,12 @@ private fun GastosList(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Buscar",
-                            tint = mutedTextColor
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = mutedTextColor.copy(alpha = 0.3f)
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
                     )
                 )
             }
@@ -372,7 +361,7 @@ private fun GastosList(
                                 label = { Text(cat.displayName, fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
-                                    containerColor = cardBg
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
                             )
                         }
@@ -393,7 +382,7 @@ private fun GastosList(
                                     label = { Text(cat.nombre, fontSize = 11.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
-                                        containerColor = cardBg
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
                                     )
                                 )
                             }
@@ -405,7 +394,7 @@ private fun GastosList(
                             onClick = onClearFilters,
                             modifier = Modifier.padding(0.dp)
                         ) {
-                            Text("Limpiar filtros", fontSize = 12.sp, color = Color(0xFF2E7D32))
+                            Text("Limpiar filtros", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
@@ -415,7 +404,7 @@ private fun GastosList(
                     Text(
                         text = "No se encontraron gastos con esos criterios",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = mutedTextColor,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 }
@@ -433,7 +422,6 @@ private fun GastosList(
                     GastoItem(
                         gasto = gasto,
                         categoriasPersonalizadas = categoriasPersonalizadas,
-                        isDarkTheme = isDarkTheme,
                         onDelete = onDelete,
                         onEdit = onEdit
                     )
@@ -447,7 +435,6 @@ private fun GastosList(
 @Composable
 private fun AlertsSection(
     alerts: List<CategoryAlert>,
-    isDarkTheme: Boolean,
     onDismissAlert: (String) -> Unit = {}
 ) {
     Column(
@@ -458,9 +445,9 @@ private fun AlertsSection(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFFF3E0)
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
                 ),
-                shape = RoundedCornerShape(10.dp)
+                shape = MaterialTheme.shapes.small
             ) {
                 Row(
                     modifier = Modifier
@@ -478,20 +465,20 @@ private fun AlertsSection(
                             text = "Has gastado m\u00E1s en ${alert.categoriaNombre} que el mes pasado",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFFE65100)
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "Este mes: \u20AC${String.format("%.2f", alert.gastoActual)}  |  Mes pasado: \u20AC${String.format("%.2f", alert.gastoAnterior)}",
                             fontSize = 12.sp,
-                            color = Color(0xFFBF360C)
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                         )
                     }
                     IconButton(onClick = { onDismissAlert(alert.categoriaNombre) }) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Descartar",
-                            tint = Color(0xFFBF360C),
+                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -504,15 +491,12 @@ private fun AlertsSection(
 @Composable
 private fun SummaryHeader(
     totalMes: Double,
-    cantidad: Int,
-    textColor: Color,
-    mutedTextColor: Color,
-    cardBg: Color
+    cantidad: Int
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = MaterialTheme.shapes.small
     ) {
         Row(
             modifier = Modifier
@@ -525,13 +509,13 @@ private fun SummaryHeader(
                 Text(
                     text = "Gastos del mes",
                     fontSize = 13.sp,
-                    color = mutedTextColor
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "\u20AC${String.format("%.2f", totalMes)}",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textColor
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Column(
@@ -540,25 +524,24 @@ private fun SummaryHeader(
                 Text(
                     text = "$cantidad ${if (cantidad == 1) "gasto" else "gastos"}",
                     fontSize = 13.sp,
-                    color = mutedTextColor
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 val media = if (cantidad > 0) totalMes / cantidad else 0.0
                 Text(
                     text = "media \u20AC${String.format("%.2f", media)}",
                     fontSize = 13.sp,
-                    color = mutedTextColor
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun GastoItem(
     gasto: GastoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    isDarkTheme: Boolean,
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit
 ) {
@@ -597,7 +580,7 @@ private fun GastoItem(
                     .background(
                         if (dismissDirection == SwipeToDismissBoxValue.EndToStart) Color.Transparent
                         else Color.Transparent,
-                        RoundedCornerShape(8.dp)
+                        MaterialTheme.shapes.extraSmall
                     )
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
@@ -606,7 +589,7 @@ private fun GastoItem(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Eliminar",
-                        tint = Color(0xFFE53935),
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -622,7 +605,7 @@ private fun GastoItem(
                     onLongClick = { onEdit(gasto) }
                 ),
             colors = CardDefaults.cardColors(
-                containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Row(
@@ -634,7 +617,7 @@ private fun GastoItem(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(categoriaColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                        .background(categoriaColor.copy(alpha = 0.2f), MaterialTheme.shapes.extraSmall),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -650,7 +633,7 @@ private fun GastoItem(
                         Text(
                             text = nombreCategoria,
                             fontSize = 12.sp,
-                            color = if (isDarkTheme) Color.White.copy(alpha = 0.65f) else Color.Black.copy(alpha = 0.55f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.height(1.dp))
                     }
@@ -658,12 +641,12 @@ private fun GastoItem(
                         text = gasto.nombre,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
-                        color = if (isDarkTheme) Color.White else Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = gasto.fecha.format(dateFormatter),
                         fontSize = 12.sp,
-                        color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
                 Text(
@@ -676,4 +659,3 @@ private fun GastoItem(
         }
     }
 }
-

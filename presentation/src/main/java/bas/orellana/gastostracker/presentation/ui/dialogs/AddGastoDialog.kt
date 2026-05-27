@@ -71,7 +71,7 @@ fun AddGastoDialog(
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(
                 modifier = Modifier
@@ -163,8 +163,8 @@ fun AddGastoDialog(
                                     label = { Text(categoria.displayName) },
                                     modifier = Modifier.clickable { onCategoriaChange(categoria) },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color(categoria.color),
-                                        containerColor = Color(categoria.color).copy(alpha = 0.3f)
+                                        selectedContainerColor = Color(categoria.color).copy(alpha = 0.4f),
+                                        containerColor = Color(categoria.color).copy(alpha = 0.15f)
                                     )
                                 )
                             }
@@ -196,8 +196,8 @@ fun AddGastoDialog(
                                         onCategoriaPersonalizadaChange(categoriaPersonalizada.id)
                                     },
                                     colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color(categoriaPersonalizada.color),
-                                        containerColor = Color(categoriaPersonalizada.color).copy(alpha = 0.3f)
+                                        selectedContainerColor = Color(categoriaPersonalizada.color).copy(alpha = 0.4f),
+                                        containerColor = Color(categoriaPersonalizada.color).copy(alpha = 0.15f)
                                     )
                                 )
                             }
@@ -217,7 +217,7 @@ fun AddGastoDialog(
                     ) {
                         Text(
                             text = "Cancelar",
-                            color = Color(0xFFE53935)
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                     Button(
@@ -254,7 +254,7 @@ fun AddGastoDialog(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar", color = Color(0xFFE53935))
+                    Text("Cancelar", color = MaterialTheme.colorScheme.error)
                 }
             }
         ) {

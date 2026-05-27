@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -111,15 +109,10 @@ fun GraphScreen(
         state.gastos.filter { it.categoria == Categoria.AHORRO }
     }
 
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
-    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
-    val surfaceBg = if (isDarkTheme) Color(0xFF121212) else Color.White
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(surfaceBg)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -150,9 +143,7 @@ fun GraphScreen(
                             selectedYear = LocalDate.now().year
                         }
                     },
-                    onMonthClick = { showMonthPicker = true },
-                    textColor = textColor,
-                    cardBg = cardBg
+                    onMonthClick = { showMonthPicker = true }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -167,7 +158,7 @@ fun GraphScreen(
                         Text(
                             text = if (state.gastos.isEmpty()) "No hay gastos registrados"
                                    else "No hay gastos en este per\u00EDodo",
-                            color = mutedTextColor,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 16.sp
                         )
                     }
@@ -184,38 +175,27 @@ fun GraphScreen(
                                 selectedPeriod = selectedPeriod,
                                 selectedMonth = selectedMonth,
                                 selectedYear = selectedYear,
-                                categoriasPersonalizadas = categoriasPersonalizadas,
-                                textColor = textColor,
-                                mutedTextColor = mutedTextColor,
-                                cardBg = cardBg
+                                categoriasPersonalizadas = categoriasPersonalizadas
                             )
                         }
 
                         item {
                             DonutChart(
                                 gastos = gastosSinAhorro,
-                                categoriasPersonalizadas = categoriasPersonalizadas,
-                                textColor = textColor,
-                                mutedTextColor = mutedTextColor
+                                categoriasPersonalizadas = categoriasPersonalizadas
                             )
                         }
 
                         item {
                             LegendSection(
                                 gastos = gastosSinAhorro,
-                                categoriasPersonalizadas = categoriasPersonalizadas,
-                                textColor = textColor,
-                                mutedTextColor = mutedTextColor,
-                                cardBg = cardBg
+                                categoriasPersonalizadas = categoriasPersonalizadas
                             )
                         }
 
                         item {
                             MonthlySavingsLineChart(
-                                gastos = gastosAhorroTotal,
-                                textColor = textColor,
-                                mutedTextColor = mutedTextColor,
-                                cardBg = cardBg
+                                gastos = gastosAhorroTotal
                             )
                         }
 
@@ -227,8 +207,8 @@ fun GraphScreen(
                             ) {
                                 Button(
                                     onClick = { viewModel.showAddGastoDialog() },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32)),
-                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                                    shape = MaterialTheme.shapes.small,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null)
@@ -240,8 +220,8 @@ fun GraphScreen(
                                         selectedPeriod = PeriodFilter.ALL
                                         viewModel.seedTestAhorro45Meses()
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0)),
-                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                                    shape = MaterialTheme.shapes.small,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(Icons.Default.Refresh, contentDescription = null)
@@ -250,8 +230,8 @@ fun GraphScreen(
                                 }
                                 Button(
                                     onClick = { showDeleteConfirm = true },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC62828)),
-                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                                    shape = MaterialTheme.shapes.small,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Icon(Icons.Default.Delete, contentDescription = null)
@@ -356,7 +336,7 @@ fun GraphScreen(
                             showDeleteConfirm = false
                         }
                     ) {
-                        Text("Eliminar", color = Color.Red)
+                        Text("Eliminar", color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
@@ -375,9 +355,7 @@ private fun PeriodFilterChips(
     selectedMonth: Int,
     selectedYear: Int,
     onPeriodChange: (PeriodFilter) -> Unit,
-    onMonthClick: () -> Unit,
-    textColor: Color,
-    cardBg: Color
+    onMonthClick: () -> Unit
 ) {
     val monthNames = listOf(
         "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -406,14 +384,14 @@ private fun PeriodFilterChips(
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    containerColor = cardBg,
-                    selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f),
-                    labelColor = textColor,
-                    selectedLabelColor = Color.White
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
                 border = FilterChipDefaults.filterChipBorder(
-                    borderColor = textColor.copy(alpha = 0.2f),
-                    selectedBorderColor = Color(0xFF2E7D32),
+                    borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                    selectedBorderColor = MaterialTheme.colorScheme.primary,
                     enabled = true,
                     selected = selectedPeriod == period
                 )
@@ -438,14 +416,14 @@ private fun PeriodFilterChips(
                 )
             },
             colors = FilterChipDefaults.filterChipColors(
-                containerColor = cardBg,
-                selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f),
-                labelColor = textColor,
-                selectedLabelColor = Color.White
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
             ),
             border = FilterChipDefaults.filterChipBorder(
-                borderColor = textColor.copy(alpha = 0.2f),
-                selectedBorderColor = Color(0xFF2E7D32),
+                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                selectedBorderColor = MaterialTheme.colorScheme.primary,
                 enabled = true,
                 selected = selectedPeriod == PeriodFilter.SPECIFIC_MONTH
             )
@@ -459,10 +437,7 @@ private fun SummaryCards(
     selectedPeriod: PeriodFilter,
     selectedMonth: Int = LocalDate.now().monthValue,
     selectedYear: Int = LocalDate.now().year,
-    categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    textColor: Color,
-    mutedTextColor: Color,
-    cardBg: Color
+    categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
     val total = gastos.sumOf { it.monto }
 
@@ -498,26 +473,17 @@ private fun SummaryCards(
         SummaryCard(
             title = "Total",
             value = "\u20AC${String.format("%.2f", total)}",
-            modifier = Modifier.weight(1f),
-            textColor = textColor,
-            mutedTextColor = mutedTextColor,
-            cardBg = cardBg
+            modifier = Modifier.weight(1f)
         )
         SummaryCard(
             title = "Top categor\u00EDa",
             value = topCategoriaData?.let { "${it.nombre} ${String.format("%.0f", it.porcentaje)}%" } ?: "-",
-            modifier = Modifier.weight(1f),
-            textColor = textColor,
-            mutedTextColor = mutedTextColor,
-            cardBg = cardBg
+            modifier = Modifier.weight(1f)
         )
         SummaryCard(
             title = "Media/d\u00EDa",
             value = "\u20AC${String.format("%.2f", dailyAvg)}",
-            modifier = Modifier.weight(1f),
-            textColor = textColor,
-            mutedTextColor = mutedTextColor,
-            cardBg = cardBg
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -526,15 +492,12 @@ private fun SummaryCards(
 private fun SummaryCard(
     title: String,
     value: String,
-    modifier: Modifier,
-    textColor: Color,
-    mutedTextColor: Color,
-    cardBg: Color
+    modifier: Modifier
 ) {
     Card(
         modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = MaterialTheme.shapes.small
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -543,14 +506,14 @@ private fun SummaryCard(
             Text(
                 text = title,
                 fontSize = 11.sp,
-                color = mutedTextColor
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = value,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold,
-                color = textColor
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -559,9 +522,7 @@ private fun SummaryCard(
 @Composable
 private fun DonutChart(
     gastos: List<GastoModel>,
-    categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    textColor: Color,
-    mutedTextColor: Color
+    categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
     val total = gastos.sumOf { it.monto }
     val categoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
@@ -602,13 +563,13 @@ private fun DonutChart(
                 Text(
                     text = "Total",
                     fontSize = 12.sp,
-                    color = mutedTextColor
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "\u20AC${String.format("%.2f", total)}",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textColor
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -618,10 +579,7 @@ private fun DonutChart(
 @Composable
 private fun LegendSection(
     gastos: List<GastoModel>,
-    categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    textColor: Color,
-    mutedTextColor: Color,
-    cardBg: Color
+    categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
     val categoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
     val sortedData = categoriaData.values.sortedByDescending { it.porcentaje }
@@ -634,8 +592,8 @@ private fun LegendSection(
             val monto = total * (data.porcentaje / 100f)
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = cardBg),
-                shape = RoundedCornerShape(10.dp)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                shape = MaterialTheme.shapes.extraSmall
             ) {
                 Row(
                     modifier = Modifier
@@ -652,20 +610,20 @@ private fun LegendSection(
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = data.nombre,
-                        color = textColor,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 14.sp,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = "\u20AC${String.format("%.2f", monto)}",
-                        color = textColor,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${String.format("%.1f", data.porcentaje)}%",
-                        color = mutedTextColor,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
                 }
@@ -674,7 +632,7 @@ private fun LegendSection(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(3.dp)
-                        .background(cardBg)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Box(
                         modifier = Modifier
@@ -697,10 +655,7 @@ private data class MonthlySaving(
 
 @Composable
 private fun MonthlySavingsLineChart(
-    gastos: List<GastoModel>,
-    textColor: Color,
-    mutedTextColor: Color,
-    cardBg: Color
+    gastos: List<GastoModel>
 ) {
     val monthNames = listOf(
         "Ene", "Feb", "Mar", "Abr", "May", "Jun",
@@ -731,8 +686,8 @@ private fun MonthlySavingsLineChart(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = cardBg),
-        shape = RoundedCornerShape(12.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = MaterialTheme.shapes.small
     ) {
         Column(
             modifier = Modifier
@@ -743,18 +698,18 @@ private fun MonthlySavingsLineChart(
                 text = "Ahorro acumulado",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = textColor
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             if (monthlyData.isEmpty()) {
                 Text(
                     text = "No hay datos de ahorro",
-                    color = mutedTextColor,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             } else {
-                val ahorroColor = Color(0xFFFFD700)
+                val ahorroColor = MaterialTheme.colorScheme.tertiary
                 val maxAmount = monthlyData.maxOf { it.amount }.coerceAtLeast(1.0)
                 val chartHeight = 160.dp
                 val bottomMargin = 32.dp
@@ -858,7 +813,7 @@ private fun MonthlySavingsLineChart(
                                 Text(
                                     text = data.label,
                                     fontSize = 9.sp,
-                                    color = mutedTextColor,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1
                                 )
                             }
@@ -878,7 +833,7 @@ private fun MonthlySavingsLineChart(
                         Text(
                             text = selectedData.label,
                             fontSize = 13.sp,
-                            color = mutedTextColor
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -892,7 +847,7 @@ private fun MonthlySavingsLineChart(
                     Text(
                         text = "Toca un punto para ver el valor",
                         fontSize = 11.sp,
-                        color = mutedTextColor,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
                 }

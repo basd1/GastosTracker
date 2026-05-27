@@ -57,7 +57,7 @@ fun MonthYearPickerDialog(
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(
                 modifier = Modifier
@@ -97,7 +97,7 @@ fun MonthYearPickerDialog(
                                     .weight(1f)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(
-                                        if (isSelected) Color(0xFF2E7D32) else Color.Transparent
+                                        if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
                                     )
                                     .clickable { selectedMonth = month.value }
                                     .padding(vertical = 10.dp),
@@ -131,7 +131,7 @@ fun MonthYearPickerDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancelar", color = Color(0xFFE53935))
+                        Text("Cancelar", color = MaterialTheme.colorScheme.error)
                     }
                     Button(
                         onClick = { onConfirm(selectedMonth, selectedYear) },

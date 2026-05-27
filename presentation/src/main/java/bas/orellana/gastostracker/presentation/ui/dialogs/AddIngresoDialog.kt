@@ -51,7 +51,7 @@ fun AddIngresoDialog(
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+            shape = MaterialTheme.shapes.medium
         ) {
             Column(
                 modifier = Modifier
@@ -109,7 +109,7 @@ fun AddIngresoDialog(
                     },
                     label = { Text("Sin categoría", fontSize = 11.sp) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f)
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
                     )
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -126,7 +126,8 @@ fun AddIngresoDialog(
                             },
                             label = { Text(cat.displayName, fontSize = 11.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = Color(cat.color).copy(alpha = 0.3f)
+                                selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
+                                containerColor = Color(cat.color).copy(alpha = 0.15f)
                             )
                         )
                     }
@@ -146,7 +147,8 @@ fun AddIngresoDialog(
                                 },
                                 label = { Text(cat.nombre, fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(cat.color).copy(alpha = 0.3f)
+                                    selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
+                                    containerColor = Color(cat.color).copy(alpha = 0.15f)
                                 )
                             )
                         }
@@ -165,7 +167,7 @@ fun AddIngresoDialog(
                     ) {
                         Text(
                             text = "Cancelar",
-                            color = Color(0xFFE53935)
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                     Button(

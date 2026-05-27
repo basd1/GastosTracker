@@ -1,0 +1,48 @@
+package bas.orellana.gastostracker.ui.theme
+
+import androidx.compose.ui.graphics.Color
+
+val Green10 = Color(0xFF002200)
+val Green20 = Color(0xFF0D3B0D)
+val Green30 = Color(0xFF1B5E20)
+val Green40 = Color(0xFF2E7D32)
+val Green50 = Color(0xFF388E3C)
+val Green60 = Color(0xFF43A047)
+val Green70 = Color(0xFF4CAF50)
+val Green80 = Color(0xFF81C784)
+val Green90 = Color(0xFFA5D6A7)
+val Green95 = Color(0xFFC8E6C9)
+val Green99 = Color(0xFFE8F5E9)
+
+val Amber20 = Color(0xFFFF6F00)
+val Amber30 = Color(0xFFFF8F00)
+val Amber40 = Color(0xFFFFB300)
+val Amber80 = Color(0xFFFFD54F)
+val Amber90 = Color(0xFFFFF3E0)
+
+val Red10 = Color(0xFF410002)
+val Red20 = Color(0xFF690005)
+val Red30 = Color(0xFF93000A)
+val Red40 = Color(0xFFBA1A1A)
+val Red80 = Color(0xFFFFB4AB)
+val Red90 = Color(0xFFFFDAD6)
+
+val Neutral10 = Color(0xFF1A1C1E)
+val Neutral20 = Color(0xFF2F3133)
+val Neutral30 = Color(0xFF45474A)
+val Neutral40 = Color(0xFF5D5F62)
+val Neutral50 = Color(0xFF76777A)
+val Neutral60 = Color(0xFF909194)
+val Neutral80 = Color(0xFFC4C6CA)
+val Neutral85 = Color(0xFFD0D2D5)
+val Neutral90 = Color(0xFFE2E2E6)
+val Neutral95 = Color(0xFFF1F0F4)
+val Neutral99 = Color(0xFFFDFBFF)
+
+val NeutralVariant20 = Color(0xFF2D3127)
+val NeutralVariant30 = Color(0xFF43473C)
+val NeutralVariant40 = Color(0xFF5B5F53)
+val NeutralVariant50 = Color(0xFF73786B)
+val NeutralVariant60 = Color(0xFF8D9284)
+val NeutralVariant80 = Color(0xFFC8CCA0)
+val NeutralVariant90 = Color(0xFFE4E8E0)

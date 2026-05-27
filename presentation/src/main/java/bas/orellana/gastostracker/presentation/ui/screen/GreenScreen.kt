@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -49,7 +48,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
@@ -64,6 +62,7 @@ import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GreenScreen(
     navController: NavController,
@@ -81,7 +80,7 @@ fun GreenScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isDarkTheme) Color(0xFF121212) else Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Scaffold(
             containerColor = Color.Transparent,
@@ -104,17 +103,18 @@ fun GreenScreen(
                 ) {
                     ExtendedFloatingActionButton(
                         onClick = { viewModel.showAddIngresoDialog() },
-                        containerColor = Color(0xFF4CAF50)
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Añadir ingreso",
-                            tint = Color.White
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Ingreso",
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -128,7 +128,7 @@ fun GreenScreen(
                         .padding(padding),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else {
                 LazyColumn(
@@ -144,7 +144,6 @@ fun GreenScreen(
                             totalAhorro = state.totalAhorroMes,
                             selectedMonth = state.selectedMonth,
                             selectedYear = state.selectedYear,
-                            isDarkTheme = isDarkTheme,
                             showMonthPicker = { viewModel.showMonthPicker() }
                         )
                     }
@@ -155,7 +154,7 @@ fun GreenScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 8.dp),
-                            color = if (isDarkTheme) Color.White else Color.Black
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
@@ -163,7 +162,6 @@ fun GreenScreen(
                         IngresoItem(
                             ingreso = ingreso,
                             categoriasPersonalizadas = categoriasPersonalizadas,
-                            isDarkTheme = isDarkTheme,
                             onDelete = { viewModel.deleteIngreso(it) },
                             onEdit = { viewModel.showEditIngresoDialog(it) }
                         )
@@ -251,18 +249,14 @@ private fun BalanceHeader(
     totalAhorro: Double,
     selectedMonth: Int,
     selectedYear: Int,
-    isDarkTheme: Boolean,
     showMonthPicker: () -> Unit
 ) {
-
-    val textColor = if (isDarkTheme) Color.White else Color.Black
-    val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
-
     Card(
-        colors = CardDefaults.cardColors(containerColor = cardBg),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp, top = 8.dp)
+            .padding(bottom = 16.dp, top = 8.dp),
+        shape = MaterialTheme.shapes.small
     ) {
         Column(
             modifier = Modifier
@@ -284,12 +278,12 @@ private fun BalanceHeader(
                     text = "${monthNames[selectedMonth - 1]} $selectedYear",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = textColor
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
                     contentDescription = "Seleccionar mes",
-                    tint = textColor
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -304,12 +298,12 @@ private fun BalanceHeader(
                         text = "\u20AC${String.format("%.2f", totalIngresos)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4CAF50)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = "Ingresos",
                         fontSize = 13.sp,
-                        color = textColor.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -317,12 +311,12 @@ private fun BalanceHeader(
                         text = "\u20AC${String.format("%.2f", totalGastos)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE53935)
+                        color = MaterialTheme.colorScheme.error
                     )
                     Text(
                         text = "Gastos",
                         fontSize = 13.sp,
-                        color = textColor.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -330,12 +324,12 @@ private fun BalanceHeader(
                         text = "\u20AC${String.format("%.2f", totalAhorro)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFFFF9800)
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
                         text = "Ahorro",
                         fontSize = 13.sp,
-                        color = textColor.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -343,27 +337,25 @@ private fun BalanceHeader(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun IngresoItem(
     ingreso: IngresoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    isDarkTheme: Boolean,
     onDelete: (String) -> Unit,
     onEdit: (IngresoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-    val greenColor = Color(0xFF4CAF50)
     val categoria = ingreso.categoria
 
     val categoryColor = when {
         ingreso.categoriaPersonalizadaId != null -> {
             categoriasPersonalizadas.find { it.id == ingreso.categoriaPersonalizadaId }?.let {
                 Color(it.color)
-            } ?: greenColor
+            } ?: MaterialTheme.colorScheme.primary
         }
         categoria != null -> Color(categoria.color)
-        else -> greenColor
+        else -> MaterialTheme.colorScheme.primary
     }
 
     val dismissState = rememberSwipeToDismissBoxState(
@@ -387,7 +379,7 @@ private fun IngresoItem(
                     .background(
                         if (dismissDirection == SwipeToDismissBoxValue.EndToStart) Color.Transparent
                         else Color.Transparent,
-                        RoundedCornerShape(8.dp)
+                        MaterialTheme.shapes.extraSmall
                     )
                     .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.CenterEnd
@@ -396,7 +388,7 @@ private fun IngresoItem(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Eliminar",
-                        tint = Color(0xFFE53935),
+                        tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(28.dp)
                     )
                 }
@@ -412,7 +404,7 @@ private fun IngresoItem(
                     onLongClick = { onEdit(ingreso) }
                 ),
             colors = CardDefaults.cardColors(
-                containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
             Row(
@@ -424,7 +416,7 @@ private fun IngresoItem(
                 Box(
                     modifier = Modifier
                         .size(40.dp)
-                        .background(categoryColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                        .background(categoryColor.copy(alpha = 0.2f), MaterialTheme.shapes.extraSmall),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -440,20 +432,20 @@ private fun IngresoItem(
                         text = ingreso.nombre,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium,
-                        color = if (isDarkTheme) Color.White else Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = ingreso.fecha.format(dateFormatter),
                             fontSize = 12.sp,
-                            color = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.5f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         if (categoria != null || ingreso.categoriaPersonalizadaId != null) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Box(
                                 modifier = Modifier
                                     .size(8.dp)
-                                    .background(categoryColor, RoundedCornerShape(4.dp))
+                                    .background(categoryColor, MaterialTheme.shapes.extraSmall)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
@@ -470,7 +462,7 @@ private fun IngresoItem(
                     text = "\u20AC${String.format("%.2f", ingreso.monto)}",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = greenColor
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
         }

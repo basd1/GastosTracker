@@ -43,6 +43,18 @@ class CategoriasRepositoryImpl(
         }
     }
 
+    override suspend fun updateCategoriaPersonalizada(categoria: CategoriaPersonalizada) {
+        context.dataStore.edit { preferences ->
+            val json = preferences[CATEGORIAS_KEY] ?: "[]"
+            val categorias = parseCategoriasFromJson(json).toMutableList()
+            val index = categorias.indexOfFirst { it.id == categoria.id }
+            if (index != -1) {
+                categorias[index] = categoria
+                preferences[CATEGORIAS_KEY] = categoriasToJson(categorias)
+            }
+        }
+    }
+
     override suspend fun deleteCategoriaPersonalizada(id: String) {
         context.dataStore.edit { preferences ->
             val json = preferences[CATEGORIAS_KEY] ?: "[]"

@@ -134,10 +134,12 @@ fun HomeScreen(
                 categoriaPersonalizadaSeleccionada = addGastoState.categoriaPersonalizadaSeleccionada,
                 categoriasPersonalizadas = categoriasPersonalizadas,
                 gastoToEdit = addGastoState.gastoToEdit,
+                fecha = addGastoState.fecha,
                 onConceptoChange = { viewModel.updateAddGastoConcepto(it) },
                 onPrecioChange = { viewModel.updateAddGastoPrecio(it) },
                 onCategoriaChange = { viewModel.updateAddGastoCategoria(it) },
                 onCategoriaPersonalizadaChange = { viewModel.updateAddGastoCategoriaPersonalizada(it) },
+                onFechaChange = { viewModel.updateAddGastoFecha(it) },
                 onSave = {
                     viewModel.saveGasto(
                         nombre = addGastoState.concepto,

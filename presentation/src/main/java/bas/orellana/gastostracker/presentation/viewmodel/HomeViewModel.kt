@@ -102,6 +102,7 @@ class HomeViewModel(
             precio = gasto.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
             categoriaSeleccionada = gasto.categoria,
             categoriaPersonalizadaSeleccionada = gasto.categoriaPersonalizadaId,
+            fecha = gasto.fecha,
             gastoToEdit = gasto
         )
         _state.update { it.copy(showAddGastoDialog = true) }
@@ -129,11 +130,13 @@ class HomeViewModel(
 
     fun saveGasto(nombre: String, precio: String, categoria: Categoria?, categoriaPersonalizadaId: String?) {
         val monto = precio.toDoubleOrNull() ?: 0.0
+        val fecha = _addGastoState.value.fecha
         val gastoToEdit = _addGastoState.value.gastoToEdit
         val gasto = if (gastoToEdit != null) {
             gastoToEdit.copy(
                 nombre = nombre,
                 monto = monto,
+                fecha = fecha,
                 categoria = categoria,
                 categoriaPersonalizadaId = categoriaPersonalizadaId
             )
@@ -142,7 +145,7 @@ class HomeViewModel(
                 id = UUID.randomUUID().toString(),
                 nombre = nombre,
                 monto = monto,
-                fecha = LocalDate.now(),
+                fecha = fecha,
                 categoria = categoria,
                 categoriaPersonalizadaId = categoriaPersonalizadaId
             )
@@ -247,6 +250,10 @@ class HomeViewModel(
         _addGastoState.update { current: AddGastoState ->
             current.copy(categoriaPersonalizadaSeleccionada = id, categoriaSeleccionada = null)
         }
+    }
+
+    fun updateAddGastoFecha(fecha: LocalDate) {
+        _addGastoState.update { it.copy(fecha = fecha) }
     }
 
     fun resetAddGastoState() {

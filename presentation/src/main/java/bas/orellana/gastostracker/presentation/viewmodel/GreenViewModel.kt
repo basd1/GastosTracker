@@ -8,6 +8,7 @@ import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.presentation.state.AddIngresoState
 import bas.orellana.gastostracker.presentation.state.GreenState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ import java.util.UUID
 class GreenViewModel(
     private val getIngresosUseCase: GetIngresosUseCase,
     private val addIngresoUseCase: AddIngresoUseCase,
+    private val updateIngresoUseCase: UpdateIngresoUseCase,
     private val deleteIngresoUseCase: DeleteIngresoUseCase,
     private val getGastosUseCase: GetGastosUseCase
 ) : ViewModel() {
@@ -83,6 +85,15 @@ class GreenViewModel(
         _state.update { it.copy(showAddIngresoDialog = true) }
     }
 
+    fun showEditIngresoDialog(ingreso: IngresoModel) {
+        _addIngresoState.value = AddIngresoState(
+            concepto = ingreso.nombre,
+            monto = ingreso.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
+            ingresoToEdit = ingreso
+        )
+        _state.update { it.copy(showAddIngresoDialog = true) }
+    }
+
     fun hideAddIngresoDialog() {
         _state.update { it.copy(showAddIngresoDialog = false) }
     }
@@ -121,14 +132,26 @@ class GreenViewModel(
 
     fun saveIngreso(nombre: String, monto: String) {
         val montoDouble = monto.toDoubleOrNull() ?: 0.0
-        val ingreso = IngresoModel(
-            id = UUID.randomUUID().toString(),
-            nombre = nombre,
-            monto = montoDouble,
-            fecha = LocalDate.now()
-        )
+        val ingresoToEdit = _addIngresoState.value.ingresoToEdit
+        val ingreso = if (ingresoToEdit != null) {
+            ingresoToEdit.copy(
+                nombre = nombre,
+                monto = montoDouble
+            )
+        } else {
+            IngresoModel(
+                id = UUID.randomUUID().toString(),
+                nombre = nombre,
+                monto = montoDouble,
+                fecha = LocalDate.now()
+            )
+        }
         viewModelScope.launch {
-            addIngresoUseCase(ingreso)
+            if (ingresoToEdit != null) {
+                updateIngresoUseCase(ingreso)
+            } else {
+                addIngresoUseCase(ingreso)
+            }
             _state.update { it.copy(showAddIngresoDialog = false) }
             loadIngresos()
         }

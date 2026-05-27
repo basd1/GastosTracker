@@ -35,6 +35,18 @@ class IngresoRepositoryImpl(
         }
     }
 
+    override suspend fun updateIngreso(ingreso: IngresoModel) {
+        context.dataStore.edit { preferences ->
+            val json = preferences[INGRESOS_KEY] ?: "[]"
+            val ingresos = parseIngresosFromJson(json).toMutableList()
+            val index = ingresos.indexOfFirst { it.id == ingreso.id }
+            if (index != -1) {
+                ingresos[index] = ingreso
+                preferences[INGRESOS_KEY] = ingresosToJson(ingresos)
+            }
+        }
+    }
+
     override suspend fun deleteIngreso(id: String) {
         context.dataStore.edit { preferences ->
             val json = preferences[INGRESOS_KEY] ?: "[]"

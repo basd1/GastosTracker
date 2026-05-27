@@ -6,5 +6,6 @@ import kotlinx.coroutines.flow.Flow
 interface IngresoRepository {
     fun getIngresos(): Flow<List<IngresoModel>>
     suspend fun addIngreso(ingreso: IngresoModel)
+    suspend fun updateIngreso(ingreso: IngresoModel)
     suspend fun deleteIngreso(id: String)
 }

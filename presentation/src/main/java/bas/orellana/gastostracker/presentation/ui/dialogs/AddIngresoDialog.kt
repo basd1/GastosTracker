@@ -23,12 +23,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import bas.orellana.gastostracker.domain.model.IngresoModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddIngresoDialog(
     concepto: String,
     monto: String,
+    ingresoToEdit: IngresoModel?,
     onConceptoChange: (String) -> Unit,
     onMontoChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -45,7 +47,7 @@ fun AddIngresoDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Añadir ingreso",
+                    text = if (ingresoToEdit != null) "Editar ingreso" else "Añadir ingreso",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -100,7 +102,7 @@ fun AddIngresoDialog(
                         enabled = concepto.isNotBlank() && monto.isNotBlank(),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Guardar")
+                        Text(if (ingresoToEdit != null) "Actualizar" else "Guardar")
                     }
                 }
             }

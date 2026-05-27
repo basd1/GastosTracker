@@ -16,6 +16,7 @@ import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
+import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
@@ -43,9 +44,10 @@ val appModule = module {
     single<IngresoRepository> { IngresoRepositoryImpl(androidContext()) }
     factory { GetIngresosUseCase(get()) }
     factory { AddIngresoUseCase(get()) }
+    factory { UpdateIngresoUseCase(get()) }
     factory { DeleteIngresoUseCase(get()) }
 
     viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
-    viewModel { GreenViewModel(get(), get(), get(), get()) }
+    viewModel { GreenViewModel(get(), get(), get(), get(), get()) }
 }

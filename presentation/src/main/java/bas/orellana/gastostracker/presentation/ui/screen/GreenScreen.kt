@@ -137,6 +137,7 @@ fun GreenScreen(
                     isLoading = state.isLoading,
                     isDarkTheme = isDarkTheme,
                     onDelete = { viewModel.deleteIngreso(it) },
+                    onEdit = { viewModel.showEditIngresoDialog(it) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -156,6 +157,7 @@ fun GreenScreen(
                 AddIngresoDialog(
                     concepto = addIngresoState.concepto,
                     monto = addIngresoState.monto,
+                    ingresoToEdit = addIngresoState.ingresoToEdit,
                     onConceptoChange = { viewModel.updateConcepto(it) },
                     onMontoChange = { viewModel.updateMonto(it) },
                     onSave = {
@@ -361,6 +363,7 @@ private fun IngresosList(
     isLoading: Boolean,
     isDarkTheme: Boolean,
     onDelete: (String) -> Unit,
+    onEdit: (IngresoModel) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val textColor = if (isDarkTheme) Color.White else Color.Black
@@ -429,7 +432,8 @@ private fun IngresosList(
                     IngresoItem(
                         ingreso = ingreso,
                         isDarkTheme = isDarkTheme,
-                        onDelete = onDelete
+                        onDelete = onDelete,
+                        onEdit = onEdit
                     )
                 }
             }
@@ -443,7 +447,8 @@ private fun IngresosList(
 private fun IngresoItem(
     ingreso: IngresoModel,
     isDarkTheme: Boolean,
-    onDelete: (String) -> Unit
+    onDelete: (String) -> Unit,
+    onEdit: (IngresoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val greenColor = Color(0xFF4CAF50)
@@ -487,7 +492,9 @@ private fun IngresoItem(
         enableDismissFromStartToEnd = false
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onEdit(ingreso) },
             colors = CardDefaults.cardColors(
                 containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
             )

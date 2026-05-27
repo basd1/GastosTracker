@@ -21,5 +21,6 @@ data class HomeState(
     val dismissedAlertKeys: Set<String> = emptySet(),
     val searchQuery: String = "",
     val filterCategoria: Categoria? = null,
-    val filterCategoriaPersonalizadaId: String? = null
+    val filterCategoriaPersonalizadaId: String? = null,
+    val sortOrder: SortOrder = SortOrder.DATE_DESC
 )

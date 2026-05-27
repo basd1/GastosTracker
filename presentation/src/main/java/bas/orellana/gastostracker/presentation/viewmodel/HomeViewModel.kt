@@ -18,6 +18,7 @@ import bas.orellana.gastostracker.presentation.state.AddGastoState
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
+import bas.orellana.gastostracker.presentation.state.SortOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -334,6 +335,10 @@ class HomeViewModel(
 
     fun clearFilters() {
         _state.update { it.copy(filterCategoria = null, filterCategoriaPersonalizadaId = null, searchQuery = "") }
+    }
+
+    fun updateSortOrder(order: SortOrder) {
+        _state.update { it.copy(sortOrder = order) }
     }
 
     fun dismissAlert(categoriaNombre: String) {

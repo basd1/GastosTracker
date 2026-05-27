@@ -59,6 +59,7 @@ import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
+import bas.orellana.gastostracker.presentation.state.SortOrder
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
@@ -129,10 +130,12 @@ fun HomeScreen(
             searchQuery = state.searchQuery,
             filterCategoria = state.filterCategoria,
             filterCategoriaPersonalizadaId = state.filterCategoriaPersonalizadaId,
+            sortOrder = state.sortOrder,
             onSearchQueryChange = { viewModel.updateSearchQuery(it) },
             onFilterCategoria = { viewModel.updateFilterCategoria(it) },
             onFilterCategoriaPersonalizada = { viewModel.updateFilterCategoriaPersonalizada(it) },
             onClearFilters = { viewModel.clearFilters() },
+            onSortOrderChange = { viewModel.updateSortOrder(it) },
             onDelete = { viewModel.deleteGasto(it) },
             onEdit = { viewModel.showEditGastoDialog(it) },
             onDismissAlert = { viewModel.dismissAlert(it) },
@@ -215,10 +218,12 @@ private fun GastosList(
     searchQuery: String = "",
     filterCategoria: Categoria? = null,
     filterCategoriaPersonalizadaId: String? = null,
+    sortOrder: SortOrder = SortOrder.DATE_DESC,
     onSearchQueryChange: (String) -> Unit = {},
     onFilterCategoria: (Categoria?) -> Unit = {},
     onFilterCategoriaPersonalizada: (String?) -> Unit = {},
     onClearFilters: () -> Unit = {},
+    onSortOrderChange: (SortOrder) -> Unit = {},
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit,
     onDismissAlert: (String) -> Unit = {},
@@ -233,6 +238,15 @@ private fun GastosList(
         val matchesCategoria = filterCategoria == null || gasto.categoria == filterCategoria
         val matchesPersonalizada = filterCategoriaPersonalizadaId == null || gasto.categoriaPersonalizadaId == filterCategoriaPersonalizadaId
         matchesSearch && matchesCategoria && matchesPersonalizada
+    }.let { sorted ->
+        when (sortOrder) {
+            SortOrder.DATE_DESC -> sorted.sortedByDescending { it.fecha }
+            SortOrder.DATE_ASC -> sorted.sortedBy { it.fecha }
+            SortOrder.AMOUNT_DESC -> sorted.sortedByDescending { it.monto }
+            SortOrder.AMOUNT_ASC -> sorted.sortedBy { it.monto }
+            SortOrder.NAME_ASC -> sorted.sortedBy { it.nombre.lowercase() }
+            SortOrder.NAME_DESC -> sorted.sortedByDescending { it.nombre.lowercase() }
+        }
     }
 
     if (isLoading) {
@@ -299,6 +313,24 @@ private fun GastosList(
                         isDarkTheme = isDarkTheme,
                         onDismissAlert = onDismissAlert
                     )
+                }
+            }
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    SortOrder.entries.take(4).forEach { order ->
+                        FilterChip(
+                            selected = sortOrder == order,
+                            onClick = { onSortOrderChange(order) },
+                            label = { Text(order.displayName, fontSize = 11.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = Color(0xFF2E7D32).copy(alpha = 0.3f),
+                                containerColor = cardBg
+                            )
+                        )
+                    }
                 }
             }
             item {

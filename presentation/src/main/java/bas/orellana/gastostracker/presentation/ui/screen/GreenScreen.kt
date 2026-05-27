@@ -5,8 +5,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -442,7 +444,7 @@ private fun IngresosList(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun IngresoItem(
     ingreso: IngresoModel,
@@ -494,7 +496,10 @@ private fun IngresoItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onEdit(ingreso) },
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = { onEdit(ingreso) }
+                ),
             colors = CardDefaults.cardColors(
                 containerColor = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
             )

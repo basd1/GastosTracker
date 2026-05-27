@@ -320,6 +320,10 @@ class HomeViewModel(
         _manageCategoriasState.value = ManageCategoriasState()
     }
 
+    fun updateSearchQuery(query: String) {
+        _state.update { it.copy(searchQuery = query) }
+    }
+
     fun dismissAlert(categoriaNombre: String) {
         _state.update {
             it.copy(

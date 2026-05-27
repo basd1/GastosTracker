@@ -26,11 +26,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -122,6 +125,8 @@ fun HomeScreen(
             categoriasPersonalizadas = categoriasPersonalizadas,
             isDarkTheme = isDarkTheme,
             alerts = state.alerts,
+            searchQuery = state.searchQuery,
+            onSearchQueryChange = { viewModel.updateSearchQuery(it) },
             onDelete = { viewModel.deleteGasto(it) },
             onEdit = { viewModel.showEditGastoDialog(it) },
             onDismissAlert = { viewModel.dismissAlert(it) },
@@ -201,6 +206,8 @@ private fun GastosList(
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     isDarkTheme: Boolean,
     alerts: List<CategoryAlert> = emptyList(),
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
     onDelete: (String) -> Unit,
     onEdit: (GastoModel) -> Unit,
     onDismissAlert: (String) -> Unit = {},
@@ -209,6 +216,12 @@ private fun GastosList(
     val textColor = if (isDarkTheme) Color.White else Color.Black
     val mutedTextColor = if (isDarkTheme) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.6f)
     val cardBg = if (isDarkTheme) Color.White.copy(alpha = 0.12f) else Color.Black.copy(alpha = 0.06f)
+
+    val filteredGastos = if (searchQuery.isBlank()) {
+        gastos
+    } else {
+        gastos.filter { it.nombre.contains(searchQuery, ignoreCase = true) }
+    }
 
     if (isLoading) {
         Box(
@@ -276,8 +289,39 @@ private fun GastosList(
                     )
                 }
             }
-            item { Spacer(modifier = Modifier.height(4.dp)) }
-            items(gastos, key = { it.id }) { gasto ->
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    placeholder = { Text("Buscar gastos...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Buscar",
+                            tint = mutedTextColor
+                        )
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = mutedTextColor.copy(alpha = 0.3f)
+                    )
+                )
+            }
+            if (filteredGastos.isEmpty() && searchQuery.isNotBlank()) {
+                item {
+                    Text(
+                        text = "No se encontraron gastos con ese nombre",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = mutedTextColor,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+                }
+            }
+            items(filteredGastos, key = { it.id }) { gasto ->
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(300)) +

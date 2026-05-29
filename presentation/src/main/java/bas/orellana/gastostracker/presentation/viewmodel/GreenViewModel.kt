@@ -178,6 +178,14 @@ class GreenViewModel(
         }
     }
 
+    fun restoreIngreso(ingreso: IngresoModel) {
+        viewModelScope.launch {
+            addIngresoUseCase(ingreso)
+            _state.update { state -> state.copy(ingresos = state.ingresos + ingreso) }
+            loadIngresos()
+        }
+    }
+
     fun resetAddIngresoState() {
         _addIngresoState.value = AddIngresoState()
     }

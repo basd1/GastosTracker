@@ -39,6 +39,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -47,6 +50,11 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -83,6 +91,10 @@ fun HomeScreen(
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    var stashedGasto by remember { mutableStateOf<GastoModel?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -90,6 +102,7 @@ fun HomeScreen(
     ) {
         Scaffold(
             containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             GradientTopAppBar(
                 title = "Gastos",
@@ -134,7 +147,20 @@ fun HomeScreen(
             onFilterCategoriaPersonalizada = { viewModel.updateFilterCategoriaPersonalizada(it) },
             onClearFilters = { viewModel.clearFilters() },
             onSortOrderChange = { viewModel.updateSortOrder(it) },
-            onDelete = { viewModel.deleteGasto(it) },
+            onDelete = { gasto ->
+                stashedGasto = gasto
+                viewModel.deleteGasto(gasto.id)
+                scope.launch {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Gasto eliminado",
+                        actionLabel = "Deshacer"
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        stashedGasto?.let { viewModel.restoreGasto(it) }
+                    }
+                    stashedGasto = null
+                }
+            },
             onEdit = { viewModel.showEditGastoDialog(it) },
             onDismissAlert = { viewModel.dismissAlert(it) },
             modifier = Modifier.padding(paddingValues)
@@ -221,7 +247,7 @@ private fun GastosList(
     onFilterCategoriaPersonalizada: (String?) -> Unit = {},
     onClearFilters: () -> Unit = {},
     onSortOrderChange: (SortOrder) -> Unit = {},
-    onDelete: (String) -> Unit,
+    onDelete: (GastoModel) -> Unit,
     onEdit: (GastoModel) -> Unit,
     onDismissAlert: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -542,7 +568,7 @@ private fun SummaryHeader(
 private fun GastoItem(
     gasto: GastoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    onDelete: (String) -> Unit,
+    onDelete: (GastoModel) -> Unit,
     onEdit: (GastoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -562,7 +588,7 @@ private fun GastoItem(
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
-                onDelete(gasto.id)
+                onDelete(gasto)
                 true
             } else {
                 false

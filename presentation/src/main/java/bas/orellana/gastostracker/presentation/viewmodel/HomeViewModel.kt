@@ -171,6 +171,14 @@ class HomeViewModel(
         }
     }
 
+    fun restoreGasto(gasto: GastoModel) {
+        viewModelScope.launch {
+            addGastoUseCase(gasto)
+            _state.update { state -> state.copy(gastos = state.gastos + gasto) }
+            loadGastos()
+        }
+    }
+
     fun seedTestAhorroData() {
         viewModelScope.launch {
             val montos = listOf(200.0, 350.0, 150.0, 400.0, 250.0, 300.0, 180.0, 420.0, 310.0, 275.0, 500.0, 380.0)

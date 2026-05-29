@@ -215,10 +215,12 @@ fun BalanceScreen(
                 categoriaPersonalizadaId = addIngresoState.categoriaPersonalizadaId,
                 categoriasPersonalizadas = categoriasPersonalizadas,
                 ingresoToEdit = addIngresoState.ingresoToEdit,
+                fecha = addIngresoState.fecha,
                 onConceptoChange = { viewModel.updateConcepto(it) },
                 onMontoChange = { viewModel.updateMonto(it) },
                 onCategoriaChange = { viewModel.updateCategoria(it) },
                 onCategoriaPersonalizadaChange = { viewModel.updateCategoriaPersonalizada(it) },
+                onFechaChange = { viewModel.updateFecha(it) },
                 onSave = {
                     viewModel.saveIngreso(
                         nombre = addIngresoState.concepto,

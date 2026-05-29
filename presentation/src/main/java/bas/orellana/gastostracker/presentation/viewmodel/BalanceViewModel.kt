@@ -91,6 +91,7 @@ class BalanceViewModel(
             monto = ingreso.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
             categoriaSeleccionada = ingreso.categoria,
             categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId,
+            fecha = ingreso.fecha,
             ingresoToEdit = ingreso
         )
         _state.update { it.copy(showAddIngresoDialog = true) }
@@ -140,13 +141,19 @@ class BalanceViewModel(
         _addIngresoState.update { it.copy(categoriaPersonalizadaId = id) }
     }
 
+    fun updateFecha(fecha: LocalDate) {
+        _addIngresoState.update { it.copy(fecha = fecha) }
+    }
+
     fun saveIngreso(nombre: String, monto: String) {
         val montoDouble = monto.toDoubleOrNull() ?: 0.0
         val ingresoToEdit = _addIngresoState.value.ingresoToEdit
+        val fecha = _addIngresoState.value.fecha
         val ingreso = if (ingresoToEdit != null) {
             ingresoToEdit.copy(
                 nombre = nombre,
                 monto = montoDouble,
+                fecha = fecha,
                 categoria = _addIngresoState.value.categoriaSeleccionada,
                 categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId
             )
@@ -155,7 +162,7 @@ class BalanceViewModel(
                 id = UUID.randomUUID().toString(),
                 nombre = nombre,
                 monto = montoDouble,
-                fecha = LocalDate.now(),
+                fecha = fecha,
                 categoria = _addIngresoState.value.categoriaSeleccionada,
                 categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId
             )

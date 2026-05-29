@@ -34,6 +34,9 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -41,6 +44,11 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -77,6 +85,10 @@ fun GreenScreen(
     val manageCategoriasState by homeViewModel.manageCategoriasState.collectAsState()
     val homeState by homeViewModel.state.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    var stashedIngreso by remember { mutableStateOf<IngresoModel?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -84,6 +96,7 @@ fun GreenScreen(
     ) {
         Scaffold(
             containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 GradientTopAppBar(
                     icon = null,
@@ -162,7 +175,20 @@ fun GreenScreen(
                         IngresoItem(
                             ingreso = ingreso,
                             categoriasPersonalizadas = categoriasPersonalizadas,
-                            onDelete = { viewModel.deleteIngreso(it) },
+                            onDelete = { ingresoEliminado ->
+                                stashedIngreso = ingresoEliminado
+                                viewModel.deleteIngreso(ingresoEliminado.id)
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Ingreso eliminado",
+                                        actionLabel = "Deshacer"
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        stashedIngreso?.let { viewModel.restoreIngreso(it) }
+                                    }
+                                    stashedIngreso = null
+                                }
+                            },
                             onEdit = { viewModel.showEditIngresoDialog(it) }
                         )
                     }
@@ -342,7 +368,7 @@ private fun BalanceHeader(
 private fun IngresoItem(
     ingreso: IngresoModel,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
-    onDelete: (String) -> Unit,
+    onDelete: (IngresoModel) -> Unit,
     onEdit: (IngresoModel) -> Unit
 ) {
     val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
@@ -361,7 +387,7 @@ private fun IngresoItem(
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             if (dismissValue == SwipeToDismissBoxValue.EndToStart) {
-                onDelete(ingreso.id)
+                onDelete(ingreso)
                 true
             } else {
                 false

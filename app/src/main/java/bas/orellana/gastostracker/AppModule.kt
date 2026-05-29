@@ -21,7 +21,7 @@ import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
-import bas.orellana.gastostracker.presentation.viewmodel.GreenViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.android.ext.koin.androidContext
@@ -51,5 +51,5 @@ val appModule = module {
 
     viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
-    viewModel { GreenViewModel(get(), get(), get(), get(), get()) }
+    viewModel { BalanceViewModel(get(), get(), get(), get(), get()) }
 }

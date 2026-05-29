@@ -3,7 +3,7 @@ package bas.orellana.gastostracker.presentation.state
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import java.time.LocalDate
 
-data class GreenState(
+data class BalanceState(
     val ingresos: List<IngresoModel> = emptyList(),
     val isLoading: Boolean = false,
     val showAddIngresoDialog: Boolean = false,

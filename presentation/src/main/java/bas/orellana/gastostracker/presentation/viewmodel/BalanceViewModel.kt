@@ -10,7 +10,7 @@ import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.presentation.state.AddIngresoState
-import bas.orellana.gastostracker.presentation.state.GreenState
+import bas.orellana.gastostracker.presentation.state.BalanceState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.util.UUID
 
-class GreenViewModel(
+class BalanceViewModel(
     private val getIngresosUseCase: GetIngresosUseCase,
     private val addIngresoUseCase: AddIngresoUseCase,
     private val updateIngresoUseCase: UpdateIngresoUseCase,
@@ -28,8 +28,8 @@ class GreenViewModel(
     private val getGastosUseCase: GetGastosUseCase
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(GreenState())
-    val state: StateFlow<GreenState> = _state.asStateFlow()
+    private val _state = MutableStateFlow(BalanceState())
+    val state: StateFlow<BalanceState> = _state.asStateFlow()
 
     private val _addIngresoState = MutableStateFlow(AddIngresoState())
     val addIngresoState: StateFlow<AddIngresoState> = _addIngresoState.asStateFlow()

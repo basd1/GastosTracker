@@ -48,7 +48,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
@@ -64,7 +64,7 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.AddIngresoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
-import bas.orellana.gastostracker.presentation.viewmodel.GreenViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -72,9 +72,9 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GreenScreen(
+fun BalanceScreen(
     navController: NavController,
-    viewModel: GreenViewModel = koinViewModel(),
+    viewModel: BalanceViewModel = koinViewModel(),
     homeViewModel: HomeViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {

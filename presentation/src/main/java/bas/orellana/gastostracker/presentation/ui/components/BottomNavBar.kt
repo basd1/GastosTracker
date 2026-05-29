@@ -22,7 +22,7 @@ private data class NavTab(
 )
 
 private val tabs = listOf(
-    NavTab(NavRoutes.GREEN_SCREEN, Icons.Default.Star, "Balance"),
+    NavTab(NavRoutes.BALANCE, Icons.Default.Star, "Balance"),
     NavTab(NavRoutes.HOME, Icons.Default.Home, "Gastos"),
     NavTab(NavRoutes.GRAPH_SCREEN, Icons.Default.FavoriteBorder, "Gráfico")
 )

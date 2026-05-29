@@ -6,7 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import bas.orellana.gastostracker.navigation.NavRoutes
 import bas.orellana.gastostracker.presentation.ui.screen.GraphScreen
-import bas.orellana.gastostracker.presentation.ui.screen.GreenScreen
+import bas.orellana.gastostracker.presentation.ui.screen.BalanceScreen
 import bas.orellana.gastostracker.presentation.ui.screen.HomeScreen
 import bas.orellana.gastostracker.presentation.ui.screen.SplashScreen
 
@@ -19,8 +19,8 @@ fun AppNavHost(navController: NavHostController) {
         composable(NavRoutes.SPLASH) {
             SplashScreen(navController = navController)
         }
-        composable(NavRoutes.GREEN_SCREEN) {
-            GreenScreen(navController = navController)
+        composable(NavRoutes.BALANCE) {
+            BalanceScreen(navController = navController)
         }
         composable(NavRoutes.HOME) {
             HomeScreen(navController = navController)

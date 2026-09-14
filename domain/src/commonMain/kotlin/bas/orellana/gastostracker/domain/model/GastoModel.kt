@@ -1,6 +1,6 @@
 package bas.orellana.gastostracker.domain.model
 
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 
 data class GastoModel(
     val id: String,

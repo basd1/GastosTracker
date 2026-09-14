@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import java.time.Month
+import kotlinx.datetime.Month
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +91,7 @@ fun MonthYearPickerDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         chunk.forEach { month ->
-                            val isSelected = month.value == selectedMonth
+                            val isSelected = (month.ordinal + 1) == selectedMonth
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
@@ -99,7 +99,7 @@ fun MonthYearPickerDialog(
                                     .background(
                                         if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
                                     )
-                                    .clickable { selectedMonth = month.value }
+                                    .clickable { selectedMonth = month.ordinal + 1 }
                                     .padding(vertical = 10.dp),
                                 contentAlignment = Alignment.Center
                             ) {

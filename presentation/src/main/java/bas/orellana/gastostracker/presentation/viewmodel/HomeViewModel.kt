@@ -14,6 +14,7 @@ import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
+import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.state.AddGastoState
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
@@ -25,7 +26,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.minus
 import java.util.UUID
 
 class HomeViewModel(
@@ -182,13 +185,13 @@ class HomeViewModel(
     fun seedTestAhorroData() {
         viewModelScope.launch {
             val montos = listOf(200.0, 350.0, 150.0, 400.0, 250.0, 300.0, 180.0, 420.0, 310.0, 275.0, 500.0, 380.0)
-            val now = LocalDate.now()
+            val now = todayLocalDate()
             montos.forEachIndexed { index, monto ->
                 val gasto = GastoModel(
                     id = UUID.randomUUID().toString(),
                     nombre = "Ahorro ${index + 1}",
                     monto = monto,
-                    fecha = now.minusMonths(11 - index.toLong()),
+                    fecha = now.minus(11 - index, DateTimeUnit.MONTH),
                     categoria = Categoria.AHORRO,
                     categoriaPersonalizadaId = null
                 )
@@ -200,14 +203,14 @@ class HomeViewModel(
 
     fun seedTestAhorro45Meses() {
         viewModelScope.launch {
-            val now = LocalDate.now()
+            val now = todayLocalDate()
             (0 until 45).forEach { i ->
                 val monto = (100..600).random().toDouble()
                 val gasto = GastoModel(
                     id = UUID.randomUUID().toString(),
                     nombre = "Ahorro ${i + 1}",
                     monto = monto,
-                    fecha = now.minusMonths(44 - i.toLong()),
+                    fecha = now.minus(44 - i, DateTimeUnit.MONTH),
                     categoria = Categoria.AHORRO,
                     categoriaPersonalizadaId = null
                 )
@@ -362,11 +365,11 @@ class HomeViewModel(
         gastos: List<GastoModel>,
         categoriasPersonalizadas: List<CategoriaPersonalizada>
     ): List<CategoryAlert> {
-        val now = LocalDate.now()
+        val now = todayLocalDate()
         val currentMonth = gastos.filter {
             it.fecha.year == now.year && it.fecha.month == now.month && it.categoria != Categoria.AHORRO
         }
-        val previousMonth = now.minusMonths(1)
+        val previousMonth = now.minus(1, DateTimeUnit.MONTH)
         val previousMonthGastos = gastos.filter {
             it.fecha.year == previousMonth.year && it.fecha.month == previousMonth.month && it.categoria != Categoria.AHORRO
         }

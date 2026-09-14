@@ -74,9 +74,9 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
+import bas.orellana.gastostracker.domain.util.todayLocalDate
+import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.androidx.compose.koinViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -304,7 +304,7 @@ private fun GastosList(
             }
         }
     } else {
-        val now = LocalDate.now()
+        val now = todayLocalDate()
         val gastosDelMes = gastos.filter {
             it.fecha.year == now.year && it.fecha.month == now.month && it.categoria != Categoria.AHORRO
         }
@@ -571,8 +571,6 @@ private fun GastoItem(
     onDelete: (GastoModel) -> Unit,
     onEdit: (GastoModel) -> Unit
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
-
     val categoriaColor = when {
         gasto.categoria != null -> Color(gasto.categoria!!.color)
         gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF607D8B)
@@ -670,7 +668,7 @@ private fun GastoItem(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = gasto.fecha.format(dateFormatter),
+                        text = gasto.fecha.formatDDMMYYYY(),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )

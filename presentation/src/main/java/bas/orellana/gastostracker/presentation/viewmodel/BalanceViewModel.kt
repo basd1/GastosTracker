@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
 import java.util.UUID
 
 class BalanceViewModel(
@@ -50,7 +50,7 @@ class BalanceViewModel(
                     val selectedMonth = _state.value.selectedMonth
                     val selectedYear = _state.value.selectedYear
                     val totalIngresosMes = ingresos.filter {
-                        it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear
+                        it.fecha.monthNumber == selectedMonth && it.fecha.year == selectedYear
                     }.sumOf { it.monto }
                     _state.value = _state.value.copy(
                         ingresos = ingresos,
@@ -69,7 +69,7 @@ class BalanceViewModel(
                     val selectedMonth = _state.value.selectedMonth
                     val selectedYear = _state.value.selectedYear
                     val gastosDelMes = gastos.filter {
-                        it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear
+                        it.fecha.monthNumber == selectedMonth && it.fecha.year == selectedYear
                     }
                     val gastosSinAhorro = gastosDelMes.filter { it.categoria != Categoria.AHORRO }
                     val ahorroDelMes = gastosDelMes.filter { it.categoria == Categoria.AHORRO }

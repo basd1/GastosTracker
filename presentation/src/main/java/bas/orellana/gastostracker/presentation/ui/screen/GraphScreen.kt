@@ -67,9 +67,13 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
+import bas.orellana.gastostracker.domain.util.todayLocalDate
 import org.koin.androidx.compose.koinViewModel
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
 
 private enum class PeriodFilter {
     THIS_MONTH, LAST_3_MONTHS, ALL, SPECIFIC_MONTH
@@ -88,8 +92,8 @@ fun GraphScreen(
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
-    var selectedMonth by remember { mutableStateOf(LocalDate.now().monthValue) }
-    var selectedYear by remember { mutableStateOf(LocalDate.now().year) }
+    var selectedMonth by remember { mutableStateOf(todayLocalDate().monthNumber) }
+    var selectedYear by remember { mutableStateOf(todayLocalDate().year) }
     var showMonthPicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -139,8 +143,8 @@ fun GraphScreen(
                     onPeriodChange = { period ->
                         selectedPeriod = period
                         if (period != PeriodFilter.SPECIFIC_MONTH) {
-                            selectedMonth = LocalDate.now().monthValue
-                            selectedYear = LocalDate.now().year
+                            selectedMonth = todayLocalDate().monthNumber
+                            selectedYear = todayLocalDate().year
                         }
                     },
                     onMonthClick = { showMonthPicker = true }
@@ -435,8 +439,8 @@ private fun PeriodFilterChips(
 private fun SummaryCards(
     gastos: List<GastoModel>,
     selectedPeriod: PeriodFilter,
-    selectedMonth: Int = LocalDate.now().monthValue,
-    selectedYear: Int = LocalDate.now().year,
+    selectedMonth: Int = todayLocalDate().monthNumber,
+    selectedYear: Int = todayLocalDate().year,
     categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
     val total = gastos.sumOf { it.monto }
@@ -446,22 +450,21 @@ private fun SummaryCards(
 
     val daysInPeriod = when (selectedPeriod) {
         PeriodFilter.THIS_MONTH -> {
-            val now = LocalDate.now()
-            val startOfMonth = now.withDayOfMonth(1)
-            ChronoUnit.DAYS.between(startOfMonth, now).toInt() + 1
+            val now = todayLocalDate()
+            val startOfMonth = LocalDate(now.year, now.monthNumber, 1)
+            startOfMonth.daysUntil(now) + 1
         }
         PeriodFilter.LAST_3_MONTHS -> {
-            val now = LocalDate.now()
-            val start = now.minusMonths(3)
-            ChronoUnit.DAYS.between(start, now).toInt() + 1
+            val now = todayLocalDate()
+            val start = now.minus(3, DateTimeUnit.MONTH)
+            start.daysUntil(now) + 1
         }
         PeriodFilter.SPECIFIC_MONTH -> {
-            val daysInMonth = java.time.YearMonth.of(selectedYear, selectedMonth).lengthOfMonth()
-            daysInMonth
+            daysInMonth(selectedYear, selectedMonth)
         }
         PeriodFilter.ALL -> {
             if (gastos.isEmpty()) 1
-            else ChronoUnit.DAYS.between(gastos.minOf { it.fecha }, LocalDate.now()).toInt() + 1
+            else gastos.minOf { it.fecha }.daysUntil(todayLocalDate()) + 1
         }
     }
     val dailyAvg = if (daysInPeriod > 0) total / daysInPeriod else 0.0
@@ -664,7 +667,7 @@ private fun MonthlySavingsLineChart(
 
     val monthlyData = remember(gastos) {
         val sorted = gastos
-            .groupBy { it.fecha.year * 12 + (it.fecha.monthValue - 1) }
+            .groupBy { it.fecha.year * 12 + (it.fecha.monthNumber - 1) }
             .map { (key, items) ->
                 val year = key / 12
                 val month = key % 12
@@ -865,25 +868,30 @@ private fun obtenerColorCategoria(gasto: GastoModel, categoriasPersonalizadas: L
     }
 }
 
+private fun daysInMonth(year: Int, month: Int): Int {
+    val first = LocalDate(year, month, 1)
+    return first.daysUntil(first.plus(1, DateTimeUnit.MONTH))
+}
+
 private fun filterGastosByPeriod(
     gastos: List<GastoModel>,
     period: PeriodFilter,
-    selectedMonth: Int = LocalDate.now().monthValue,
-    selectedYear: Int = LocalDate.now().year
+    selectedMonth: Int = todayLocalDate().monthNumber,
+    selectedYear: Int = todayLocalDate().year
 ): List<GastoModel> {
-    val now = LocalDate.now()
+    val now = todayLocalDate()
     return when (period) {
         PeriodFilter.THIS_MONTH -> {
-            val startOfMonth = now.withDayOfMonth(1)
-            gastos.filter { !it.fecha.isBefore(startOfMonth) && !it.fecha.isAfter(now) }
+            val startOfMonth = LocalDate(now.year, now.monthNumber, 1)
+            gastos.filter { it.fecha >= startOfMonth && it.fecha <= now }
         }
         PeriodFilter.LAST_3_MONTHS -> {
-            val start = now.minusMonths(3)
-            gastos.filter { !it.fecha.isBefore(start) && !it.fecha.isAfter(now) }
+            val start = now.minus(3, DateTimeUnit.MONTH)
+            gastos.filter { it.fecha >= start && it.fecha <= now }
         }
         PeriodFilter.ALL -> gastos
         PeriodFilter.SPECIFIC_MONTH -> {
-            gastos.filter { it.fecha.monthValue == selectedMonth && it.fecha.year == selectedYear }
+            gastos.filter { it.fecha.monthNumber == selectedMonth && it.fecha.year == selectedYear }
         }
     }
 }

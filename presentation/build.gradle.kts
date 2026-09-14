@@ -40,4 +40,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.koin.compose)
     implementation(libs.kotlinx.coroutines)
+    implementation(libs.kotlinx.datetime)
 }

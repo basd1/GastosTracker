@@ -67,8 +67,8 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
+import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.androidx.compose.koinViewModel
-import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -373,7 +373,6 @@ private fun IngresoItem(
     onDelete: (IngresoModel) -> Unit,
     onEdit: (IngresoModel) -> Unit
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val categoria = ingreso.categoria
 
     val categoryColor = when {
@@ -464,7 +463,7 @@ private fun IngresoItem(
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = ingreso.fecha.format(dateFormatter),
+                            text = ingreso.fecha.formatDDMMYYYY(),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

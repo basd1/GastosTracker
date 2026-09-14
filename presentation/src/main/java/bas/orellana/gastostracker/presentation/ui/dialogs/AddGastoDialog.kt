@@ -44,9 +44,12 @@ import androidx.compose.ui.unit.sp
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
+import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -234,7 +237,7 @@ fun AddGastoDialog(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = fecha.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            initialSelectedDateMillis = fecha.atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -242,9 +245,9 @@ fun AddGastoDialog(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
                         onFechaChange(
-                            Instant.ofEpochMilli(millis)
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate()
+                            Instant.fromEpochMilliseconds(millis)
+                                .toLocalDateTime(TimeZone.currentSystemDefault())
+                                .date
                         )
                     }
                     showDatePicker = false
@@ -268,7 +271,6 @@ private fun DateDisplay(
     fecha: LocalDate,
     onClick: () -> Unit
 ) {
-    val dateFormatter = java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -285,7 +287,7 @@ private fun DateDisplay(
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = fecha.format(dateFormatter),
+                text = fecha.formatDDMMYYYY(),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface

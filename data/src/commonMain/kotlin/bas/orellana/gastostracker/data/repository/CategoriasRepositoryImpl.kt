@@ -1,6 +1,7 @@
 package bas.orellana.gastostracker.data.repository
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import bas.orellana.gastostracker.domain.model.Categoria
@@ -9,11 +10,11 @@ import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 
 class CategoriasRepositoryImpl(
-    private val context: Context
+    private val dataStore: DataStore<Preferences>
 ) : CategoriasRepository {
 
     companion object {
@@ -21,7 +22,7 @@ class CategoriasRepositoryImpl(
     }
 
     override fun getCategoriasPersonalizadas(): Flow<List<CategoriaPersonalizada>> {
-        return context.dataStore.data.map { preferences ->
+        return dataStore.data.map { preferences ->
             val json = preferences[CATEGORIAS_KEY] ?: "[]"
             parseCategoriasFromJson(json)
         }
@@ -35,7 +36,7 @@ class CategoriasRepositoryImpl(
             color = color
         )
 
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val json = preferences[CATEGORIAS_KEY] ?: "[]"
             val categorias = parseCategoriasFromJson(json).toMutableList()
             categorias.add(newCategoria)
@@ -44,7 +45,7 @@ class CategoriasRepositoryImpl(
     }
 
     override suspend fun updateCategoriaPersonalizada(categoria: CategoriaPersonalizada) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val json = preferences[CATEGORIAS_KEY] ?: "[]"
             val categorias = parseCategoriasFromJson(json).toMutableList()
             val index = categorias.indexOfFirst { it.id == categoria.id }
@@ -56,7 +57,7 @@ class CategoriasRepositoryImpl(
     }
 
     override suspend fun deleteCategoriaPersonalizada(id: String) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val json = preferences[CATEGORIAS_KEY] ?: "[]"
             val categorias = parseCategoriasFromJson(json).filter { it.id != id }
             preferences[CATEGORIAS_KEY] = categoriasToJson(categorias)
@@ -64,7 +65,7 @@ class CategoriasRepositoryImpl(
     }
 
     private suspend fun getNextId(): String {
-        val json = context.dataStore.data.first()[CATEGORIAS_KEY] ?: "[]"
+        val json = dataStore.data.first()[CATEGORIAS_KEY] ?: "[]"
         val categorias = parseCategoriasFromJson(json)
         val maxId = categorias.maxOfOrNull { it.id.toIntOrNull() ?: 0 } ?: 0
         return (maxId + 1).toString()
@@ -76,18 +77,11 @@ class CategoriasRepositoryImpl(
 
     private fun parseCategoriasFromJson(json: String): List<CategoriaPersonalizada> {
         return try {
-            val jsonArray = JSONArray(json)
-            (0 until jsonArray.length()).map { i ->
-                val obj = jsonArray.getJSONObject(i)
-                val color = try {
-                    obj.getLong("color")
-                } catch (e: Exception) {
-                    getRandomColor()
-                }
+            repositoryJson.decodeFromString<List<CategoriaPersonalizadaDto>>(json).map { dto ->
                 CategoriaPersonalizada(
-                    id = obj.getString("id"),
-                    nombre = obj.getString("nombre"),
-                    color = color
+                    id = dto.id,
+                    nombre = dto.nombre,
+                    color = dto.color ?: getRandomColor()
                 )
             }
         } catch (e: Exception) {
@@ -96,14 +90,13 @@ class CategoriasRepositoryImpl(
     }
 
     private fun categoriasToJson(categorias: List<CategoriaPersonalizada>): String {
-        val jsonArray = JSONArray()
-        categorias.forEach { categoria ->
-            val obj = JSONObject()
-            obj.put("id", categoria.id)
-            obj.put("nombre", categoria.nombre)
-            obj.put("color", categoria.color)
-            jsonArray.put(obj)
+        val dtos = categorias.map { categoria ->
+            CategoriaPersonalizadaDto(
+                id = categoria.id,
+                nombre = categoria.nombre,
+                color = categoria.color
+            )
         }
-        return jsonArray.toString()
+        return repositoryJson.encodeToString(dtos)
     }
 }

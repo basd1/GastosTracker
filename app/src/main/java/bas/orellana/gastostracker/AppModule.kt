@@ -1,10 +1,10 @@
 package bas.orellana.gastostracker
 
+import bas.orellana.gastostracker.data.createDataStore
 import bas.orellana.gastostracker.data.repository.CategoriasRepositoryImpl
 import bas.orellana.gastostracker.data.repository.GastoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.IngresoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.PreferencesRepository
-import bas.orellana.gastostracker.data.repository.dataStore
 import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import bas.orellana.gastostracker.domain.repository.GastoRepository
 import bas.orellana.gastostracker.domain.repository.IngresoRepository
@@ -29,9 +29,10 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    single<CategoriasRepository> { CategoriasRepositoryImpl(androidContext()) }
-    single<GastoRepository> { GastoRepositoryImpl(androidContext()) }
-    single { PreferencesRepository(androidContext()) }
+    single { createDataStore(androidContext()) }
+    single<CategoriasRepository> { CategoriasRepositoryImpl(get()) }
+    single<GastoRepository> { GastoRepositoryImpl(get()) }
+    single { PreferencesRepository(get()) }
 
     factory { GetGastosUseCase(get()) }
     factory { AddGastoUseCase(get()) }
@@ -43,7 +44,7 @@ val appModule = module {
     factory { UpdateCategoriaPersonalizadaUseCase(get()) }
     factory { DeleteCategoriaPersonalizadaUseCase(get()) }
 
-    single<IngresoRepository> { IngresoRepositoryImpl(androidContext()) }
+    single<IngresoRepository> { IngresoRepositoryImpl(get()) }
     factory { GetIngresosUseCase(get()) }
     factory { AddIngresoUseCase(get()) }
     factory { UpdateIngresoUseCase(get()) }

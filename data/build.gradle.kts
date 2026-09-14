@@ -1,6 +1,33 @@
-﻿plugins {
+plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(project(":domain"))
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
+            api(libs.androidx.datastore.preferences.core)
+            implementation(libs.okio)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+        }
+    }
 }
 
 android {
@@ -15,15 +42,4 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-}
-
-dependencies {
-    implementation(project(":domain"))
-    implementation(libs.kotlinx.coroutines)
-    implementation(libs.kotlinx.datetime)
-    implementation(libs.androidx.datastore)
 }

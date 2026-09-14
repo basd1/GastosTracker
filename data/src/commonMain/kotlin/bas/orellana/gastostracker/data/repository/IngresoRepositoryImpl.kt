@@ -1,6 +1,7 @@
 package bas.orellana.gastostracker.data.repository
 
-import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import bas.orellana.gastostracker.domain.model.Categoria
@@ -8,12 +9,12 @@ import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.json.JSONArray
-import org.json.JSONObject
 import kotlinx.datetime.LocalDate
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 
 class IngresoRepositoryImpl(
-    private val context: Context
+    private val dataStore: DataStore<Preferences>
 ) : IngresoRepository {
 
     companion object {
@@ -21,14 +22,14 @@ class IngresoRepositoryImpl(
     }
 
     override fun getIngresos(): Flow<List<IngresoModel>> {
-        return context.dataStore.data.map { preferences ->
+        return dataStore.data.map { preferences ->
             val json = preferences[INGRESOS_KEY] ?: "[]"
             parseIngresosFromJson(json)
         }
     }
 
     override suspend fun addIngreso(ingreso: IngresoModel) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val json = preferences[INGRESOS_KEY] ?: "[]"
             val ingresos = parseIngresosFromJson(json).toMutableList()
             ingresos.add(0, ingreso)
@@ -37,7 +38,7 @@ class IngresoRepositoryImpl(
     }
 
     override suspend fun updateIngreso(ingreso: IngresoModel) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val json = preferences[INGRESOS_KEY] ?: "[]"
             val ingresos = parseIngresosFromJson(json).toMutableList()
             val index = ingresos.indexOfFirst { it.id == ingreso.id }
@@ -49,7 +50,7 @@ class IngresoRepositoryImpl(
     }
 
     override suspend fun deleteIngreso(id: String) {
-        context.dataStore.edit { preferences ->
+        dataStore.edit { preferences ->
             val json = preferences[INGRESOS_KEY] ?: "[]"
             val ingresos = parseIngresosFromJson(json).filter { it.id != id }
             preferences[INGRESOS_KEY] = ingresosToJson(ingresos)
@@ -58,16 +59,14 @@ class IngresoRepositoryImpl(
 
     private fun parseIngresosFromJson(json: String): List<IngresoModel> {
         return try {
-            val jsonArray = JSONArray(json)
-            (0 until jsonArray.length()).map { i ->
-                val obj = jsonArray.getJSONObject(i)
+            repositoryJson.decodeFromString<List<IngresoDto>>(json).map { dto ->
                 IngresoModel(
-                    id = obj.getString("id"),
-                    nombre = obj.getString("nombre"),
-                    monto = obj.getDouble("monto"),
-                    fecha = LocalDate.parse(obj.getString("fecha")),
-                    categoria = if (obj.has("categoria")) Categoria.valueOf(obj.getString("categoria")) else null,
-                    categoriaPersonalizadaId = obj.optString("categoriaPersonalizadaId", null)
+                    id = dto.id,
+                    nombre = dto.nombre,
+                    monto = dto.monto,
+                    fecha = LocalDate.parse(dto.fecha),
+                    categoria = dto.categoria?.let { name -> Categoria.entries.find { it.name == name } },
+                    categoriaPersonalizadaId = dto.categoriaPersonalizadaId
                 )
             }
         } catch (e: Exception) {
@@ -76,19 +75,16 @@ class IngresoRepositoryImpl(
     }
 
     private fun ingresosToJson(ingresos: List<IngresoModel>): String {
-        val jsonArray = JSONArray()
-        ingresos.forEach { ingreso ->
-            val obj = JSONObject()
-            obj.put("id", ingreso.id)
-            obj.put("nombre", ingreso.nombre)
-            obj.put("monto", ingreso.monto)
-            obj.put("fecha", ingreso.fecha.toString())
-            val cat = ingreso.categoria
-            if (cat != null) obj.put("categoria", cat.name)
-            val catPersId = ingreso.categoriaPersonalizadaId
-            if (catPersId != null) obj.put("categoriaPersonalizadaId", catPersId)
-            jsonArray.put(obj)
+        val dtos = ingresos.map { ingreso ->
+            IngresoDto(
+                id = ingreso.id,
+                nombre = ingreso.nombre,
+                monto = ingreso.monto,
+                fecha = ingreso.fecha.toString(),
+                categoria = ingreso.categoria?.name,
+                categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId
+            )
         }
-        return jsonArray.toString()
+        return repositoryJson.encodeToString(dtos)
     }
 }

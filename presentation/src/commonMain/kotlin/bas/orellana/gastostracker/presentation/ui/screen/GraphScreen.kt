@@ -1,5 +1,6 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
+import bas.orellana.gastostracker.presentation.util.formatDecimal
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -68,7 +69,7 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
@@ -475,17 +476,17 @@ private fun SummaryCards(
     ) {
         SummaryCard(
             title = "Total",
-            value = "\u20AC${String.format("%.2f", total)}",
+            value = "\u20AC${formatDecimal(total, 2)}",
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
             title = "Top categor\u00EDa",
-            value = topCategoriaData?.let { "${it.nombre} ${String.format("%.0f", it.porcentaje)}%" } ?: "-",
+            value = topCategoriaData?.let { "${it.nombre} ${formatDecimal(it.porcentaje, 0)}%" } ?: "-",
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
             title = "Media/d\u00EDa",
-            value = "\u20AC${String.format("%.2f", dailyAvg)}",
+            value = "\u20AC${formatDecimal(dailyAvg, 2)}",
             modifier = Modifier.weight(1f)
         )
     }
@@ -569,7 +570,7 @@ private fun DonutChart(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "\u20AC${String.format("%.2f", total)}",
+                    text = "\u20AC${formatDecimal(total, 2)}",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -618,14 +619,14 @@ private fun LegendSection(
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "\u20AC${String.format("%.2f", monto)}",
+                        text = "\u20AC${formatDecimal(monto, 2)}",
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${String.format("%.1f", data.porcentaje)}%",
+                        text = "${formatDecimal(data.porcentaje, 1)}%",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
@@ -840,7 +841,7 @@ private fun MonthlySavingsLineChart(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "\u20AC${String.format("%.2f", selectedData.amount)}",
+                            text = "\u20AC${formatDecimal(selectedData.amount, 2)}",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = ahorroColor

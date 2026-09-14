@@ -18,7 +18,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import java.util.UUID
+import bas.orellana.gastostracker.presentation.util.randomId
+import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
 
 class BalanceViewModel(
     private val getIngresosUseCase: GetIngresosUseCase,
@@ -88,7 +89,7 @@ class BalanceViewModel(
     fun showEditIngresoDialog(ingreso: IngresoModel) {
         _addIngresoState.value = AddIngresoState(
             concepto = ingreso.nombre,
-            monto = ingreso.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
+            monto = ingreso.monto.toPlainStringTrimmed(),
             categoriaSeleccionada = ingreso.categoria,
             categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId,
             fecha = ingreso.fecha,
@@ -159,7 +160,7 @@ class BalanceViewModel(
             )
         } else {
             IngresoModel(
-                id = UUID.randomUUID().toString(),
+                id = randomId(),
                 nombre = nombre,
                 monto = montoDouble,
                 fecha = fecha,

@@ -29,7 +29,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
-import java.util.UUID
+import bas.orellana.gastostracker.presentation.util.randomId
+import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
 
 class HomeViewModel(
     private val getGastosUseCase: GetGastosUseCase,
@@ -105,7 +106,7 @@ class HomeViewModel(
     fun showEditGastoDialog(gasto: GastoModel) {
         _addGastoState.value = AddGastoState(
             concepto = gasto.nombre,
-            precio = gasto.monto.toBigDecimal().stripTrailingZeros().toPlainString(),
+            precio = gasto.monto.toPlainStringTrimmed(),
             categoriaSeleccionada = gasto.categoria,
             categoriaPersonalizadaSeleccionada = gasto.categoriaPersonalizadaId,
             fecha = gasto.fecha,
@@ -148,7 +149,7 @@ class HomeViewModel(
             )
         } else {
             GastoModel(
-                id = UUID.randomUUID().toString(),
+                id = randomId(),
                 nombre = nombre,
                 monto = monto,
                 fecha = fecha,
@@ -188,7 +189,7 @@ class HomeViewModel(
             val now = todayLocalDate()
             montos.forEachIndexed { index, monto ->
                 val gasto = GastoModel(
-                    id = UUID.randomUUID().toString(),
+                    id = randomId(),
                     nombre = "Ahorro ${index + 1}",
                     monto = monto,
                     fecha = now.minus(11 - index, DateTimeUnit.MONTH),
@@ -207,7 +208,7 @@ class HomeViewModel(
             (0 until 45).forEach { i ->
                 val monto = (100..600).random().toDouble()
                 val gasto = GastoModel(
-                    id = UUID.randomUUID().toString(),
+                    id = randomId(),
                     nombre = "Ahorro ${i + 1}",
                     monto = monto,
                     fecha = now.minus(44 - i, DateTimeUnit.MONTH),

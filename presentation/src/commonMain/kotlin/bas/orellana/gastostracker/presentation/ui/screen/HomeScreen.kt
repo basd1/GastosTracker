@@ -1,5 +1,6 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
+import bas.orellana.gastostracker.presentation.util.formatDecimal
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -76,7 +77,7 @@ import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -495,7 +496,7 @@ private fun AlertsSection(
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Este mes: \u20AC${String.format("%.2f", alert.gastoActual)}  |  Mes pasado: \u20AC${String.format("%.2f", alert.gastoAnterior)}",
+                            text = "Este mes: \u20AC${formatDecimal(alert.gastoActual, 2)}  |  Mes pasado: \u20AC${formatDecimal(alert.gastoAnterior, 2)}",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                         )
@@ -538,7 +539,7 @@ private fun SummaryHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "\u20AC${String.format("%.2f", totalMes)}",
+                    text = "\u20AC${formatDecimal(totalMes, 2)}",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -554,7 +555,7 @@ private fun SummaryHeader(
                 )
                 val media = if (cantidad > 0) totalMes / cantidad else 0.0
                 Text(
-                    text = "media \u20AC${String.format("%.2f", media)}",
+                    text = "media \u20AC${formatDecimal(media, 2)}",
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -674,7 +675,7 @@ private fun GastoItem(
                     )
                 }
                 Text(
-                    text = "\u20AC${String.format("%.2f", gasto.monto)}",
+                    text = "\u20AC${formatDecimal(gasto.monto, 2)}",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = categoriaColor

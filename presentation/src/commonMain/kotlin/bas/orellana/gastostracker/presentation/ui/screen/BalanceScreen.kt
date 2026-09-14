@@ -1,5 +1,6 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
+import bas.orellana.gastostracker.presentation.util.formatDecimal
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -68,7 +69,7 @@ import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
-import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -323,7 +324,7 @@ private fun BalanceHeader(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "\u20AC${String.format("%.2f", totalIngresos)}",
+                        text = "\u20AC${formatDecimal(totalIngresos, 2)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -336,7 +337,7 @@ private fun BalanceHeader(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "\u20AC${String.format("%.2f", totalGastos)}",
+                        text = "\u20AC${formatDecimal(totalGastos, 2)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
@@ -349,7 +350,7 @@ private fun BalanceHeader(
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "\u20AC${String.format("%.2f", totalAhorro)}",
+                        text = "\u20AC${formatDecimal(totalAhorro, 2)}",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary
@@ -486,7 +487,7 @@ private fun IngresoItem(
                     }
                 }
                 Text(
-                    text = "\u20AC${String.format("%.2f", ingreso.monto)}",
+                    text = "\u20AC${formatDecimal(ingreso.monto, 2)}",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

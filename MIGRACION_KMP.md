@@ -180,17 +180,43 @@ iOS (`iosArm64`/`iosX64`/`iosSimulatorArm64`) de todos los módulos KMP compilan
   directa), sino la serialización JSON manual en `data` (Fase 2) — ahí vive la
   persistencia real de gastos/ingresos/categorías y hoy no tiene tests ni
   compatibilidad garantizada hacia atrás.
-- AGP 9.x / Gradle 9.x: **se probó y se revirtió**. AGP 9 introduce soporte de Kotlin
-  integrado ("built-in Kotlin") que choca con `org.jetbrains.kotlin.multiplatform`
-  (error "Cannot add extension with name 'kotlin'"); existe el flag
-  `android.builtInKotlin=false` para desactivarlo, pero incluso así, aplicar
-  `org.jetbrains.kotlin.android` con Kotlin Gradle Plugin 2.1.10 contra AGP 9.4.0 falla
-  con un `ClassCastException` interno (`ApplicationExtensionImpl$AgpDecorated_Decorated
-  cannot be cast to BaseExtension`) — necesitaría subir también el Kotlin Gradle Plugin
-  a una versión mucho más nueva (2.4.20, la última disponible), lo que a su vez
-  probablemente rompe de nuevo las versiones de `navigation-compose`/
-  `lifecycle-viewmodel-compose` elegidas en la Fase 4 por su ABI de klib. Se dejó en
-  AGP 8.13.2 / Gradle 8.13 (que ya funciona) y este salto queda como una migración
-  propia, aislada, para abordar cuando compense el riesgo.
+- AGP 9.x / Gradle 9.x: **se probó y se revirtió** (primer intento), y luego se
+  investigó por qué falló para dejar el camino correcto documentado.
+
+  **Primer intento (fallido) y por qué falló de verdad**: subir a AGP 9.4.0 / Gradle
+  9.7.1 manteniendo `com.android.library` + `org.jetbrains.kotlin.multiplatform` en los
+  6 módulos KMP. Da el error "Cannot add extension with name 'kotlin'" porque AGP 9
+  trae soporte de Kotlin integrado ("built-in Kotlin"). El flag
+  `android.builtInKotlin=false` lo desactiva, pero incluso así falla con un
+  `ClassCastException` interno (`ApplicationExtensionImpl$AgpDecorated_Decorated cannot
+  be cast to BaseExtension`) contra Kotlin Gradle Plugin 2.1.10.
+
+  **La causa real** (confirmado en la documentación oficial de Kotlin/AGP): a partir de
+  AGP 9.0, **`org.jetbrains.kotlin.multiplatform` ya no se puede combinar con
+  `com.android.library`/`com.android.application`**, ni con el flag de arriba. Hace
+  falta el plugin nuevo **`com.android.kotlin.multiplatform.library`**, que sustituye a
+  `com.android.library` en los módulos KMP y usa un bloque `androidLibrary { }` en vez
+  de `androidTarget { }`. Como parche temporal (desaparece en AGP 10, ~Q2 2026) existe
+  `android.enableLegacyVariantApi=true`, distinto del flag que se probó al principio.
+
+  **Matriz de versiones que sí encajan entre sí** (fuente: documentación oficial de
+  Kotlin para la migración a AGP 9 + JetBrains Compose Multiplatform):
+  - AGP: 9.0.0+ (9.4.0 ya probado y disponible)
+  - Gradle: 9.1.0+ (9.7.1 ya probado y disponible)
+  - Kotlin: 2.3.0+ recomendado (la última es 2.4.20; con eso ya se podría usar Koin
+    4.2.2, la última, en vez del 4.0.0 al que hubo que bajar en la Fase 4)
+  - Compose Multiplatform: 1.9.3+ recomendado (la última es 1.11.0)
+  - JDK: 17+ (ya cubierto, el Gradle de este proyecto corre sobre el JDK 21 de Homebrew)
+  - `navigation-compose` / `lifecycle-viewmodel-compose` (JetBrains): habría que
+    volver a fijar sus versiones para esta franja de Kotlin/Compose Multiplatform más
+    nueva; no se llegó a probar.
+
+  **Alcance real de hacerlo bien**: no es solo subir números — hay que reescribir el
+  `build.gradle.kts` de los 6 módulos KMP (`domain`, `data`, `di`, `presentation`,
+  `navigation`, `core`) para usar el plugin nuevo y `androidLibrary{}`, y ese plugin
+  **no soporta build variants** (adiós `debugImplementation`/`compileDebugKotlinAndroid`
+  tal como están hoy), así que también tocaría `app/build.gradle.kts` y los tests. Se
+  dejó en AGP 8.13.2 / Gradle 8.13 (que ya funciona) — este salto queda como su propia
+  migración aislada para cuando se quiera abordar.
 - Proyecto pequeño → esto es semanas, no meses, si se hace por fases como aquí en vez
   de intentarlo todo junto.

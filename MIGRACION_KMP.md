@@ -45,7 +45,7 @@ Estado del proyecto en el momento de este análisis: 56 archivos `.kt`, ~5.300 l
 
 ## Fase 1 — `domain` a `commonMain` (Kotlin Multiplatform)
 
-**Estado: pendiente**
+**Estado: hecho ✅ (commit `f42aae6`)**
 
 Convertir `domain` de módulo Android (`com.android.library`) a módulo KMP puro. Es la
 fase de menor riesgo porque `domain` no tiene ni un import de Android.
@@ -73,7 +73,10 @@ Fuera de alcance en esta fase: `data`, UI, Compose Multiplatform.
 
 ## Fase 2 — `data` desacoplado de Android
 
-**Estado: pendiente**
+**Estado: hecho ✅ (commit `43b74cf`)** — `org.json` reemplazado por
+`kotlinx.serialization`, con tests que congelan el formato JSON que ya generaba el
+código viejo para no romper datos guardados en dispositivos reales. `DataStore` se
+crea vía una factoría `createDataStore(...)` por plataforma (`androidMain`/`iosMain`).
 
 Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
 `PreferencesRepository` reciben `Context` de Android y serializan a mano con
@@ -94,7 +97,10 @@ Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
 
 ## Fase 3 — Inyección de dependencias (Koin)
 
-**Estado: pendiente**
+**Estado: hecho ✅ (commit `ed04790`)** — bindings de repos/casos de uso movidos a
+`di/commonMain` con `koin-core`; solo el binding del `DataStore` (necesita `Context`
+en Android) quedó separado por plataforma. Los `ViewModel` se siguen registrando en
+`:app` (Android), pendiente de moverse en la Fase 4/5 si hiciera falta.
 
 `AppModule.kt`, `BaseApplication.kt`, `MainActivity.kt` y las 3 pantallas usan
 `koin-android`/`koin-androidx-compose` (`androidContext()`, `koinViewModel()`).
@@ -108,7 +114,25 @@ Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
 
 ## Fase 4 — UI compartida (Compose Multiplatform)
 
-**Estado: pendiente**
+**Estado: hecho ✅ (commit `c35588f`)** — `presentation`, `navigation` y `core` ya son
+KMP con el plugin de Compose Multiplatform (mismo namespace `androidx.compose.*`, la
+UI no cambió). `navigation-compose` y `lifecycle-viewmodel-compose` pasaron a sus
+artefactos multiplataforma (`org.jetbrains.androidx.*`, porque los de Google
+`androidx.navigation`/`androidx.lifecycle` todavía no publican klibs de iOS reales,
+solo variantes "stub"). `koinViewModel()` pasó a `koin-compose-viewmodel`.
+
+**Efecto colateral importante**: esto obligó a subir Kotlin 2.0.21 → 2.1.10 y Koin
+3.5.6 → 4.0.0 (las versiones multiplataforma de navigation-compose/lifecycle-viewmodel-compose
+compatibles con Kotlin 2.0.21 no tienen klibs de iOS reales; y `koin-compose-viewmodel`
+no existe antes de Koin 4.0.0). Ya estaba anticipado como riesgo transversal más abajo.
+
+Se reemplazaron además usos de APIs solo-JVM que no existen en Kotlin/Native:
+`java.util.UUID` → `kotlin.uuid.Uuid`, `String.format("%.Nf", ...)` → función propia
+`formatDecimal()`, `BigDecimal.stripTrailingZeros()` → `Double.toPlainStringTrimmed()`
+(todo en `presentation/util/`).
+
+Verificado: build de Android completo + tests domain/data en verde + los 3 targets
+iOS (`iosArm64`/`iosX64`/`iosSimulatorArm64`) de todos los módulos KMP compilan.
 
 1. Aplicar el plugin `org.jetbrains.compose` en `presentation`.
 2. Cambiar imports de `androidx.compose.*` a las coordenadas multiplataforma
@@ -123,11 +147,30 @@ Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
 
 ## Fase 5 — App iOS
 
-**Estado: pendiente**
+**Estado: parcial** — hecho el lado Kotlin, falta el proyecto Xcode.
 
-1. Crear el módulo `iosApp` (proyecto Xcode + punto de entrada Compose Multiplatform
-   vía `MainViewController.kt`).
-2. Reutilizar `presentation` tal cual desde el lado iOS.
+1. **Hecho**: módulo Gradle `:iosApp` (KMP, solo targets iOS: `iosX64`, `iosArm64`,
+   `iosSimulatorArm64`), con `MainViewController.kt` que arranca Koin
+   (`sharedModule` + `platformModule` de `:di`) y expone un `UIViewController` con
+   `ComposeUIViewController { AppNavHost(...) }` reutilizando `presentation` tal cual.
+   Configurado `binaries.framework { baseName = "GastosTrackerApp" }`.
+2. **Verificado**: `compileKotlinIosArm64`, `compileKotlinIosX64` y
+   `compileKotlinIosSimulatorArm64` compilan bien (el código Kotlin/Native es
+   correcto).
+3. **Bloqueado en esta máquina**: `linkDebugFrameworkIosSimulatorArm64` (el paso que
+   empaqueta el `.framework` final) falla con `xcrun` exit code 72 — esta máquina solo
+   tiene las Command Line Tools de Xcode instaladas (`xcode-select -p` →
+   `/Library/Developer/CommandLineTools`), no Xcode.app completo. Compilar código
+   Kotlin/Native no lo necesita, pero enlazar el framework final y crear/abrir un
+   proyecto `.xcodeproj` sí.
+4. **Pendiente, a hacer en una Mac con Xcode.app instalado**:
+   - Crear un proyecto Xcode normal (SwiftUI o UIKit) en, por ejemplo, `iosApp/xcode/`.
+   - Añadir un "Run Script" build phase que invoque
+     `./gradlew :iosApp:embedAndSignAppleFrameworkForXcode` (tarea estándar que genera
+     KMP para integrar el framework en el build de Xcode).
+   - Desde Swift, instanciar la vista con
+     `MainViewControllerKt.MainViewController()` (el nombre exacto depende del
+     `baseName` del framework, `GastosTrackerApp`).
 
 ---
 
@@ -137,8 +180,17 @@ Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
   directa), sino la serialización JSON manual en `data` (Fase 2) — ahí vive la
   persistencia real de gastos/ingresos/categorías y hoy no tiene tests ni
   compatibilidad garantizada hacia atrás.
-- AGP 9.x / Gradle 9.x (necesarios tarde o temprano para KMP moderno) tienen su propia
-  guía de migración específica publicada por JetBrains — conviene abordarlos como
-  parte de la Fase 1, no antes.
+- AGP 9.x / Gradle 9.x: **se probó y se revirtió**. AGP 9 introduce soporte de Kotlin
+  integrado ("built-in Kotlin") que choca con `org.jetbrains.kotlin.multiplatform`
+  (error "Cannot add extension with name 'kotlin'"); existe el flag
+  `android.builtInKotlin=false` para desactivarlo, pero incluso así, aplicar
+  `org.jetbrains.kotlin.android` con Kotlin Gradle Plugin 2.1.10 contra AGP 9.4.0 falla
+  con un `ClassCastException` interno (`ApplicationExtensionImpl$AgpDecorated_Decorated
+  cannot be cast to BaseExtension`) — necesitaría subir también el Kotlin Gradle Plugin
+  a una versión mucho más nueva (2.4.20, la última disponible), lo que a su vez
+  probablemente rompe de nuevo las versiones de `navigation-compose`/
+  `lifecycle-viewmodel-compose` elegidas en la Fase 4 por su ABI de klib. Se dejó en
+  AGP 8.13.2 / Gradle 8.13 (que ya funciona) y este salto queda como una migración
+  propia, aislada, para abordar cuando compense el riesgo.
 - Proyecto pequeño → esto es semanas, no meses, si se hace por fases como aquí en vez
   de intentarlo todo junto.

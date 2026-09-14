@@ -27,4 +27,5 @@ include(":presentation")
 include(":di")
 include(":core")
 include(":navigation")
+include(":iosApp")
  

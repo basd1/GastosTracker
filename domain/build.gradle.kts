@@ -1,16 +1,19 @@
 plugins {
-    id("com.android.library")
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.kotlin.multiplatform)
 }
 
 kotlin {
-    androidTarget {
+    androidLibrary {
+        namespace = "bas.orellana.gastostracker.domain"
+        compileSdk = 37
+        minSdk = 33
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
+        withHostTest {}
     }
 
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
 
@@ -21,21 +24,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
         }
-    }
-}
-
-android {
-    namespace = "bas.orellana.gastostracker.domain"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 33
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }

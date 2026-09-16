@@ -1,13 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "bas.orellana.gastostracker"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {

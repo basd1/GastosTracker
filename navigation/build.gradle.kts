@@ -1,16 +1,18 @@
 plugins {
-    id("com.android.library")
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.kotlin.multiplatform)
 }
 
 kotlin {
-    androidTarget {
+    androidLibrary {
+        namespace = "bas.orellana.gastostracker.navigation"
+        compileSdk = 37
+        minSdk = 33
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
 
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
 
@@ -18,19 +20,5 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":core"))
         }
-    }
-}
-
-android {
-    namespace = "bas.orellana.gastostracker.navigation"
-    compileSdk = 36
-
-    defaultConfig {
-        minSdk = 33
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
     }
 }

@@ -75,8 +75,8 @@ Fuera de alcance en esta fase: `data`, UI, Compose Multiplatform.
 
 **Estado: hecho ✅ (commit `43b74cf`)** — `org.json` reemplazado por
 `kotlinx.serialization`, con tests que congelan el formato JSON que ya generaba el
-código viejo para no romper datos guardados en dispositivos reales. `DataStore` se
-crea vía una factoría `createDataStore(...)` por plataforma (`androidMain`/`iosMain`).
+código viejo, para no cambiar de comportamiento con el cambio de librería. `DataStore`
+se crea vía una factoría `createDataStore(...)` por plataforma (`androidMain`/`iosMain`).
 
 Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
 `PreferencesRepository` reciben `Context` de Android y serializan a mano con
@@ -87,11 +87,14 @@ Hoy `GastoRepositoryImpl`, `IngresoRepositoryImpl`, `CategoriasRepositoryImpl` y
    1.1.x) a una función `expect fun createDataStore(...)`, con `actual` en Android
    (usa `Context.filesDir`) y `actual` en iOS (usa `NSDocumentDirectory`).
 3. Mover `data` a KMP con los mismos targets que `domain`.
-4. **Punto de riesgo real de esta fase**: no hay tests hoy sobre la serialización, y
-   los usuarios ya tienen datos guardados en DataStore con el formato JSON actual —
-   conviene escribir tests que comparen el JSON generado antes/después del cambio de
-   librería de serialización, para no romper la compatibilidad con dispositivos
-   existentes.
+4. **Riesgo de esta fase (mitigado)**: el cambio de librería de serialización podía
+   generar/leer el JSON de forma distinta a `org.json` (nulls explícitos vs. claves
+   omitidas, formato de números, fallbacks). Se añadió
+   `RepositoryJsonCompatibilityTest.kt` con fixtures que reproducen a mano el formato
+   exacto del código viejo, para verificar que el nuevo decoder los sigue leyendo
+   igual, más tests de round-trip. Nota: este proyecto no tiene usuarios ni datos en
+   producción — el test es una red de regresión de la corrección del cambio, no una
+   garantía de compatibilidad con dispositivos reales.
 
 ---
 
@@ -174,14 +177,128 @@ iOS (`iosArm64`/`iosX64`/`iosSimulatorArm64`) de todos los módulos KMP compilan
 
 ---
 
+## Fase 6 — AGP 9 / Gradle 9 / Kotlin 2.4
+
+**Estado: hecho ✅ para el cambio de build system.** No dependía de Xcode. El plan
+original la dividía en 5 sub-fases incrementales (6.1 solo Gradle+Kotlin, 6.2 solo
+`domain`, ...), pero al ejecutarlo se descubrieron dos acoplamientos que obligaron a
+fusionarlas en un único paso — documentados aquí porque no eran obvios de antemano:
+
+1. **Gradle 9.7.1 rompe directamente con AGP 8.13.2**, no solo al llegar a AGP 9 +
+   plugin nuevo. Error real: `Plugin 'com.android.internal.application' relies on
+   'org.gradle.api.problems.internal.InternalProblems', a Gradle internal API that
+   was removed in Gradle 9.6.0`. Es decir, no se puede aislar el bump de Gradle del
+   de AGP como planteaba la 6.1 — van atados.
+2. **La versión de AGP se comparte entre todos los módulos** vía el catálogo de
+   versiones, así que en el momento en que sube a 9.4.0 los 6 módulos KMP se rompen
+   a la vez (el error "Cannot add extension with name 'kotlin'" ya documentado
+   arriba). No hay estado intermedio estable con "domain migrado, el resto en AGP
+   viejo" — la 6.2/6.3/6.4 tuvieron que hacerse en el mismo commit.
+
+**Lo que se hizo, en un solo paso:**
+- Gradle wrapper 8.13 → **9.7.1** (regenerado con `./gradlew wrapper --gradle-version
+  9.7.1 --distribution-type bin`, no editando `distributionUrl` a mano).
+- `libs.versions.toml`: AGP → **9.4.0**, Kotlin → **2.4.20**, KSP → **2.3.11** (sin uso
+  real en el proyecto, se sube solo por consistencia).
+- Los 6 módulos KMP (`domain`, `data`, `di`, `navigation`, `core`, `presentation`):
+  plugin `com.android.library` → `com.android.kotlin.multiplatform.library`
+  (alias `libs.plugins.android.kotlin.multiplatform.library` en el catálogo), y el
+  bloque separado `android { namespace/compileSdk/minSdk/compileOptions }` +
+  `kotlin { androidTarget { } }` se fusionan en uno solo:
+  `kotlin { androidLibrary { namespace = ...; compileSdk = ...; minSdk = ...;
+  compilerOptions { jvmTarget.set(...) } } }`. `sourceCompatibility`/
+  `targetCompatibility` desaparecen (los controla `jvmTarget`).
+- `app/build.gradle.kts`: se quitó el plugin `org.jetbrains.kotlin.android` — con
+  AGP 9 el soporte de Kotlin ya viene integrado en `com.android.application`
+  (built-in Kotlin) y aplicar el plugin aparte ahora da error explícito pidiendo
+  quitarlo. `app` no se tocó en nada más: sigue con `com.android.application` normal,
+  build variants intactas (`debugImplementation`, etc.), porque esas solo se pierden
+  en los módulos que usan el plugin KMP nuevo.
+- `domain` y `data` (los únicos con tests hoy): se añadió `withHostTest {}` dentro de
+  `androidLibrary { }` para poder seguir ejecutando `commonTest` sobre JVM puro
+  (`./gradlew :domain:testAndroidHostTest`), ya que el plugin nuevo no habilita esto
+  por defecto. `di`/`navigation`/`core`/`presentation` no tienen tests hoy, así que no
+  se les añadió (se puede añadir igual el día que los tengan).
+
+**Verificado:**
+- `./gradlew :app:assembleDebug :domain:assemble :data:assemble :di:assemble
+  :core:assemble :navigation:assemble :presentation:assemble` → build completo,
+  Android + los 3 targets iOS (solo compilación de klibs, sin enlazar) en verde.
+- `./gradlew :domain:testAndroidHostTest :data:testAndroidHostTest` → los 20 tests
+  existentes (incluido `RepositoryJsonCompatibilityTest`) pasan sin fallos.
+- `./gradlew assemble` completo (incluyendo `:iosApp`) solo falla en
+  `linkDebugFrameworkIosArm64`/`linkReleaseFrameworkIosArm64` con el mismo
+  `xcrun exit code 72` ya documentado en la Fase 5 — no es un problema nuevo de esta
+  fase, sigue siendo el bloqueo de Xcode.app.
+
+**Extra: bump de Compose Multiplatform / Koin / navigation-compose / lifecycle-viewmodel-compose.**
+No hacía falta para que AGP9/Gradle9/Kotlin2.4 funcionaran (con las versiones viejas
+ya compilaba y pasaban los tests), pero se hizo también, de una sentada, y salieron
+dos hallazgos reales más:
+
+1. **Compose Multiplatform 1.12.0 exige `compileSdk 37`** (vía sus propias
+   dependencias de `androidx.compose.ui`/`androidx.lifecycle`). El SDK 37 no estaba
+   instalado (no había `cmdline-tools`/`sdkmanager` en la máquina). Se instaló con
+   `brew install --cask android-commandlinetools` y luego
+   `sdkmanager --sdk_root="$HOME/Library/Android/sdk" "platforms;android-37.2"`
+   (ojo: el paquete se llama `android-37.2`, no `android-37` a secas). `compileSdk`
+   subido a 37 en los 6 módulos KMP + `app` (`targetSdk` se dejó en 36, es una
+   decisión aparte).
+2. **Compose Multiplatform 1.12.0 y `navigation-compose` 2.10.0-beta01 ya no publican
+   variante para el target `iosX64`** (el simulador de iOS en Intel, obsoleto desde
+   que Apple Silicon es el estándar). Como los 7 módulos declaraban `iosX64()` como
+   target, esto rompía la resolución de dependencias con errores de "no matching
+   variant". Se quitó `iosX64()` de los 7 módulos (`domain`, `data`, `di`,
+   `navigation`, `core`, `presentation`, `iosApp`), dejando solo `iosArm64` +
+   `iosSimulatorArm64` — los únicos reales en esta máquina (ya daba warning de
+   "architecture mismatch" al intentar correr tests en `iosX64Test`).
+
+**Versiones finales:** Compose Multiplatform **1.12.0**, Koin **4.2.2**,
+`navigation-compose` (JetBrains) **2.10.0-beta01**, `lifecycle-viewmodel-compose`
+(JetBrains) **2.9.5**, `compileSdk` **37** en todos los módulos.
+
+**Re-verificado tras estos dos cambios:** build completo (`app` + los 6 módulos KMP)
+en verde, los 20 tests unitarios siguen pasando, y `iosApp` compila Kotlin para
+`iosArm64`/`iosSimulatorArm64` (sin enlazar, sigue bloqueado por Xcode.app).
+
+**Extra 2: resto de dependencias sueltas del catálogo** (`compose-bom`,
+`kotlinx-coroutines`, `kotlinx-datetime`, `kotlinx-serialization-json`,
+`androidx-datastore`), que llevaban tiempo sin tocarse y no tenían relación directa
+con AGP/Gradle/Kotlin:
+- `androidx.compose:compose-bom` 2024.09.00 → **2026.09.00** (2 años desactualizada).
+- `kotlinx-coroutines` (antes hardcodeada sin entrada en `[versions]`) 1.8.0 →
+  **1.11.0**, ahora con su propia entrada `kotlinxCoroutines` en el catálogo
+  (incluye también el `kotlinx-coroutines-test` hardcodeado en `domain`).
+- `kotlinx-serialization-json` 1.7.3 → **1.11.0**.
+- `androidx-datastore` (datastore-preferences-core) 1.1.1 → **1.2.1**.
+- `kotlinx-datetime`: **se quedó en 0.6.1**, sin subir. La 0.8.0 (última estable) es
+  una migración con cambio de API real, no solo un bump de versión: desde la 0.7.0,
+  `kotlinx.datetime.Clock`/`Instant` pasaron a ser alias de `kotlin.time.Clock`/
+  `Instant` (movidos al stdlib de Kotlin), y `Clock.System.todayIn(...)` en
+  `domain/src/commonMain/kotlin/.../util/DateUtils.kt:8` deja de resolver
+  (`Unresolved reference 'System'`) específicamente en la compilación del target
+  Android (`compileAndroidMain`; la compilación de metadata común no lo detecta).
+  Migrar ese único call site queda pendiente como tarea aparte, no bloqueante.
+
+Todo re-verificado de nuevo tras estos cambios: build completo en verde, 20 tests
+en verde.
+
+**Pendiente de esta fase:** verificar visualmente que la app sigue funcionando en un
+emulador/dispositivo Android real (navegación entre las 3 pantallas), no solo que
+compila y pasan los tests unitarios. Y, aparte, migrar `DateUtils.kt` para poder
+subir `kotlinx-datetime` a 0.8.0 el día que se quiera.
+
+---
+
 ## Resumen de riesgos transversales
 
-- El cambio más laborioso y con más riesgo de bugs no es la UI (se porta casi
-  directa), sino la serialización JSON manual en `data` (Fase 2) — ahí vive la
-  persistencia real de gastos/ingresos/categorías y hoy no tiene tests ni
-  compatibilidad garantizada hacia atrás.
-- AGP 9.x / Gradle 9.x: **se probó y se revirtió** (primer intento), y luego se
-  investigó por qué falló para dejar el camino correcto documentado.
+- El cambio más laborioso y con más riesgo de bugs no fue la UI (se portó casi
+  directa), sino la serialización JSON manual en `data` (Fase 2) — ya cubierto con
+  `RepositoryJsonCompatibilityTest.kt` (ver Fase 2). Al no haber datos ni usuarios en
+  producción, el riesgo real era solo de correctness del propio cambio, no de romper
+  dispositivos existentes.
+- AGP 9.x / Gradle 9.x: **hecho ✅** (ver Fase 6). Primer intento fallido, se investigó
+  por qué, y en el segundo intento se aplicó de una vez a los 6 módulos + `app`.
 
   **Primer intento (fallido) y por qué falló de verdad**: subir a AGP 9.4.0 / Gradle
   9.7.1 manteniendo `com.android.library` + `org.jetbrains.kotlin.multiplatform` en los
@@ -199,24 +316,22 @@ iOS (`iosArm64`/`iosX64`/`iosSimulatorArm64`) de todos los módulos KMP compilan
   de `androidTarget { }`. Como parche temporal (desaparece en AGP 10, ~Q2 2026) existe
   `android.enableLegacyVariantApi=true`, distinto del flag que se probó al principio.
 
-  **Matriz de versiones que sí encajan entre sí** (fuente: documentación oficial de
-  Kotlin para la migración a AGP 9 + JetBrains Compose Multiplatform):
-  - AGP: 9.0.0+ (9.4.0 ya probado y disponible)
-  - Gradle: 9.1.0+ (9.7.1 ya probado y disponible)
-  - Kotlin: 2.3.0+ recomendado (la última es 2.4.20; con eso ya se podría usar Koin
-    4.2.2, la última, en vez del 4.0.0 al que hubo que bajar en la Fase 4)
-  - Compose Multiplatform: 1.9.3+ recomendado (la última es 1.11.0)
+  **Matriz de versiones que sí encajan entre sí** (confirmada de nuevo, septiembre
+  2026 — ver desglose por sub-fases en la Fase 6):
+  - AGP: **9.4.0** (última estable)
+  - Gradle: **9.7.1** (última estable)
+  - Kotlin: **2.4.20** (última estable), KSP **2.3.11**
+  - Compose Multiplatform: **1.12.0** (última)
+  - Koin: **4.2.2**
+  - `navigation-compose` (JetBrains): **2.10.0-beta01** (sigue sin versión estable)
+  - `lifecycle-viewmodel-compose` (JetBrains): **2.9.5** (estable)
   - JDK: 17+ (ya cubierto, el Gradle de este proyecto corre sobre el JDK 21 de Homebrew)
-  - `navigation-compose` / `lifecycle-viewmodel-compose` (JetBrains): habría que
-    volver a fijar sus versiones para esta franja de Kotlin/Compose Multiplatform más
-    nueva; no se llegó a probar.
 
-  **Alcance real de hacerlo bien**: no es solo subir números — hay que reescribir el
+  **Alcance real, ya hecho** (ver Fase 6 para el detalle completo): se reescribió el
   `build.gradle.kts` de los 6 módulos KMP (`domain`, `data`, `di`, `presentation`,
-  `navigation`, `core`) para usar el plugin nuevo y `androidLibrary{}`, y ese plugin
-  **no soporta build variants** (adiós `debugImplementation`/`compileDebugKotlinAndroid`
-  tal como están hoy), así que también tocaría `app/build.gradle.kts` y los tests. Se
-  dejó en AGP 8.13.2 / Gradle 8.13 (que ya funciona) — este salto queda como su propia
-  migración aislada para cuando se quiera abordar.
+  `navigation`, `core`) para usar el plugin nuevo y `androidLibrary{}`. En la práctica
+  no hizo falta tocar build variants en `app` porque ese módulo no usa el plugin KMP
+  (sigue siendo `com.android.application` normal) — sí hubo que quitarle el plugin
+  `org.jetbrains.kotlin.android`, redundante con el Kotlin integrado de AGP 9.
 - Proyecto pequeño → esto es semanas, no meses, si se hace por fases como aquí en vez
   de intentarlo todo junto.

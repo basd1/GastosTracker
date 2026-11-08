@@ -49,3 +49,6 @@ credentials.json
 
 # Claude
 .claude/
+# Notas locales (plan, guías...): no se suben. El README sí.
+*.md
+!README.md

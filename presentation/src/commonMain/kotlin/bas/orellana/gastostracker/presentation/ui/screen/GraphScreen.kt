@@ -57,8 +57,18 @@ import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Aportacion
-import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
+import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.presentation.navigation.NavRoutes
+import bas.orellana.gastostracker.presentation.navigation.PeticionFiltro
+import bas.orellana.gastostracker.presentation.navigation.PeticionesFiltro
+import bas.orellana.gastostracker.presentation.state.FiltroGastos
+import bas.orellana.gastostracker.presentation.resources.toca_categoria_para_ver
+import org.koin.compose.koinInject
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import kotlin.math.PI
+import kotlin.math.atan2
+import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
@@ -116,7 +126,19 @@ fun GraphScreen(
         filterGastosByPeriod(todosLosGastos, selectedPeriod, selectedMonth, selectedYear)
     }
 
-    val gastosSinAhorro = filteredGastos
+    val gastosDelPeriodo = filteredGastos
+    val ingresos by graphViewModel.ingresos.collectAsState()
+    val peticionesFiltro = koinInject<PeticionesFiltro>()
+    // Mes de referencia para la comparativa y la evolución: el elegido o, si no, el actual.
+    val mesReferencia = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) Mes(selectedYear, selectedMonth) else Mes.actual()
+    val abrirGastosDeCategoria: (CategoriaData) -> Unit = { dato ->
+        peticionesFiltro.pedir(peticionParaCategoria(dato, selectedPeriod, selectedMonth, selectedYear, todosLosGastos))
+        navController.navigate(NavRoutes.HOME) {
+            popUpTo(NavRoutes.HOME) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
 
 
     val aportaciones by graphViewModel.aportaciones.collectAsState()
@@ -160,7 +182,7 @@ fun GraphScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                if (gastosSinAhorro.isEmpty() && aportaciones.isEmpty()) {
+                if (gastosDelPeriodo.isEmpty() && aportaciones.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -185,7 +207,7 @@ fun GraphScreen(
                     ) {
                         item {
                             SummaryCards(
-                                gastos = gastosSinAhorro,
+                                gastos = gastosDelPeriodo,
                                 selectedPeriod = selectedPeriod,
                                 selectedMonth = selectedMonth,
                                 selectedYear = selectedYear,
@@ -195,16 +217,35 @@ fun GraphScreen(
 
                         item {
                             DonutChart(
-                                gastos = gastosSinAhorro,
-                                categoriasPersonalizadas = categoriasPersonalizadas
+                                gastos = gastosDelPeriodo,
+                                categoriasPersonalizadas = categoriasPersonalizadas,
+                                onCategoria = abrirGastosDeCategoria
                             )
                         }
 
                         item {
                             LegendSection(
-                                gastos = gastosSinAhorro,
-                                categoriasPersonalizadas = categoriasPersonalizadas
+                                gastos = gastosDelPeriodo,
+                                categoriasPersonalizadas = categoriasPersonalizadas,
+                                onCategoria = abrirGastosDeCategoria
                             )
+                        }
+
+                        item {
+                            IngresosVsGastosCard(gastos = todosLosGastos, ingresos = ingresos, hasta = mesReferencia)
+                        }
+
+                        item {
+                            EvolucionCategoriaCard(
+                                gastos = todosLosGastos,
+                                categoriasPersonalizadas = categoriasPersonalizadas,
+                                hasta = mesReferencia,
+                                categoriaInicial = null
+                            )
+                        }
+
+                        item {
+                            ComparativaAnualCard(gastos = todosLosGastos, categoriasPersonalizadas = categoriasPersonalizadas, mes = mesReferencia)
                         }
 
                         item {
@@ -450,10 +491,12 @@ private fun SummaryCard(
     }
 }
 
+/** Gráfico de anillo por categoría. Tocar una sección abre la lista de gastos de esa categoría. */
 @Composable
 private fun DonutChart(
     gastos: List<GastoModel>,
-    categoriasPersonalizadas: List<CategoriaPersonalizada>
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    onCategoria: (CategoriaData) -> Unit = {}
 ) {
     val total = gastos.sumOf { it.monto }
     val sortedData = calcularTotalesPorCategoria(gastos, categoriasPersonalizadas)
@@ -464,16 +507,37 @@ private fun DonutChart(
         label = "donut"
     )
 
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center
-    ) {
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
-            modifier = Modifier
-                .size(260.dp),
+            modifier = Modifier.size(240.dp),
             contentAlignment = Alignment.Center
         ) {
-            Canvas(modifier = Modifier.size(260.dp)) {
+            Canvas(
+                modifier = Modifier
+                    .size(240.dp)
+                    .pointerInput(sortedData) {
+                        detectTapGestures { toque ->
+                            val centro = Offset(size.width / 2f, size.height / 2f)
+                            val distancia = (toque - centro).getDistance()
+                            val radioExterior = size.width / 2f
+                            val grosor = radioExterior * 0.38f
+                            if (distancia > radioExterior || distancia < radioExterior - grosor * 1.4f) return@detectTapGestures
+                            // Ángulo desde las 12 en punto, en el sentido de las agujas del reloj.
+                            var angulo = (atan2(toque.y - centro.y, toque.x - centro.x) * 180f / PI.toFloat()) + 90f
+                            if (angulo < 0f) angulo += 360f
+                            var acumulado = 0f
+                            sortedData.forEach { dato ->
+                                acumulado += dato.porcentaje / 100f * 360f
+                                if (angulo <= acumulado) {
+                                    onCategoria(dato)
+                                    return@detectTapGestures
+                                }
+                            }
+                        }
+                    }
+            ) {
+                val grosor = size.minDimension / 2f * 0.38f
+                val inset = grosor / 2f
                 var startAngle = -90f
                 sortedData.forEach { data ->
                     val sweepAngle = (data.porcentaje / 100f) * 360f * animationProgress
@@ -481,15 +545,16 @@ private fun DonutChart(
                         color = data.color,
                         startAngle = startAngle,
                         sweepAngle = sweepAngle,
-                        useCenter = true
+                        useCenter = false,
+                        topLeft = Offset(inset, inset),
+                        size = Size(size.width - grosor, size.height - grosor),
+                        style = Stroke(width = grosor)
                     )
                     startAngle += (data.porcentaje / 100f) * 360f
                 }
             }
 
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = stringResource(Res.string.resumen_total),
                     fontSize = 12.sp,
@@ -503,13 +568,20 @@ private fun DonutChart(
                 )
             }
         }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(Res.string.toca_categoria_para_ver),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
 @Composable
 private fun LegendSection(
     gastos: List<GastoModel>,
-    categoriasPersonalizadas: List<CategoriaPersonalizada>
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    onCategoria: (CategoriaData) -> Unit = {}
 ) {
     val sortedData = calcularTotalesPorCategoria(gastos, categoriasPersonalizadas)
 
@@ -518,7 +590,7 @@ private fun LegendSection(
     ) {
         sortedData.forEach { data ->
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().clickable { onCategoria(data) },
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                 shape = MaterialTheme.shapes.extraSmall
             ) {
@@ -813,7 +885,8 @@ private data class CategoriaData(
     val nombrePersonalizada: String?,
     val colorArgb: Long,
     val monto: Double,
-    val porcentaje: Float
+    val porcentaje: Float,
+    val categoriaPersonalizadaId: String? = null
 ) {
     val color: Color get() = Color(colorArgb)
 }
@@ -843,9 +916,34 @@ private fun calcularTotalesPorCategoria(
             val porcentaje = ((monto / total) * 100).toFloat()
             when (clave) {
                 is Categoria -> CategoriaData(clave, null, clave.color, monto, porcentaje)
-                is CategoriaPersonalizada -> CategoriaData(null, clave.nombre, clave.color, monto, porcentaje)
+                is CategoriaPersonalizada -> CategoriaData(null, clave.nombre, clave.color, monto, porcentaje, clave.id)
                 else -> error("Clave de categoría inesperada: $clave")
             }
         }
         .sortedByDescending { it.monto }
+}
+
+/**
+ * Petición para abrir Gastos con la categoría tocada y el mismo periodo del gráfico: un mes si el
+ * gráfico es de un mes, o un rango de fechas para "3 meses" y "Total".
+ * Los gastos sin categoría salen en el gráfico como "Otros"; al tocar "Otros" solo se filtra esa categoría.
+ */
+private fun peticionParaCategoria(
+    dato: CategoriaData,
+    periodo: PeriodFilter,
+    mes: Int,
+    anio: Int,
+    todos: List<GastoModel>
+): PeticionFiltro {
+    val porCategoria = FiltroGastos(
+        categorias = setOfNotNull(dato.categoria),
+        personalizadas = setOfNotNull(dato.categoriaPersonalizadaId)
+    )
+    val hoy = todayLocalDate()
+    return when (periodo) {
+        PeriodFilter.THIS_MONTH -> PeticionFiltro(porCategoria, Mes.de(hoy))
+        PeriodFilter.SPECIFIC_MONTH -> PeticionFiltro(porCategoria, Mes(anio, mes))
+        PeriodFilter.LAST_3_MONTHS -> PeticionFiltro(porCategoria.copy(desde = hoy.minus(3, DateTimeUnit.MONTH), hasta = hoy))
+        PeriodFilter.ALL -> PeticionFiltro(porCategoria.copy(desde = todos.minOfOrNull { it.fecha } ?: hoy, hasta = hoy))
+    }
 }

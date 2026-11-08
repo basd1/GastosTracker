@@ -31,6 +31,7 @@ import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
 import bas.orellana.gastostracker.presentation.state.SortOrder
 import bas.orellana.gastostracker.presentation.state.FiltroGastos
+import bas.orellana.gastostracker.presentation.navigation.PeticionFiltro
 import bas.orellana.gastostracker.presentation.util.parseImporte
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -429,6 +430,12 @@ class HomeViewModel(
     fun aplicarFiltro(filtro: FiltroGastos) {
         _state.update { it.copy(filtro = filtro, showFiltrosDialog = false) }
         rangoPropio.value = filtro.rangoFechas
+    }
+
+    /** Aplica una petición de otra pantalla (p. ej. pulsar una categoría en el gráfico). */
+    fun aplicarPeticion(peticion: PeticionFiltro) {
+        peticion.mes?.let { seleccionarMes(it) }
+        aplicarFiltro(peticion.filtro)
     }
 
     fun clearFilters() {

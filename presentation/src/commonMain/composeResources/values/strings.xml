@@ -108,6 +108,13 @@
     <string name="ahorro_acumulado">Ahorro acumulado</string>
     <string name="sin_datos_ahorro">No hay datos de ahorro</string>
     <string name="toca_un_punto">Toca un punto para ver el valor</string>
+    <string name="toca_una_barra">Toca una barra para ver los importes</string>
+    <string name="ingresos_vs_gastos">Ingresos y gastos (últimos 6 meses)</string>
+    <string name="evolucion_categoria">Evolución por categoría (12 meses)</string>
+    <string name="comparativa_anual">%1$s frente a %2$s</string>
+    <string name="comparativa_total">Total</string>
+    <string name="comparativa_sin_datos">No hay gastos en ninguno de los dos meses</string>
+    <string name="toca_categoria_para_ver">Toca una categoría para ver sus gastos</string>
 
     <!-- Ajustes y categorías -->
     <string name="modo_oscuro">Modo oscuro</string>

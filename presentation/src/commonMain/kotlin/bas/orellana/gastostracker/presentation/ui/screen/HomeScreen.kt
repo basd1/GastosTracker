@@ -94,6 +94,10 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
+import bas.orellana.gastostracker.presentation.navigation.PeticionesFiltro
+import kotlinx.coroutines.flow.filterNotNull
+import androidx.compose.runtime.LaunchedEffect
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.accion_descartar
 import bas.orellana.gastostracker.presentation.resources.accion_deshacer
@@ -131,6 +135,14 @@ fun HomeScreen(
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Peticiones de otras pantallas para abrir la lista ya filtrada (p. ej. desde el gráfico).
+    val peticionesFiltro = koinInject<PeticionesFiltro>()
+    LaunchedEffect(peticionesFiltro) {
+        peticionesFiltro.pendiente.filterNotNull().collect {
+            peticionesFiltro.consumir()?.let { peticion -> viewModel.aplicarPeticion(peticion) }
+        }
+    }
     val scope = rememberCoroutineScope()
     var stashedGasto by remember { mutableStateOf<GastoModel?>(null) }
     val textoGastoEliminado = stringResource(Res.string.gasto_eliminado)

@@ -23,6 +23,7 @@ import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.state.SortOrder
 import bas.orellana.gastostracker.presentation.state.FiltroGastos
+import bas.orellana.gastostracker.presentation.navigation.PeticionFiltro
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -193,6 +194,21 @@ class HomeViewModelTest {
         vm.seleccionarMes(Mes.actual())
         assertNull(vm.state.value.filtro.rangoFechas)
         assertEquals(listOf("actual"), vm.state.value.gastos.map { it.id })
+    }
+
+
+    @Test
+    fun `una peticion desde el grafico cambia de mes y filtra por la categoria`() = runTest {
+        anadir(
+            gasto("ocio", fecha = inicioMesAnterior, categoria = Categoria.OCIO),
+            gasto("comida", fecha = inicioMesAnterior, categoria = Categoria.COMIDA)
+        )
+        val vm = crearViewModel()
+
+        vm.aplicarPeticion(PeticionFiltro(FiltroGastos(categorias = setOf(Categoria.OCIO)), Mes.de(inicioMesAnterior)))
+
+        assertEquals(Mes.de(inicioMesAnterior), vm.state.value.mes)
+        assertEquals(listOf("ocio"), vm.idsVisibles)
     }
 
     // ---------- Orden ----------

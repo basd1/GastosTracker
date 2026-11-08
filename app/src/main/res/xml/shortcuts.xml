@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Atajos que salen al mantener pulsado el icono de la app. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_atajo_anadir"
+        android:shortcutId="anadir_gasto"
+        android:shortcutLongLabel="@string/atajo_anadir_gasto_largo"
+        android:shortcutShortLabel="@string/atajo_anadir_gasto">
+        <intent
+            android:action="bas.orellana.gastostracker.ANADIR_GASTO"
+            android:targetClass="bas.orellana.gastostracker.MainActivity"
+            android:targetPackage="bas.orellana.gastostracker" />
+    </shortcut>
+</shortcuts>

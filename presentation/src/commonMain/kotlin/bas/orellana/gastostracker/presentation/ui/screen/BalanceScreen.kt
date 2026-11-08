@@ -1,6 +1,5 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
-import bas.orellana.gastostracker.presentation.util.formatDecimal
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -70,6 +69,22 @@ import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_deshacer
+import bas.orellana.gastostracker.presentation.resources.accion_eliminar
+import bas.orellana.gastostracker.presentation.resources.anadir_ingreso
+import bas.orellana.gastostracker.presentation.resources.boton_ingreso
+import bas.orellana.gastostracker.presentation.resources.ingreso_eliminado
+import bas.orellana.gastostracker.presentation.resources.ingresos_con_numero
+import bas.orellana.gastostracker.presentation.resources.resumen_ahorro
+import bas.orellana.gastostracker.presentation.resources.resumen_gastos
+import bas.orellana.gastostracker.presentation.resources.resumen_ingresos
+import bas.orellana.gastostracker.presentation.resources.seleccionar_mes
+import bas.orellana.gastostracker.presentation.resources.titulo_balance
+import bas.orellana.gastostracker.presentation.ui.components.etiquetaCategoria
+import bas.orellana.gastostracker.presentation.ui.components.mesYAnio
+import bas.orellana.gastostracker.presentation.util.formatMoney
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,12 +98,13 @@ fun BalanceScreen(
     val addIngresoState by viewModel.addIngresoState.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val categoriasPersonalizadas by homeViewModel.categoriasPersonalizadas.collectAsState()
-    val manageCategoriasState by homeViewModel.manageCategoriasState.collectAsState()
     val homeState by homeViewModel.state.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var stashedIngreso by remember { mutableStateOf<IngresoModel?>(null) }
+    val textoIngresoEliminado = stringResource(Res.string.ingreso_eliminado)
+    val textoDeshacer = stringResource(Res.string.accion_deshacer)
 
     Box(
         modifier = Modifier
@@ -102,7 +118,7 @@ fun BalanceScreen(
                 GradientTopAppBar(
                     icon = null,
                     emoji = "\uD83D\uDCB0",
-                    title = "Balance",
+                    title = stringResource(Res.string.titulo_balance),
                     onSettingsClick = { viewModel.showSettingsDialog() }
                 )
             },
@@ -122,12 +138,12 @@ fun BalanceScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
-                            contentDescription = "Añadir ingreso",
+                            contentDescription = stringResource(Res.string.anadir_ingreso),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Ingreso",
+                            text = stringResource(Res.string.boton_ingreso),
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         )
@@ -164,7 +180,7 @@ fun BalanceScreen(
 
                     item {
                         Text(
-                            text = "Ingresos (${state.ingresos.size})",
+                            text = stringResource(Res.string.ingresos_con_numero, state.ingresos.size),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(bottom = 8.dp),
@@ -181,8 +197,8 @@ fun BalanceScreen(
                                 viewModel.deleteIngreso(ingresoEliminado.id)
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
-                                        message = "Ingreso eliminado",
-                                        actionLabel = "Deshacer"
+                                        message = textoIngresoEliminado,
+                                        actionLabel = textoDeshacer
                                     )
                                     if (result == SnackbarResult.ActionPerformed) {
                                         stashedIngreso?.let { viewModel.restoreIngreso(it) }
@@ -243,30 +259,7 @@ fun BalanceScreen(
         }
 
         if (homeState.showManageCategoriasDialog) {
-            ManageCategoriasDialog(
-                categoriasPersonalizadas = categoriasPersonalizadas,
-                colorSeleccionado = manageCategoriasState.colorSeleccionado,
-                nuevaCategoria = manageCategoriasState.nuevaCategoria,
-                editCategoria = manageCategoriasState.editCategoria,
-                editNombre = manageCategoriasState.editNombre,
-                editColor = manageCategoriasState.editColor,
-                onColorSeleccionado = { homeViewModel.updateColorSeleccionado(it) },
-                onNuevaCategoriaChange = { homeViewModel.updateNuevaCategoria(it) },
-                onAddCategoria = {
-                    homeViewModel.addCategoriaPersonalizada(
-                        manageCategoriasState.nuevaCategoria,
-                        manageCategoriasState.colorSeleccionado
-                    )
-                    homeViewModel.resetManageCategoriasState()
-                },
-                onDeleteCategoria = { homeViewModel.deleteCategoriaPersonalizada(it) },
-                onEditCategoria = { homeViewModel.showEditCategoriaDialog(it) },
-                onEditNombreChange = { homeViewModel.updateEditNombre(it) },
-                onEditColorChange = { homeViewModel.updateEditColor(it) },
-                onSaveEdit = { homeViewModel.saveEditCategoria() },
-                onCancelEdit = { homeViewModel.cancelEditCategoria() },
-                onDismiss = { homeViewModel.hideManageCategoriasDialog() }
-            )
+            ManageCategoriasDialog(homeViewModel)
         }
     }
 }
@@ -299,19 +292,15 @@ private fun BalanceHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
-                val monthNames = listOf(
-                    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-                    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-                )
                 Text(
-                    text = "${monthNames[selectedMonth - 1]} $selectedYear",
+                    text = mesYAnio(selectedMonth, selectedYear),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Seleccionar mes",
+                    contentDescription = stringResource(Res.string.seleccionar_mes),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -324,39 +313,39 @@ private fun BalanceHeader(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "\u20AC${formatDecimal(totalIngresos, 2)}",
+                        text = formatMoney(totalIngresos),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Ingresos",
+                        text = stringResource(Res.string.resumen_ingresos),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "\u20AC${formatDecimal(totalGastos, 2)}",
+                        text = formatMoney(totalGastos),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.error
                     )
                     Text(
-                        text = "Gastos",
+                        text = stringResource(Res.string.resumen_gastos),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "\u20AC${formatDecimal(totalAhorro, 2)}",
+                        text = formatMoney(totalAhorro),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.tertiary
                     )
                     Text(
-                        text = "Ahorro",
+                        text = stringResource(Res.string.resumen_ahorro),
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -374,17 +363,8 @@ private fun IngresoItem(
     onDelete: (IngresoModel) -> Unit,
     onEdit: (IngresoModel) -> Unit
 ) {
-    val categoria = ingreso.categoria
-
-    val categoryColor = when {
-        ingreso.categoriaPersonalizadaId != null -> {
-            categoriasPersonalizadas.find { it.id == ingreso.categoriaPersonalizadaId }?.let {
-                Color(it.color)
-            } ?: MaterialTheme.colorScheme.primary
-        }
-        categoria != null -> Color(categoria.color)
-        else -> MaterialTheme.colorScheme.primary
-    }
+    val etiqueta = etiquetaCategoria(ingreso.categoria, ingreso.categoriaPersonalizadaId, categoriasPersonalizadas)
+    val categoryColor = etiqueta?.color ?: MaterialTheme.colorScheme.primary
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
@@ -415,7 +395,7 @@ private fun IngresoItem(
                 if (dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar",
+                        contentDescription = stringResource(Res.string.accion_eliminar),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(28.dp)
                     )
@@ -468,7 +448,7 @@ private fun IngresoItem(
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        if (categoria != null || ingreso.categoriaPersonalizadaId != null) {
+                        if (etiqueta != null) {
                             Spacer(modifier = Modifier.width(6.dp))
                             Box(
                                 modifier = Modifier
@@ -477,9 +457,7 @@ private fun IngresoItem(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = categoria?.displayName
-                                    ?: categoriasPersonalizadas.find { it.id == ingreso.categoriaPersonalizadaId }?.nombre
-                                    ?: "",
+                                text = etiqueta.nombre,
                                 fontSize = 11.sp,
                                 color = categoryColor
                             )
@@ -487,7 +465,7 @@ private fun IngresoItem(
                     }
                 }
                 Text(
-                    text = "\u20AC${formatDecimal(ingreso.monto, 2)}",
+                    text = formatMoney(ingreso.monto),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

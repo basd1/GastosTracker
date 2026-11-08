@@ -40,6 +40,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.datetime.Month
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_cancelar
+import bas.orellana.gastostracker.presentation.resources.accion_seleccionar
+import bas.orellana.gastostracker.presentation.resources.anio_anterior
+import bas.orellana.gastostracker.presentation.resources.anio_siguiente
+import bas.orellana.gastostracker.presentation.ui.components.nombreMesCorto
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +77,7 @@ fun MonthYearPickerDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = { selectedYear-- }) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Año anterior")
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(Res.string.anio_anterior))
                     }
                     Text(
                         text = "$selectedYear",
@@ -78,7 +85,7 @@ fun MonthYearPickerDialog(
                         fontWeight = FontWeight.Bold
                     )
                     IconButton(onClick = { selectedYear++ }) {
-                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Año siguiente")
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(Res.string.anio_siguiente))
                     }
                 }
 
@@ -104,7 +111,7 @@ fun MonthYearPickerDialog(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = month.name.take(3),
+                                    text = nombreMesCorto(month.ordinal + 1),
                                     fontSize = 14.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                     color = if (isSelected) Color.White else Color.Unspecified,
@@ -131,13 +138,13 @@ fun MonthYearPickerDialog(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancelar", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(Res.string.accion_cancelar), color = MaterialTheme.colorScheme.error)
                     }
                     Button(
                         onClick = { onConfirm(selectedMonth, selectedYear) },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Seleccionar")
+                        Text(stringResource(Res.string.accion_seleccionar))
                     }
                 }
             }

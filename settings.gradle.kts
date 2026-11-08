@@ -25,7 +25,5 @@ include(":domain")
 include(":data")
 include(":presentation")
 include(":di")
-include(":core")
-include(":navigation")
 include(":iosApp")
  

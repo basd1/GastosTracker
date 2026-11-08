@@ -52,6 +52,24 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_actualizar
+import bas.orellana.gastostracker.presentation.resources.accion_cancelar
+import bas.orellana.gastostracker.presentation.resources.accion_guardar
+import bas.orellana.gastostracker.presentation.resources.accion_seleccionar
+import bas.orellana.gastostracker.presentation.resources.anadir_gasto
+import bas.orellana.gastostracker.presentation.resources.cambiar_fecha
+import bas.orellana.gastostracker.presentation.resources.campo_categoria
+import bas.orellana.gastostracker.presentation.resources.campo_concepto
+import bas.orellana.gastostracker.presentation.resources.campo_fecha
+import bas.orellana.gastostracker.presentation.resources.campo_precio
+import bas.orellana.gastostracker.presentation.resources.categorias_personalizadas
+import bas.orellana.gastostracker.presentation.resources.editar_gasto
+import bas.orellana.gastostracker.presentation.resources.importe_invalido
+import bas.orellana.gastostracker.presentation.resources.sin_categoria
+import bas.orellana.gastostracker.presentation.ui.components.nombre
+import bas.orellana.gastostracker.presentation.util.simboloMoneda
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +104,7 @@ fun AddGastoDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = if (gastoToEdit != null) "Editar gasto" else "Añadir gasto",
+                    text = stringResource(if (gastoToEdit != null) Res.string.editar_gasto else Res.string.anadir_gasto),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -96,7 +114,7 @@ fun AddGastoDialog(
                 OutlinedTextField(
                     value = concepto,
                     onValueChange = onConceptoChange,
-                    label = { Text("Concepto") },
+                    label = { Text(stringResource(Res.string.campo_concepto)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
@@ -113,16 +131,16 @@ fun AddGastoDialog(
                     },
                     isError = importeInvalido,
                     supportingText = if (importeInvalido) {
-                        { Text("Introduce un importe mayor que 0") }
+                        { Text(stringResource(Res.string.importe_invalido)) }
                     } else null,
-                    label = { Text("Precio") },
+                    label = { Text(stringResource(Res.string.campo_precio)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
                         capitalization = KeyboardCapitalization.Sentences
                     ),
-                    prefix = { Text("€") }
+                    prefix = { Text(simboloMoneda()) }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -135,7 +153,7 @@ fun AddGastoDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "Categoría",
+                    text = stringResource(Res.string.campo_categoria),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -155,7 +173,7 @@ fun AddGastoDialog(
                                 onCategoriaChange(null)
                                 onCategoriaPersonalizadaChange(null)
                             },
-                            label = { Text("Sin categoría") },
+                            label = { Text(stringResource(Res.string.sin_categoria)) },
                             modifier = Modifier.clickable {
                                 onCategoriaChange(null)
                                 onCategoriaPersonalizadaChange(null)
@@ -171,7 +189,7 @@ fun AddGastoDialog(
                                 FilterChip(
                                     selected = categoriaSeleccionada == categoria,
                                     onClick = { onCategoriaChange(categoria) },
-                                    label = { Text(categoria.displayName) },
+                                    label = { Text(categoria.nombre()) },
                                     modifier = Modifier.clickable { onCategoriaChange(categoria) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = Color(categoria.color).copy(alpha = 0.4f),
@@ -184,7 +202,7 @@ fun AddGastoDialog(
 
                     if (categoriasPersonalizadas.isNotEmpty()) {
                         Text(
-                            text = "Personalizadas",
+                            text = stringResource(Res.string.categorias_personalizadas),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -227,7 +245,7 @@ fun AddGastoDialog(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "Cancelar",
+                            text = stringResource(Res.string.accion_cancelar),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -236,7 +254,7 @@ fun AddGastoDialog(
                         enabled = concepto.isNotBlank() && importeValido,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(if (gastoToEdit != null) "Actualizar" else "Guardar")
+                        Text(stringResource(if (gastoToEdit != null) Res.string.accion_actualizar else Res.string.accion_guardar))
                     }
                 }
             }
@@ -260,12 +278,12 @@ fun AddGastoDialog(
                     }
                     showDatePicker = false
                 }) {
-                    Text("Seleccionar")
+                    Text(stringResource(Res.string.accion_seleccionar))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.accion_cancelar), color = MaterialTheme.colorScheme.error)
                 }
             }
         ) {
@@ -289,7 +307,7 @@ private fun DateDisplay(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Fecha",
+            text = stringResource(Res.string.campo_fecha),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -303,7 +321,7 @@ private fun DateDisplay(
             Spacer(modifier = Modifier.padding(horizontal = 4.dp))
             Icon(
                 imageVector = Icons.Default.DateRange,
-                contentDescription = "Cambiar fecha",
+                contentDescription = stringResource(Res.string.cambiar_fecha),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp)
             )

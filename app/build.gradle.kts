@@ -1,6 +1,21 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+/**
+ * Datos de firma de release, fuera de git. Crea `keystore.properties` en la raíz con:
+ *   storeFile=ruta/al/keystore.jks   (relativa a la raíz del proyecto)
+ *   storePassword=...
+ *   keyAlias=...
+ *   keyPassword=...
+ * Sin ese fichero, `assembleRelease` genera un APK sin firmar.
+ */
+val keystoreProperties = Properties().apply {
+    val fichero = rootProject.file("keystore.properties")
+    if (fichero.exists()) fichero.inputStream().use { load(it) }
 }
 
 android {
@@ -13,19 +28,33 @@ android {
         applicationId = "bas.orellana.gastostracker"
         minSdk = 33
         targetSdk = 36
+        // Súbelos en cada versión que se publique: versionCode siempre tiene que crecer.
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (!keystoreProperties.isEmpty) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

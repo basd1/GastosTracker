@@ -12,6 +12,7 @@ import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
+import bas.orellana.gastostracker.domain.usecase.ContarMovimientosCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
@@ -35,7 +36,6 @@ val sharedModule = module {
     single { MigradorDatosLegacy(get(), get(), get()) }
     single { get<AppDatabase>().gastoDao() }
     single { get<AppDatabase>().ingresoDao() }
-    single { get<AppDatabase>().categoriaPersonalizadaDao() }
 
     single<CategoriasRepository> { CategoriasRepositoryImpl(get(), get()) }
     single<GastoRepository> { GastoRepositoryImpl(get(), get()) }
@@ -52,6 +52,7 @@ val sharedModule = module {
     factory { AddCategoriaPersonalizadaUseCase(get()) }
     factory { UpdateCategoriaPersonalizadaUseCase(get()) }
     factory { DeleteCategoriaPersonalizadaUseCase(get()) }
+    factory { ContarMovimientosCategoriaUseCase(get()) }
 
     factory { GetIngresosUseCase(get()) }
     factory { AddIngresoUseCase(get()) }

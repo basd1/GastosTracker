@@ -43,6 +43,28 @@ interface GastoDao {
     @Query("DELETE FROM gastos WHERE id = :id")
     suspend fun eliminar(id: String)
 
+    @Query("SELECT COUNT(*) FROM gastos WHERE categoria_personalizada_id = :idCategoria")
+    suspend fun contarConCategoriaPersonalizada(idCategoria: String): Int
+
+    /** Pasa a otra categoría todo lo que usaba la categoría personalizada [idOrigen]. */
+    @Query(
+        """
+        UPDATE gastos SET categoria = :categoria, categoria_personalizada_id = :categoriaPersonalizadaId
+        WHERE categoria_personalizada_id = :idOrigen
+        """
+    )
+    suspend fun reasignarCategoriaPersonalizada(idOrigen: String, categoria: String?, categoriaPersonalizadaId: String?)
+
+    /** Pasa a [categoria] lo que apunta a una categoría personalizada que ya no existe. */
+    @Query(
+        """
+        UPDATE gastos SET categoria = :categoria, categoria_personalizada_id = NULL
+        WHERE categoria_personalizada_id IS NOT NULL
+          AND categoria_personalizada_id NOT IN (SELECT id FROM categorias_personalizadas)
+        """
+    )
+    suspend fun reasignarHuerfanos(categoria: String): Int
+
     @Query("DELETE FROM gastos")
     suspend fun eliminarTodos()
 }

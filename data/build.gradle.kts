@@ -17,6 +17,10 @@ kotlin {
         withHostTest {}
     }
 
+    // Target JVM de escritorio: solo para los tests de Room con una base de datos en memoria
+    // (SQLite bundled trae nativos para el host; el target Android necesitaría un dispositivo).
+    jvm()
+
     iosArm64()
     iosSimulatorArm64()
 
@@ -38,7 +42,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
@@ -49,6 +53,7 @@ room {
 
 dependencies {
     add("kspAndroid", libs.androidx.room.compiler)
+    add("kspJvm", libs.androidx.room.compiler)
     add("kspIosArm64", libs.androidx.room.compiler)
     add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }

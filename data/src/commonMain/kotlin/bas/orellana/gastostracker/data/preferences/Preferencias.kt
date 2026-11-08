@@ -12,6 +12,7 @@ import kotlinx.coroutines.CancellationException
 import okio.Path
 
 /** Fichero de preferencias de la app (solo ajustes, sin datos). */
+// Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val PREFERENCIAS_FILE_NAME = "preferencias.preferences_pb"
 
 internal object ClavesPreferencias {

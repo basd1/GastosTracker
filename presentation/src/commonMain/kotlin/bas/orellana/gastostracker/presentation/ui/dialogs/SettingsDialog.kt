@@ -20,6 +20,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_cerrar
+import bas.orellana.gastostracker.presentation.resources.administrar_categorias
+import bas.orellana.gastostracker.presentation.resources.configuracion
+import bas.orellana.gastostracker.presentation.resources.modo_oscuro
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +46,7 @@ fun SettingsDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Configuración",
+                    text = stringResource(Res.string.configuracion),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -53,7 +59,7 @@ fun SettingsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Modo oscuro",
+                        text = stringResource(Res.string.modo_oscuro),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Switch(
@@ -68,7 +74,7 @@ fun SettingsDialog(
                     onClick = onManageCategorias,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Administrar categorías")
+                    Text(stringResource(Res.string.administrar_categorias))
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -77,7 +83,7 @@ fun SettingsDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text("Cerrar")
+                    Text(stringResource(Res.string.accion_cerrar))
                 }
             }
         }

@@ -1,19 +1,28 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-   Sample data extraction rules file; uncomment and customize as necessary.
-   See https://developer.android.com/about/versions/12/backup-restore#xml-changes
-   for details.
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Qué se guarda en la copia de seguridad de Google y qué se pasa al cambiar de móvil.
+    Con minSdk 33 este es el único fichero que cuenta (fullBackupContent solo se usaba hasta Android 11).
+
+    Se respaldan los datos del usuario y nada más:
+    - database/: la base de datos Room (gastos_tracker.db y sus ficheros -wal/-shm, que van juntos).
+    - preferencias.preferences_pb: ajustes (tema) y la marca de "datos ya migrados a Room".
+      Tiene que ir con la base de datos: si se restaurase sola, la app daría la migración por hecha.
+    - settings.preferences_pb (dos rutas): los datos en JSON de versiones antiguas. Se conservan porque,
+      si su migración falló, son la única copia (la app los vuelve a intentar migrar al arrancar).
+    Todo lo demás (cachés, ficheros temporales de DataStore...) queda fuera.
 -->
 <data-extraction-rules>
-    <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+    <!-- Son datos financieros: solo se suben a la nube si la copia va cifrada en el dispositivo. -->
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <include domain="database" path="." />
+        <include domain="file" path="preferencias.preferences_pb" />
+        <include domain="file" path="settings.preferences_pb" />
+        <include domain="file" path="datastore/settings.preferences_pb" />
     </cloud-backup>
-    <!--
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <include domain="database" path="." />
+        <include domain="file" path="preferencias.preferences_pb" />
+        <include domain="file" path="settings.preferences_pb" />
+        <include domain="file" path="datastore/settings.preferences_pb" />
     </device-transfer>
-    -->
 </data-extraction-rules>

@@ -5,19 +5,23 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import androidx.sqlite.execSQL
 import bas.orellana.gastostracker.data.local.dao.CategoriaPersonalizadaDao
 import bas.orellana.gastostracker.data.local.dao.GastoDao
 import bas.orellana.gastostracker.data.local.dao.IngresoDao
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
+import bas.orellana.gastostracker.domain.model.Categoria
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
     entities = [GastoEntity::class, IngresoEntity::class, CategoriaPersonalizadaEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -34,7 +38,30 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
 }
 
+// Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"
+
+/** Categoría a la que van los movimientos cuya categoría personalizada ya no existe. */
+internal val CATEGORIA_PARA_HUERFANOS = Categoria.OTROS
+
+/**
+ * 1 → 2: sin cambios de esquema. Antes, borrar una categoría personalizada dejaba sus gastos e
+ * ingresos apuntando a un id que ya no existía (se veían grises y sin nombre). Esta migración pasa
+ * esos movimientos huérfanos a "Otros"; desde la versión 2, al borrar una categoría se reasignan.
+ */
+internal val MIGRACION_1_2 = object : Migration(1, 2) {
+    override fun migrate(connection: SQLiteConnection) {
+        listOf("gastos", "ingresos").forEach { tabla ->
+            connection.execSQL(
+                """
+                UPDATE $tabla SET categoria = '${CATEGORIA_PARA_HUERFANOS.name}', categoria_personalizada_id = NULL
+                WHERE categoria_personalizada_id IS NOT NULL
+                  AND categoria_personalizada_id NOT IN (SELECT id FROM categorias_personalizadas)
+                """.trimIndent()
+            )
+        }
+    }
+}
 
 /**
  * Configuración común de la base de datos; cada plataforma solo aporta el builder con la ruta.
@@ -44,4 +71,5 @@ internal fun construirAppDatabase(builder: RoomDatabase.Builder<AppDatabase>): A
     builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
+        .addMigrations(MIGRACION_1_2)
         .build()

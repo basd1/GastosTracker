@@ -3,11 +3,14 @@ package bas.orellana.gastostracker.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
+import bas.orellana.gastostracker.domain.model.totalesSinAhorro
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
+import bas.orellana.gastostracker.domain.usecase.ContarMovimientosCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
@@ -47,6 +50,7 @@ class HomeViewModel(
     private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
     private val updateCategoriaPersonalizadaUseCase: UpdateCategoriaPersonalizadaUseCase,
     private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase,
+    private val contarMovimientosCategoriaUseCase: ContarMovimientosCategoriaUseCase,
     private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase
 ) : ViewModel() {
 
@@ -115,7 +119,7 @@ class HomeViewModel(
                 .catch { }
                 .collect { alerts ->
                     _state.update { state ->
-                        state.copy(alerts = alerts.filter { it.categoriaNombre !in state.dismissedAlertKeys })
+                        state.copy(alerts = alerts.filter { it.clave !in state.dismissedAlertKeys })
                     }
                 }
         }
@@ -215,11 +219,54 @@ class HomeViewModel(
         }
     }
 
-    fun deleteCategoriaPersonalizada(id: String) {
+    /**
+     * Si la categoría no tiene movimientos se borra directamente; si tiene, se pregunta antes
+     * a qué categoría pasarlos (ver [confirmarEliminarCategoria]).
+     */
+    fun solicitarEliminarCategoria(categoria: CategoriaPersonalizada) {
         viewModelScope.launch {
-            deleteCategoriaPersonalizadaUseCase(id)
-            _categoriasPersonalizadas.value = _categoriasPersonalizadas.value.filter { it.id != id }
+            val movimientos = contarMovimientosCategoriaUseCase(categoria.id)
+            if (movimientos == 0) {
+                eliminarCategoria(categoria.id, CategoriaDestino.POR_DEFECTO)
+            } else {
+                _manageCategoriasState.update {
+                    it.copy(
+                        categoriaAEliminar = categoria,
+                        movimientosCategoriaAEliminar = movimientos,
+                        destinoReasignacion = CategoriaDestino.POR_DEFECTO
+                    )
+                }
+            }
         }
+    }
+
+    fun updateDestinoReasignacion(destino: CategoriaDestino) {
+        _manageCategoriasState.update { it.copy(destinoReasignacion = destino) }
+    }
+
+    fun confirmarEliminarCategoria() {
+        val state = _manageCategoriasState.value
+        val categoria = state.categoriaAEliminar ?: return
+        cancelarEliminarCategoria()
+        viewModelScope.launch { eliminarCategoria(categoria.id, state.destinoReasignacion) }
+    }
+
+    fun cancelarEliminarCategoria() {
+        _manageCategoriasState.update {
+            it.copy(
+                categoriaAEliminar = null,
+                movimientosCategoriaAEliminar = 0,
+                destinoReasignacion = CategoriaDestino.POR_DEFECTO
+            )
+        }
+    }
+
+    private suspend fun eliminarCategoria(id: String, destino: CategoriaDestino) {
+        deleteCategoriaPersonalizadaUseCase(id, destino)
+        _categoriasPersonalizadas.update { categorias -> categorias.filter { it.id != id } }
+        // Si se estaba filtrando o editando esa categoría, ya no tiene sentido.
+        _state.update { if (it.filterCategoriaPersonalizadaId == id) it.copy(filterCategoriaPersonalizadaId = null) else it }
+        if (_manageCategoriasState.value.editCategoria?.id == id) cancelEditCategoria()
     }
 
     fun showEditCategoriaDialog(categoria: CategoriaPersonalizada) {
@@ -326,11 +373,11 @@ class HomeViewModel(
         _state.update { it.copy(sortOrder = order) }
     }
 
-    fun dismissAlert(categoriaNombre: String) {
+    fun dismissAlert(clave: String) {
         _state.update {
             it.copy(
-                dismissedAlertKeys = it.dismissedAlertKeys + categoriaNombre,
-                alerts = it.alerts.filter { a -> a.categoriaNombre != categoriaNombre }
+                dismissedAlertKeys = it.dismissedAlertKeys + clave,
+                alerts = it.alerts.filter { a -> a.clave != clave }
             )
         }
     }
@@ -341,25 +388,28 @@ class HomeViewModel(
         categoriasPersonalizadas: List<CategoriaPersonalizada>
     ): List<CategoryAlert> {
         val anteriorPorCategoria = totalesMesAnterior
-            .filter { it.categoria != Categoria.AHORRO }
+            .totalesSinAhorro()
             .associate { (it.categoria to it.categoriaPersonalizadaId) to it.total }
 
         return totalesMesActual
-            .filter { it.categoria != Categoria.AHORRO }
+            .totalesSinAhorro()
             .mapNotNull { actual ->
                 val totalAnterior = anteriorPorCategoria[actual.categoria to actual.categoriaPersonalizadaId] ?: 0.0
                 if (totalAnterior <= 0 || actual.total <= totalAnterior) return@mapNotNull null
 
-                val categoria = actual.categoria
-                val personalizada = actual.categoriaPersonalizadaId?.let { id ->
-                    categoriasPersonalizadas.find { it.id == id }
-                }
                 CategoryAlert(
-                    categoriaNombre = categoria?.displayName ?: personalizada?.nombre ?: "Sin categor\u00EDa",
-                    categoriaColor = categoria?.color ?: personalizada?.color ?: 0xFF607D8B,
+                    clave = actual.categoria?.name ?: actual.categoriaPersonalizadaId ?: CLAVE_SIN_CATEGORIA,
+                    categoria = actual.categoria,
+                    categoriaPersonalizada = actual.categoriaPersonalizadaId?.let { id ->
+                        categoriasPersonalizadas.find { it.id == id }
+                    },
                     gastoActual = actual.total,
                     gastoAnterior = totalAnterior
                 )
             }
+    }
+
+    private companion object {
+        const val CLAVE_SIN_CATEGORIA = "sin_categoria"
     }
 }

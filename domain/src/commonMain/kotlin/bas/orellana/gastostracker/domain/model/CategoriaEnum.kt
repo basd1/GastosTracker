@@ -1,17 +1,21 @@
 package bas.orellana.gastostracker.domain.model
 
-enum class Categoria(val displayName: String, val color: Long) {
-    COMIDA("Comida", 0xFF81C784),
-    HOGAR("Hogar", 0xFFFFB74D),
-    TRANSPORTE("Transporte", 0xFF64B5F6),
-    OCIO("Ocio", 0xFFBA68C8),
-    ROPA("Ropa", 0xFFFFD54F),
-    SALUD("Salud", 0xFFE57373),
-    TECNOLOGIA("Tecnología", 0xFF4DD0E1),
-    SERVICIOS("Servicios", 0xFF9575CD),
-    REGALOS("Regalos", 0xFFF06292),
-    AHORRO("Ahorro", 0xFFFFD700),
-    OTROS("Otros", 0xFF90A4AE);
+/**
+ * Categorías predefinidas. El nombre visible de cada una vive en los recursos de texto de
+ * `:presentation`, para poder traducirlo; aquí solo queda el color.
+ */
+enum class Categoria(val color: Long) {
+    COMIDA(0xFF81C784),
+    HOGAR(0xFFFFB74D),
+    TRANSPORTE(0xFF64B5F6),
+    OCIO(0xFFBA68C8),
+    ROPA(0xFFFFD54F),
+    SALUD(0xFFE57373),
+    TECNOLOGIA(0xFF4DD0E1),
+    SERVICIOS(0xFF9575CD),
+    REGALOS(0xFFF06292),
+    AHORRO(0xFFFFD700),
+    OTROS(0xFF90A4AE);
 
     companion object {
         val PALETA_COLORES_PERSONALIZADOS = listOf(
@@ -20,5 +24,8 @@ enum class Categoria(val displayName: String, val color: Long) {
             0xFFA5D6A7, 0xFFC5E1A5, 0xFFDCE775, 0xFFFFE082,
             0xFFFFCC80, 0xFFFFAB91, 0xFFBCAAA4, 0xFFB0BEC5
         )
+
+        /** Categorías que tiene sentido asignar a un ingreso (todas menos el ahorro). */
+        val PARA_INGRESOS: List<Categoria> get() = entries.filterNot { it.esAhorro }
     }
 }

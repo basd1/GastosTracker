@@ -53,6 +53,23 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_actualizar
+import bas.orellana.gastostracker.presentation.resources.accion_cancelar
+import bas.orellana.gastostracker.presentation.resources.accion_guardar
+import bas.orellana.gastostracker.presentation.resources.accion_seleccionar
+import bas.orellana.gastostracker.presentation.resources.anadir_ingreso
+import bas.orellana.gastostracker.presentation.resources.cambiar_fecha
+import bas.orellana.gastostracker.presentation.resources.campo_categoria
+import bas.orellana.gastostracker.presentation.resources.campo_concepto
+import bas.orellana.gastostracker.presentation.resources.campo_fecha
+import bas.orellana.gastostracker.presentation.resources.campo_monto
+import bas.orellana.gastostracker.presentation.resources.editar_ingreso
+import bas.orellana.gastostracker.presentation.resources.importe_invalido
+import bas.orellana.gastostracker.presentation.resources.sin_categoria
+import bas.orellana.gastostracker.presentation.ui.components.nombre
+import bas.orellana.gastostracker.presentation.util.simboloMoneda
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -86,7 +103,7 @@ fun AddIngresoDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = if (ingresoToEdit != null) "Editar ingreso" else "Añadir ingreso",
+                    text = stringResource(if (ingresoToEdit != null) Res.string.editar_ingreso else Res.string.anadir_ingreso),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -96,7 +113,7 @@ fun AddIngresoDialog(
                 OutlinedTextField(
                     value = concepto,
                     onValueChange = onConceptoChange,
-                    label = { Text("Concepto") },
+                    label = { Text(stringResource(Res.string.campo_concepto)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
@@ -113,16 +130,16 @@ fun AddIngresoDialog(
                     },
                     isError = importeInvalido,
                     supportingText = if (importeInvalido) {
-                        { Text("Introduce un importe mayor que 0") }
+                        { Text(stringResource(Res.string.importe_invalido)) }
                     } else null,
-                    label = { Text("Monto") },
+                    label = { Text(stringResource(Res.string.campo_monto)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Decimal,
                         capitalization = KeyboardCapitalization.Sentences
                     ),
-                    prefix = { Text("€") }
+                    prefix = { Text(simboloMoneda()) }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -134,7 +151,7 @@ fun AddIngresoDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Categoría",
+                    text = stringResource(Res.string.campo_categoria),
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium
                 )
@@ -145,7 +162,7 @@ fun AddIngresoDialog(
                         onCategoriaChange(null)
                         onCategoriaPersonalizadaChange(null)
                     },
-                    label = { Text("Sin categoría", fontSize = 11.sp) },
+                    label = { Text(stringResource(Res.string.sin_categoria), fontSize = 11.sp) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer
                     )
@@ -155,14 +172,14 @@ fun AddIngresoDialog(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Categoria.entries.filter { it != Categoria.AHORRO }.forEach { cat ->
+                    Categoria.PARA_INGRESOS.forEach { cat ->
                         FilterChip(
                             selected = categoriaSeleccionada == cat && categoriaPersonalizadaId == null,
                             onClick = {
                                 onCategoriaChange(cat)
                                 onCategoriaPersonalizadaChange(null)
                             },
-                            label = { Text(cat.displayName, fontSize = 11.sp) },
+                            label = { Text(cat.nombre(), fontSize = 11.sp) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
                                 containerColor = Color(cat.color).copy(alpha = 0.15f)
@@ -204,7 +221,7 @@ fun AddIngresoDialog(
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(
-                            text = "Cancelar",
+                            text = stringResource(Res.string.accion_cancelar),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -213,7 +230,7 @@ fun AddIngresoDialog(
                         enabled = concepto.isNotBlank() && importeValido,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text(if (ingresoToEdit != null) "Actualizar" else "Guardar")
+                        Text(stringResource(if (ingresoToEdit != null) Res.string.accion_actualizar else Res.string.accion_guardar))
                     }
                 }
             }
@@ -237,12 +254,12 @@ fun AddIngresoDialog(
                     }
                     showDatePicker = false
                 }) {
-                    Text("Seleccionar")
+                    Text(stringResource(Res.string.accion_seleccionar))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(Res.string.accion_cancelar), color = MaterialTheme.colorScheme.error)
                 }
             }
         ) {
@@ -266,7 +283,7 @@ private fun DateDisplay(
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
-            text = "Fecha",
+            text = stringResource(Res.string.campo_fecha),
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -280,7 +297,7 @@ private fun DateDisplay(
             Spacer(modifier = Modifier.padding(horizontal = 4.dp))
             Icon(
                 imageVector = Icons.Default.DateRange,
-                contentDescription = "Cambiar fecha",
+                contentDescription = stringResource(Res.string.cambiar_fecha),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 4.dp)
             )

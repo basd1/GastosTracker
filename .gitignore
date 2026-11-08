@@ -8,6 +8,16 @@
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+# .idea/: solo se comparten los ajustes del proyecto (inspecciones, compilador, VCS...).
+# Estos dependen de cada máquina (JDK, dispositivos, módulos tras sincronizar) y los regenera el IDE.
+/.idea/misc.xml
+/.idea/gradle.xml
+/.idea/deploymentTargetSelector.xml
+/.idea/deviceManager.xml
+/.idea/appInsightsSettings.xml
+/.idea/studiobot.xml
+/.idea/markdown.xml
+/.idea/other.xml
 .DS_Store
 /build
 /captures
@@ -16,15 +26,16 @@
 local.properties
 
 # Project exclude paths
-/core/build/
 /data/build/
 /di/build/
 /domain/build/
-/navigation/build/
 /presentation/build/
 /iosApp/build/
 
 # Secrets
+keystore.properties
+*.jks
+*.keystore
 *.pem
 *.key
 .env

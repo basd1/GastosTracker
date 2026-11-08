@@ -31,12 +31,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.app_name
+import bas.orellana.gastostracker.presentation.resources.configuracion
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun GradientTopAppBar(
     icon: ImageVector? = null,
     emoji: String? = null,
-    title: String = "Gastos",
+    title: String,
     onSettingsClick: () -> Unit
 ) {
     val shape = MaterialTheme.shapes.large
@@ -105,7 +109,7 @@ fun GradientTopAppBar(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "GastosTracker",
+                            text = stringResource(Res.string.app_name),
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Light
@@ -122,7 +126,7 @@ fun GradientTopAppBar(
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Configuración",
+                            contentDescription = stringResource(Res.string.configuracion),
                             tint = Color.White
                         )
                     }

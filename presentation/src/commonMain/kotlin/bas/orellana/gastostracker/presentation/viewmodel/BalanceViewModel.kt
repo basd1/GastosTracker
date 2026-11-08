@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.IngresoModel
+import bas.orellana.gastostracker.domain.model.esAhorro
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
@@ -74,7 +75,7 @@ class BalanceViewModel(
                         getTotalIngresosUseCase(desde, hasta),
                         getTotalesGastosPorCategoriaUseCase(desde, hasta)
                     ) { totalIngresos, totalesGastos ->
-                        val (ahorro, gastos) = totalesGastos.partition { it.categoria == Categoria.AHORRO }
+                        val (ahorro, gastos) = totalesGastos.partition { it.esAhorro }
                         Triple(totalIngresos, gastos.sumOf { it.total }, ahorro.sumOf { it.total })
                     }
                 }

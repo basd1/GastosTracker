@@ -13,6 +13,11 @@ kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
+        // Necesario para empaquetar los textos de Compose Multiplatform Resources en el AAR.
+        androidResources {
+            enable = true
+        }
+        withHostTest {}
     }
 
     iosArm64()
@@ -20,10 +25,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":core"))
             api(project(":domain"))
             api(project(":data"))
-            implementation(project(":navigation"))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
@@ -35,6 +38,16 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.compose.components.resources)
+        }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+compose.resources {
+    publicResClass = false
+    packageOfResClass = "bas.orellana.gastostracker.presentation.resources"
 }

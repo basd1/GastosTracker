@@ -1,10 +1,13 @@
 package bas.orellana.gastostracker.data.repository
 
+import androidx.room.immediateTransaction
+import androidx.room.useWriterConnection
 import bas.orellana.gastostracker.data.legacy.MigradorDatosLegacy
-import bas.orellana.gastostracker.data.local.dao.CategoriaPersonalizadaDao
+import bas.orellana.gastostracker.data.local.AppDatabase
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.toEntity
 import bas.orellana.gastostracker.data.local.toModel
+import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import kotlinx.coroutines.flow.Flow
@@ -13,9 +16,11 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class CategoriasRepositoryImpl(
-    private val dao: CategoriaPersonalizadaDao,
+    private val db: AppDatabase,
     private val migrador: MigradorDatosLegacy
 ) : CategoriasRepository {
+
+    private val dao = db.categoriaPersonalizadaDao()
 
     override fun getCategoriasPersonalizadas(): Flow<List<CategoriaPersonalizada>> =
         migrador.despuesDeMigrar { dao.observarTodas() }
@@ -39,8 +44,25 @@ class CategoriasRepositoryImpl(
         dao.actualizar(categoria.toEntity())
     }
 
-    override suspend fun deleteCategoriaPersonalizada(id: String) {
+    override suspend fun contarMovimientos(id: String): Int {
         migrador.asegurarMigracion()
-        dao.eliminar(id)
+        return db.gastoDao().contarConCategoriaPersonalizada(id) +
+            db.ingresoDao().contarConCategoriaPersonalizada(id)
+    }
+
+    override suspend fun deleteCategoriaPersonalizada(id: String, destino: CategoriaDestino) {
+        migrador.asegurarMigracion()
+        val (categoria, categoriaPersonalizadaId) = when (destino) {
+            is CategoriaDestino.Predefinida -> destino.categoria.name to null
+            is CategoriaDestino.Personalizada -> null to destino.id
+        }
+        // Todo o nada: si algo falla, la categoría y sus movimientos se quedan como estaban.
+        db.useWriterConnection { conexion ->
+            conexion.immediateTransaction {
+                db.gastoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
+                db.ingresoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
+                dao.eliminar(id)
+            }
+        }
     }
 }

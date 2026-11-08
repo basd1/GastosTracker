@@ -14,6 +14,9 @@ kotlin {
         withHostTest {}
     }
 
+    // Target JVM de escritorio: solo para ejecutar los tests en el host (lo necesita :data para Room).
+    jvm()
+
     iosArm64()
     iosSimulatorArm64()
 
@@ -24,7 +27,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

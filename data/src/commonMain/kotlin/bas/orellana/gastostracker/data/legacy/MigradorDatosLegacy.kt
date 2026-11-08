@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.room.immediateTransaction
 import androidx.room.useWriterConnection
 import bas.orellana.gastostracker.data.local.AppDatabase
+import bas.orellana.gastostracker.data.local.CATEGORIA_PARA_HUERFANOS
 import bas.orellana.gastostracker.data.preferences.ClavesPreferencias
 import bas.orellana.gastostracker.data.util.registrarError
 import bas.orellana.gastostracker.data.util.registrarInfo
@@ -73,6 +74,9 @@ class MigradorDatosLegacy(
                 db.categoriaPersonalizadaDao().insertarSiNoExisten(datos.categorias)
                 db.gastoDao().insertarSiNoExisten(datos.gastos)
                 db.ingresoDao().insertarSiNoExisten(datos.ingresos)
+                // La app antigua no reasignaba nada al borrar una categoría: puede haber huérfanos.
+                db.gastoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
+                db.ingresoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
             }
         }
 

@@ -1,6 +1,5 @@
 package bas.orellana.gastostracker.presentation.ui.screen
 
-import bas.orellana.gastostracker.presentation.util.formatDecimal
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -78,6 +77,32 @@ import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
+import bas.orellana.gastostracker.domain.model.sinAhorro
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_descartar
+import bas.orellana.gastostracker.presentation.resources.accion_deshacer
+import bas.orellana.gastostracker.presentation.resources.accion_eliminar
+import bas.orellana.gastostracker.presentation.resources.alerta_comparativa
+import bas.orellana.gastostracker.presentation.resources.alerta_mas_gasto
+import bas.orellana.gastostracker.presentation.resources.anadir_gasto
+import bas.orellana.gastostracker.presentation.resources.buscar
+import bas.orellana.gastostracker.presentation.resources.buscar_gastos
+import bas.orellana.gastostracker.presentation.resources.gasto_eliminado
+import bas.orellana.gastostracker.presentation.resources.gastos_del_mes
+import bas.orellana.gastostracker.presentation.resources.limpiar_filtros
+import bas.orellana.gastostracker.presentation.resources.media_importe
+import bas.orellana.gastostracker.presentation.resources.numero_gastos
+import bas.orellana.gastostracker.presentation.resources.sin_categoria
+import bas.orellana.gastostracker.presentation.resources.sin_gastos_mensaje
+import bas.orellana.gastostracker.presentation.resources.sin_gastos_titulo
+import bas.orellana.gastostracker.presentation.resources.sin_resultados
+import bas.orellana.gastostracker.presentation.resources.titulo_gastos
+import bas.orellana.gastostracker.presentation.ui.components.etiquetaCategoria
+import bas.orellana.gastostracker.presentation.ui.components.nombre
+import bas.orellana.gastostracker.presentation.util.formatMoney
+import bas.orellana.gastostracker.presentation.util.simboloMoneda
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,13 +113,14 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
-    val manageCategoriasState by viewModel.manageCategoriasState.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var stashedGasto by remember { mutableStateOf<GastoModel?>(null) }
+    val textoGastoEliminado = stringResource(Res.string.gasto_eliminado)
+    val textoDeshacer = stringResource(Res.string.accion_deshacer)
 
     Box(
         modifier = Modifier
@@ -106,7 +132,7 @@ fun HomeScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             GradientTopAppBar(
-                title = "Gastos",
+                title = stringResource(Res.string.titulo_gastos),
                 onSettingsClick = { viewModel.showSettingsDialog() }
             )
         },
@@ -129,19 +155,21 @@ fun HomeScreen(
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Añadir gasto", fontSize = 18.sp)
+                    Text(stringResource(Res.string.anadir_gasto), fontSize = 18.sp)
                 }
             }
         }
     ) { paddingValues ->
         GastosList(
             gastos = state.gastos,
+            gastosVisibles = state.gastosVisibles,
             isLoading = state.isLoading,
             categoriasPersonalizadas = categoriasPersonalizadas,
             alerts = state.alerts,
             searchQuery = state.searchQuery,
             filterCategoria = state.filterCategoria,
             filterCategoriaPersonalizadaId = state.filterCategoriaPersonalizadaId,
+            hayBusquedaOFiltro = state.hayBusquedaOFiltro,
             sortOrder = state.sortOrder,
             onSearchQueryChange = { viewModel.updateSearchQuery(it) },
             onFilterCategoria = { viewModel.updateFilterCategoria(it) },
@@ -153,8 +181,8 @@ fun HomeScreen(
                 viewModel.deleteGasto(gasto.id)
                 scope.launch {
                     val result = snackbarHostState.showSnackbar(
-                        message = "Gasto eliminado",
-                        actionLabel = "Deshacer"
+                        message = textoGastoEliminado,
+                        actionLabel = textoDeshacer
                     )
                     if (result == SnackbarResult.ActionPerformed) {
                         stashedGasto?.let { viewModel.restoreGasto(it) }
@@ -204,30 +232,7 @@ fun HomeScreen(
         }
 
         if (state.showManageCategoriasDialog) {
-            ManageCategoriasDialog(
-                categoriasPersonalizadas = categoriasPersonalizadas,
-                colorSeleccionado = manageCategoriasState.colorSeleccionado,
-                nuevaCategoria = manageCategoriasState.nuevaCategoria,
-                editCategoria = manageCategoriasState.editCategoria,
-                editNombre = manageCategoriasState.editNombre,
-                editColor = manageCategoriasState.editColor,
-                onColorSeleccionado = { viewModel.updateColorSeleccionado(it) },
-                onNuevaCategoriaChange = { viewModel.updateNuevaCategoria(it) },
-                onAddCategoria = {
-                    viewModel.addCategoriaPersonalizada(
-                        manageCategoriasState.nuevaCategoria,
-                        manageCategoriasState.colorSeleccionado
-                    )
-                    viewModel.resetManageCategoriasState()
-                },
-                onDeleteCategoria = { viewModel.deleteCategoriaPersonalizada(it) },
-                onEditCategoria = { viewModel.showEditCategoriaDialog(it) },
-                onEditNombreChange = { viewModel.updateEditNombre(it) },
-                onEditColorChange = { viewModel.updateEditColor(it) },
-                onSaveEdit = { viewModel.saveEditCategoria() },
-                onCancelEdit = { viewModel.cancelEditCategoria() },
-                onDismiss = { viewModel.hideManageCategoriasDialog() }
-            )
+            ManageCategoriasDialog(viewModel)
         }
     }
     }
@@ -236,12 +241,14 @@ fun HomeScreen(
 @Composable
 private fun GastosList(
     gastos: List<GastoModel>,
+    gastosVisibles: List<GastoModel>,
     isLoading: Boolean,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     alerts: List<CategoryAlert> = emptyList(),
     searchQuery: String = "",
     filterCategoria: Categoria? = null,
     filterCategoriaPersonalizadaId: String? = null,
+    hayBusquedaOFiltro: Boolean = false,
     sortOrder: SortOrder = SortOrder.DATE_DESC,
     onSearchQueryChange: (String) -> Unit = {},
     onFilterCategoria: (Categoria?) -> Unit = {},
@@ -253,22 +260,6 @@ private fun GastosList(
     onDismissAlert: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val filteredGastos = gastos.filter { gasto ->
-        val matchesSearch = searchQuery.isBlank() || gasto.nombre.contains(searchQuery, ignoreCase = true)
-        val matchesCategoria = filterCategoria == null || gasto.categoria == filterCategoria
-        val matchesPersonalizada = filterCategoriaPersonalizadaId == null || gasto.categoriaPersonalizadaId == filterCategoriaPersonalizadaId
-        matchesSearch && matchesCategoria && matchesPersonalizada
-    }.let { sorted ->
-        when (sortOrder) {
-            SortOrder.DATE_DESC -> sorted.sortedByDescending { it.fecha }
-            SortOrder.DATE_ASC -> sorted.sortedBy { it.fecha }
-            SortOrder.AMOUNT_DESC -> sorted.sortedByDescending { it.monto }
-            SortOrder.AMOUNT_ASC -> sorted.sortedBy { it.monto }
-            SortOrder.NAME_ASC -> sorted.sortedBy { it.nombre.lowercase() }
-            SortOrder.NAME_DESC -> sorted.sortedByDescending { it.nombre.lowercase() }
-        }
-    }
-
     if (isLoading) {
         Box(
             modifier = modifier.fillMaxSize(),
@@ -292,13 +283,13 @@ private fun GastosList(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "No hay gastos todavía",
+                    text = stringResource(Res.string.sin_gastos_titulo),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Pulsa + para añadir tu primer gasto",
+                    text = stringResource(Res.string.sin_gastos_mensaje),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -306,8 +297,8 @@ private fun GastosList(
         }
     } else {
         val now = todayLocalDate()
-        val gastosDelMes = gastos.filter {
-            it.fecha.year == now.year && it.fecha.month == now.month && it.categoria != Categoria.AHORRO
+        val gastosDelMes = gastos.sinAhorro().filter {
+            it.fecha.year == now.year && it.fecha.month == now.month
         }
         val totalMes = gastosDelMes.sumOf { it.monto }
 
@@ -340,7 +331,7 @@ private fun GastosList(
                         FilterChip(
                             selected = sortOrder == order,
                             onClick = { onSortOrderChange(order) },
-                            label = { Text(order.displayName, fontSize = 11.sp) },
+                            label = { Text(stringResource(order.etiqueta), fontSize = 11.sp) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -353,7 +344,7 @@ private fun GastosList(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = onSearchQueryChange,
-                    placeholder = { Text("Buscar gastos...") },
+                    placeholder = { Text(stringResource(Res.string.buscar_gastos)) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
@@ -361,7 +352,7 @@ private fun GastosList(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Buscar",
+                            contentDescription = stringResource(Res.string.buscar),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
@@ -385,7 +376,7 @@ private fun GastosList(
                                     if (filterCategoria == cat) onFilterCategoria(null)
                                     else onFilterCategoria(cat)
                                 },
-                                label = { Text(cat.displayName, fontSize = 11.sp) },
+                                label = { Text(cat.nombre(), fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -421,22 +412,22 @@ private fun GastosList(
                             onClick = onClearFilters,
                             modifier = Modifier.padding(0.dp)
                         ) {
-                            Text("Limpiar filtros", fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(Res.string.limpiar_filtros), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
             }
-            if (filteredGastos.isEmpty() && (searchQuery.isNotBlank() || filterCategoria != null || filterCategoriaPersonalizadaId != null)) {
+            if (gastosVisibles.isEmpty() && hayBusquedaOFiltro) {
                 item {
                     Text(
-                        text = "No se encontraron gastos con esos criterios",
+                        text = stringResource(Res.string.sin_resultados),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 16.dp)
                     )
                 }
             }
-            items(filteredGastos, key = { it.id }) { gasto ->
+            items(gastosVisibles, key = { it.id }) { gasto ->
                 AnimatedVisibility(
                     visible = true,
                     enter = fadeIn(animationSpec = tween(300)) +
@@ -488,23 +479,30 @@ private fun AlertsSection(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f)) {
+                        val nombreCategoria = alert.categoria?.nombre()
+                            ?: alert.categoriaPersonalizada?.nombre
+                            ?: stringResource(Res.string.sin_categoria)
                         Text(
-                            text = "Has gastado m\u00E1s en ${alert.categoriaNombre} que el mes pasado",
+                            text = stringResource(Res.string.alerta_mas_gasto, nombreCategoria),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Este mes: \u20AC${formatDecimal(alert.gastoActual, 2)}  |  Mes pasado: \u20AC${formatDecimal(alert.gastoAnterior, 2)}",
+                            text = stringResource(
+                                Res.string.alerta_comparativa,
+                                formatMoney(alert.gastoActual),
+                                formatMoney(alert.gastoAnterior)
+                            ),
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
                         )
                     }
-                    IconButton(onClick = { onDismissAlert(alert.categoriaNombre) }) {
+                    IconButton(onClick = { onDismissAlert(alert.clave) }) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "Descartar",
+                            contentDescription = stringResource(Res.string.accion_descartar),
                             tint = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.size(18.dp)
                         )
@@ -534,12 +532,12 @@ private fun SummaryHeader(
         ) {
             Column {
                 Text(
-                    text = "Gastos del mes",
+                    text = stringResource(Res.string.gastos_del_mes),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "\u20AC${formatDecimal(totalMes, 2)}",
+                    text = formatMoney(totalMes),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -549,13 +547,13 @@ private fun SummaryHeader(
                 horizontalAlignment = Alignment.End
             ) {
                 Text(
-                    text = "$cantidad ${if (cantidad == 1) "gasto" else "gastos"}",
+                    text = pluralStringResource(Res.plurals.numero_gastos, cantidad, cantidad),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 val media = if (cantidad > 0) totalMes / cantidad else 0.0
                 Text(
-                    text = "media \u20AC${formatDecimal(media, 2)}",
+                    text = stringResource(Res.string.media_importe, formatMoney(media)),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -572,17 +570,9 @@ private fun GastoItem(
     onDelete: (GastoModel) -> Unit,
     onEdit: (GastoModel) -> Unit
 ) {
-    val categoriaColor = when {
-        gasto.categoria != null -> Color(gasto.categoria!!.color)
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF607D8B)
-        else -> Color(0xFF607D8B)
-    }
-
-    val nombreCategoria = when {
-        gasto.categoria != null -> gasto.categoria?.displayName
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas.find { it.id == gasto.categoriaPersonalizadaId }?.nombre
-        else -> null
-    }
+    val etiqueta = etiquetaCategoria(gasto.categoria, gasto.categoriaPersonalizadaId, categoriasPersonalizadas)
+    val categoriaColor = etiqueta?.color ?: Color(0xFF607D8B)
+    val nombreCategoria = etiqueta?.nombre
 
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
@@ -613,7 +603,7 @@ private fun GastoItem(
                 if (dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar",
+                        contentDescription = stringResource(Res.string.accion_eliminar),
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.size(28.dp)
                     )
@@ -646,7 +636,7 @@ private fun GastoItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "\u20AC",
+                        text = simboloMoneda(),
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = categoriaColor
@@ -675,7 +665,7 @@ private fun GastoItem(
                     )
                 }
                 Text(
-                    text = "\u20AC${formatDecimal(gasto.monto, 2)}",
+                    text = formatMoney(gasto.monto),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = categoriaColor

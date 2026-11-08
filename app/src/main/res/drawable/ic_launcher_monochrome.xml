@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Versión de un solo color para los iconos temáticos de Android 13+: solo cuenta la silueta. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M48,37a10,10 0,1 0,20 0a10,10 0,1 0,-20 0z" />
+    <!-- Monedero con el bolsillo hueco (evenOdd) y el cierre dentro. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M37,45H71A6,6 0,0 1,77 51V69A6,6 0,0 1,71 75H37A6,6 0,0 1,31 69V51A6,6 0,0 1,37 45z M61,53H77A4,4 0,0 1,81 57V63A4,4 0,0 1,77 67H61A4,4 0,0 1,57 63V57A4,4 0,0 1,61 53z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M63,60a3,3 0,1 0,6 0a3,3 0,1 0,-6 0z" />
+</vector>

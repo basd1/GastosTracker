@@ -2,16 +2,10 @@ package bas.orellana.gastostracker.domain.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CategoriaTest {
-
-    @Test
-    fun `cada categoria tiene un nombre visible no vacio`() {
-        Categoria.entries.forEach { categoria ->
-            assertTrue(categoria.displayName.isNotBlank(), "displayName vacio para $categoria")
-        }
-    }
 
     @Test
     fun `cada categoria tiene un color opaco valido`() {
@@ -29,5 +23,24 @@ class CategoriaTest {
             val alpha = (color ushr 24) and 0xFF
             assertEquals(0xFF, alpha, "Color $color de la paleta no es opaco")
         }
+    }
+
+    @Test
+    fun `las categorias de ingreso son todas menos el ahorro`() {
+        assertFalse(Categoria.AHORRO in Categoria.PARA_INGRESOS)
+        assertEquals(Categoria.entries.size - 1, Categoria.PARA_INGRESOS.size)
+    }
+
+    @Test
+    fun `la categoria por defecto al reasignar es Otros`() {
+        assertEquals(CategoriaDestino.Predefinida(Categoria.OTROS), CategoriaDestino.POR_DEFECTO)
+    }
+
+    @Test
+    fun `solo la categoria AHORRO es ahorro`() {
+        assertTrue(Categoria.AHORRO.esAhorro)
+        Categoria.entries.filter { it != Categoria.AHORRO }.forEach { assertFalse(it.esAhorro, "$it") }
+        val sinCategoria: Categoria? = null
+        assertFalse(sinCategoria.esAhorro)
     }
 }

@@ -71,6 +71,28 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import bas.orellana.gastostracker.domain.model.sinAhorro
+import bas.orellana.gastostracker.domain.model.soloAhorro
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.ahorro_acumulado
+import bas.orellana.gastostracker.presentation.resources.anadir_gasto
+import bas.orellana.gastostracker.presentation.resources.periodo_3_meses
+import bas.orellana.gastostracker.presentation.resources.periodo_este_mes
+import bas.orellana.gastostracker.presentation.resources.periodo_total
+import bas.orellana.gastostracker.presentation.resources.resumen_media_dia
+import bas.orellana.gastostracker.presentation.resources.resumen_top_categoria
+import bas.orellana.gastostracker.presentation.resources.resumen_total
+import bas.orellana.gastostracker.presentation.resources.seleccionar_mes
+import bas.orellana.gastostracker.presentation.resources.sin_datos_ahorro
+import bas.orellana.gastostracker.presentation.resources.sin_gastos_periodo
+import bas.orellana.gastostracker.presentation.resources.sin_gastos_registrados
+import bas.orellana.gastostracker.presentation.resources.titulo_grafico
+import bas.orellana.gastostracker.presentation.resources.toca_un_punto
+import bas.orellana.gastostracker.presentation.ui.components.mesYAnio
+import bas.orellana.gastostracker.presentation.ui.components.nombre
+import bas.orellana.gastostracker.presentation.ui.components.nombreMesCorto
+import bas.orellana.gastostracker.presentation.util.formatMoney
+import org.jetbrains.compose.resources.stringResource
 
 private enum class PeriodFilter {
     THIS_MONTH, LAST_3_MONTHS, ALL, SPECIFIC_MONTH
@@ -85,7 +107,6 @@ fun GraphScreen(
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
-    val manageCategoriasState by viewModel.manageCategoriasState.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
@@ -97,17 +118,11 @@ fun GraphScreen(
         filterGastosByPeriod(state.gastos, selectedPeriod, selectedMonth, selectedYear)
     }
 
-    val gastosSinAhorro = remember(filteredGastos) {
-        filteredGastos.filter { it.categoria != Categoria.AHORRO }
-    }
+    val gastosSinAhorro = remember(filteredGastos) { filteredGastos.sinAhorro() }
 
-    val gastosAhorro = remember(filteredGastos) {
-        filteredGastos.filter { it.categoria == Categoria.AHORRO }
-    }
+    val gastosAhorro = remember(filteredGastos) { filteredGastos.soloAhorro() }
 
-    val gastosAhorroTotal = remember(state.gastos) {
-        state.gastos.filter { it.categoria == Categoria.AHORRO }
-    }
+    val gastosAhorroTotal = remember(state.gastos) { state.gastos.soloAhorro() }
 
     Box(
         modifier = Modifier
@@ -120,7 +135,7 @@ fun GraphScreen(
                 GradientTopAppBar(
                     icon = null,
                     emoji = "\uD83D\uDCCA",
-                    title = "Gr\u00E1fico",
+                    title = stringResource(Res.string.titulo_grafico),
                     onSettingsClick = { viewModel.showSettingsDialog() }
                 )
             },
@@ -156,8 +171,10 @@ fun GraphScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = if (state.gastos.isEmpty()) "No hay gastos registrados"
-                                   else "No hay gastos en este per\u00EDodo",
+                            text = stringResource(
+                                if (state.gastos.isEmpty()) Res.string.sin_gastos_registrados
+                                else Res.string.sin_gastos_periodo
+                            ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 16.sp
                         )
@@ -213,7 +230,7 @@ fun GraphScreen(
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = null)
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Text("A\u00F1adir gasto", fontSize = 15.sp)
+                                    Text(stringResource(Res.string.anadir_gasto), fontSize = 15.sp)
                                 }
                             }
                         }
@@ -248,30 +265,7 @@ fun GraphScreen(
         }
 
         if (state.showManageCategoriasDialog) {
-            ManageCategoriasDialog(
-                categoriasPersonalizadas = categoriasPersonalizadas,
-                colorSeleccionado = manageCategoriasState.colorSeleccionado,
-                nuevaCategoria = manageCategoriasState.nuevaCategoria,
-                editCategoria = manageCategoriasState.editCategoria,
-                editNombre = manageCategoriasState.editNombre,
-                editColor = manageCategoriasState.editColor,
-                onColorSeleccionado = { viewModel.updateColorSeleccionado(it) },
-                onNuevaCategoriaChange = { viewModel.updateNuevaCategoria(it) },
-                onAddCategoria = {
-                    viewModel.addCategoriaPersonalizada(
-                        manageCategoriasState.nuevaCategoria,
-                        manageCategoriasState.colorSeleccionado
-                    )
-                    viewModel.resetManageCategoriasState()
-                },
-                onDeleteCategoria = { viewModel.deleteCategoriaPersonalizada(it) },
-                onEditCategoria = { viewModel.showEditCategoriaDialog(it) },
-                onEditNombreChange = { viewModel.updateEditNombre(it) },
-                onEditColorChange = { viewModel.updateEditColor(it) },
-                onSaveEdit = { viewModel.saveEditCategoria() },
-                onCancelEdit = { viewModel.cancelEditCategoria() },
-                onDismiss = { viewModel.hideManageCategoriasDialog() }
-            )
+            ManageCategoriasDialog(viewModel)
         }
 
         if (state.showAddGastoDialog) {
@@ -311,20 +305,15 @@ private fun PeriodFilterChips(
     onPeriodChange: (PeriodFilter) -> Unit,
     onMonthClick: () -> Unit
 ) {
-    val monthNames = listOf(
-        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-    )
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         PeriodFilter.entries.filter { it != PeriodFilter.SPECIFIC_MONTH }.forEach { period ->
             val label = when (period) {
-                PeriodFilter.THIS_MONTH -> "Este mes"
-                PeriodFilter.LAST_3_MONTHS -> "3 meses"
-                PeriodFilter.ALL -> "Total"
+                PeriodFilter.THIS_MONTH -> stringResource(Res.string.periodo_este_mes)
+                PeriodFilter.LAST_3_MONTHS -> stringResource(Res.string.periodo_3_meses)
+                PeriodFilter.ALL -> stringResource(Res.string.periodo_total)
                 PeriodFilter.SPECIFIC_MONTH -> ""
             }
             FilterChip(
@@ -357,7 +346,7 @@ private fun PeriodFilterChips(
             onClick = onMonthClick,
             label = {
                 Text(
-                    text = "${monthNames[selectedMonth - 1]} $selectedYear",
+                    text = mesYAnio(selectedMonth, selectedYear),
                     fontSize = 13.sp,
                     fontWeight = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) FontWeight.Bold else FontWeight.Normal
                 )
@@ -365,7 +354,7 @@ private fun PeriodFilterChips(
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = "Seleccionar mes",
+                    contentDescription = stringResource(Res.string.seleccionar_mes),
                     modifier = Modifier.size(18.dp)
                 )
             },
@@ -395,8 +384,7 @@ private fun SummaryCards(
 ) {
     val total = gastos.sumOf { it.monto }
 
-    val topCategoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
-        .values.maxByOrNull { it.porcentaje }
+    val topCategoria = calcularTotalesPorCategoria(gastos, categoriasPersonalizadas).firstOrNull()
 
     val daysInPeriod = when (selectedPeriod) {
         PeriodFilter.THIS_MONTH -> {
@@ -424,18 +412,18 @@ private fun SummaryCards(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         SummaryCard(
-            title = "Total",
-            value = "\u20AC${formatDecimal(total, 2)}",
+            title = stringResource(Res.string.resumen_total),
+            value = formatMoney(total),
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
-            title = "Top categor\u00EDa",
-            value = topCategoriaData?.let { "${it.nombre} ${formatDecimal(it.porcentaje, 0)}%" } ?: "-",
+            title = stringResource(Res.string.resumen_top_categoria),
+            value = topCategoria?.let { "${it.nombre()} ${formatDecimal(it.porcentaje, 0)}%" } ?: "-",
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
-            title = "Media/d\u00EDa",
-            value = "\u20AC${formatDecimal(dailyAvg, 2)}",
+            title = stringResource(Res.string.resumen_media_dia),
+            value = formatMoney(dailyAvg),
             modifier = Modifier.weight(1f)
         )
     }
@@ -478,8 +466,7 @@ private fun DonutChart(
     categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
     val total = gastos.sumOf { it.monto }
-    val categoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
-    val sortedData = categoriaData.values.sortedByDescending { it.porcentaje }
+    val sortedData = calcularTotalesPorCategoria(gastos, categoriasPersonalizadas)
 
     val animationProgress by animateFloatAsState(
         targetValue = 1f,
@@ -514,12 +501,12 @@ private fun DonutChart(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Total",
+                    text = stringResource(Res.string.resumen_total),
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "\u20AC${formatDecimal(total, 2)}",
+                    text = formatMoney(total),
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -534,15 +521,12 @@ private fun LegendSection(
     gastos: List<GastoModel>,
     categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
-    val categoriaData = calcularPorcentajesPorCategoria(gastos, categoriasPersonalizadas)
-    val sortedData = categoriaData.values.sortedByDescending { it.porcentaje }
-    val total = gastos.sumOf { it.monto }
+    val sortedData = calcularTotalesPorCategoria(gastos, categoriasPersonalizadas)
 
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         sortedData.forEach { data ->
-            val monto = total * (data.porcentaje / 100f)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -562,13 +546,13 @@ private fun LegendSection(
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
-                        text = data.nombre,
+                        text = data.nombre(),
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 14.sp,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = "\u20AC${formatDecimal(monto, 2)}",
+                        text = formatMoney(data.monto),
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
@@ -602,7 +586,6 @@ private fun LegendSection(
 private data class MonthlySaving(
     val year: Int,
     val month: Int,
-    val label: String,
     val amount: Double
 )
 
@@ -610,11 +593,6 @@ private data class MonthlySaving(
 private fun MonthlySavingsLineChart(
     gastos: List<GastoModel>
 ) {
-    val monthNames = listOf(
-        "Ene", "Feb", "Mar", "Abr", "May", "Jun",
-        "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
-    )
-
     val monthlyData = remember(gastos) {
         val sorted = gastos
             .groupBy { it.fecha.year * 12 + (it.fecha.monthNumber - 1) }
@@ -624,7 +602,6 @@ private fun MonthlySavingsLineChart(
                 MonthlySaving(
                     year = year,
                     month = month + 1,
-                    label = "${monthNames[month]} $year",
                     amount = items.sumOf { it.monto }
                 )
             }
@@ -648,7 +625,7 @@ private fun MonthlySavingsLineChart(
                 .padding(12.dp)
         ) {
             Text(
-                text = "Ahorro acumulado",
+                text = stringResource(Res.string.ahorro_acumulado),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -657,7 +634,7 @@ private fun MonthlySavingsLineChart(
 
             if (monthlyData.isEmpty()) {
                 Text(
-                    text = "No hay datos de ahorro",
+                    text = stringResource(Res.string.sin_datos_ahorro),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
@@ -764,7 +741,7 @@ private fun MonthlySavingsLineChart(
                             }
                             labelsToShow.forEach { data ->
                                 Text(
-                                    text = data.label,
+                                    text = "${nombreMesCorto(data.month)} ${data.year}",
                                     fontSize = 9.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1
@@ -784,13 +761,13 @@ private fun MonthlySavingsLineChart(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = selectedData.label,
+                            text = "${nombreMesCorto(selectedData.month)} ${selectedData.year}",
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "\u20AC${formatDecimal(selectedData.amount, 2)}",
+                            text = formatMoney(selectedData.amount),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = ahorroColor
@@ -798,7 +775,7 @@ private fun MonthlySavingsLineChart(
                     }
                 } else {
                     Text(
-                        text = "Toca un punto para ver el valor",
+                        text = stringResource(Res.string.toca_un_punto),
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -806,15 +783,6 @@ private fun MonthlySavingsLineChart(
                 }
             }
         }
-    }
-}
-
-private fun obtenerColorCategoria(gasto: GastoModel, categoriasPersonalizadas: List<CategoriaPersonalizada>): Color {
-    return when {
-        gasto.categoria != null -> Color(gasto.categoria!!.color)
-        gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas
-            .find { it.id == gasto.categoriaPersonalizadaId }?.let { Color(it.color) } ?: Color(0xFF90A4AE)
-        else -> Color(0xFF90A4AE)
     }
 }
 
@@ -846,49 +814,48 @@ private fun filterGastosByPeriod(
     }
 }
 
+/**
+ * Total de una categoría en el periodo. Los gastos sin categoría, o con una personalizada que ya
+ * no existe, cuentan como "Otros".
+ */
 private data class CategoriaData(
-    val nombre: String,
-    val porcentaje: Float,
-    val color: Color
-)
+    val categoria: Categoria?,
+    val nombrePersonalizada: String?,
+    val colorArgb: Long,
+    val monto: Double,
+    val porcentaje: Float
+) {
+    val color: Color get() = Color(colorArgb)
+}
 
-private fun calcularPorcentajesPorCategoria(
+@Composable
+private fun CategoriaData.nombre(): String = categoria?.nombre() ?: nombrePersonalizada.orEmpty()
+
+/** Totales por categoría, de mayor a menor importe. */
+private fun calcularTotalesPorCategoria(
     gastos: List<GastoModel>,
     categoriasPersonalizadas: List<CategoriaPersonalizada>
-): Map<String, CategoriaData> {
+): List<CategoriaData> {
     val total = gastos.sumOf { it.monto }
-    if (total == 0.0) return emptyMap()
+    if (total == 0.0) return emptyList()
 
-    val categoriaMontos = mutableMapOf<String, Double>()
-
-    gastos.forEach { gasto ->
-        val nombreCategoria = when {
-            gasto.categoria != null -> gasto.categoria!!.displayName
-            gasto.categoriaPersonalizadaId != null -> categoriasPersonalizadas
-                .find { it.id == gasto.categoriaPersonalizadaId }?.nombre ?: "Otros"
-            else -> "Otros"
-        }
-        categoriaMontos[nombreCategoria] = (categoriaMontos[nombreCategoria] ?: 0.0) + gasto.monto
-    }
-
-    val result = mutableMapOf<String, CategoriaData>()
-
-    categoriaMontos.forEach { (nombre, monto) ->
-        val porcentaje = ((monto / total) * 100).toFloat()
-
-        val color = when {
-            gastos.any { it.categoria?.displayName == nombre } -> {
-                val cat = gastos.first { it.categoria?.displayName == nombre }.categoria
-                Color(cat!!.color)
-            }
-            else -> {
-                val catPersonalizada = categoriasPersonalizadas.find { it.nombre == nombre }
-                if (catPersonalizada != null) Color(catPersonalizada.color)
-                else Color(0xFF90A4AE)
+    return gastos
+        .groupBy { gasto ->
+            val personalizada = gasto.categoriaPersonalizadaId?.let { id -> categoriasPersonalizadas.find { it.id == id } }
+            when {
+                gasto.categoria != null -> gasto.categoria
+                personalizada != null -> personalizada
+                else -> Categoria.OTROS
             }
         }
-        result[nombre] = CategoriaData(nombre, porcentaje, color)
-    }
-
-    return result
+        .map { (clave, grupo) ->
+            val monto = grupo.sumOf { it.monto }
+            val porcentaje = ((monto / total) * 100).toFloat()
+            when (clave) {
+                is Categoria -> CategoriaData(clave, null, clave.color, monto, porcentaje)
+                is CategoriaPersonalizada -> CategoriaData(null, clave.nombre, clave.color, monto, porcentaje)
+                else -> error("Clave de categoría inesperada: $clave")
+            }
+        }
+        .sortedByDescending { it.monto }
 }

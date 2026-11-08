@@ -41,6 +41,35 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
+import androidx.compose.material.icons.filled.Add
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.accion_cerrar
+import bas.orellana.gastostracker.presentation.resources.accion_eliminar
+import bas.orellana.gastostracker.presentation.resources.accion_guardar
+import bas.orellana.gastostracker.presentation.resources.administrar_categorias
+import bas.orellana.gastostracker.presentation.resources.anadir_categoria
+import bas.orellana.gastostracker.presentation.resources.campo_nombre
+import bas.orellana.gastostracker.presentation.resources.cancelar_edicion
+import bas.orellana.gastostracker.presentation.resources.categorias_existentes
+import bas.orellana.gastostracker.presentation.resources.editar_categoria
+import bas.orellana.gastostracker.presentation.resources.nueva_categoria
+import bas.orellana.gastostracker.presentation.resources.selecciona_color
+import org.jetbrains.compose.resources.stringResource
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.unit.sp
+import bas.orellana.gastostracker.domain.model.CategoriaDestino
+import bas.orellana.gastostracker.presentation.resources.accion_cancelar
+import bas.orellana.gastostracker.presentation.resources.eliminar_categoria_mensaje
+import bas.orellana.gastostracker.presentation.resources.eliminar_categoria_titulo
+import bas.orellana.gastostracker.presentation.ui.components.nombre
+import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
+import org.jetbrains.compose.resources.pluralStringResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -54,7 +83,7 @@ fun ManageCategoriasDialog(
     onColorSeleccionado: (Long) -> Unit,
     onNuevaCategoriaChange: (String) -> Unit,
     onAddCategoria: () -> Unit,
-    onDeleteCategoria: (String) -> Unit,
+    onDeleteCategoria: (CategoriaPersonalizada) -> Unit,
     onEditCategoria: (CategoriaPersonalizada) -> Unit,
     onEditNombreChange: (String) -> Unit,
     onEditColorChange: (Long) -> Unit,
@@ -73,7 +102,7 @@ fun ManageCategoriasDialog(
                     .padding(24.dp)
             ) {
                 Text(
-                    text = "Administrar categor\u00EDas",
+                    text = stringResource(Res.string.administrar_categorias),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
@@ -82,7 +111,7 @@ fun ManageCategoriasDialog(
 
                 if (categoriasPersonalizadas.isNotEmpty()) {
                     Text(
-                        text = "Categor\u00EDas existentes",
+                        text = stringResource(Res.string.categorias_existentes),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -114,11 +143,11 @@ fun ManageCategoriasDialog(
                                     modifier = Modifier.weight(1f)
                                 )
                                 IconButton(
-                                    onClick = { onDeleteCategoria(categoria.id) }
+                                    onClick = { onDeleteCategoria(categoria) }
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Eliminar",
+                                        contentDescription = stringResource(Res.string.accion_eliminar),
                                         tint = MaterialTheme.colorScheme.error
                                     )
                                 }
@@ -131,7 +160,7 @@ fun ManageCategoriasDialog(
 
                 if (editCategoria != null) {
                     Text(
-                        text = "Editar categor\u00EDa",
+                        text = stringResource(Res.string.editar_categoria),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -139,7 +168,7 @@ fun ManageCategoriasDialog(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Selecciona un color",
+                        text = stringResource(Res.string.selecciona_color),
                         style = MaterialTheme.typography.bodySmall
                     )
 
@@ -181,7 +210,7 @@ fun ManageCategoriasDialog(
                         OutlinedTextField(
                             value = editNombre,
                             onValueChange = onEditNombreChange,
-                            label = { Text("Nombre") },
+                            label = { Text(stringResource(Res.string.campo_nombre)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
@@ -190,21 +219,21 @@ fun ManageCategoriasDialog(
                             onClick = onSaveEdit,
                             enabled = editNombre.isNotBlank()
                         ) {
-                            Text("Guardar")
+                            Text(stringResource(Res.string.accion_guardar))
                         }
                     }
 
                     TextButton(
                         onClick = onCancelEdit
                     ) {
-                        Text("Cancelar edici\u00F3n", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(Res.string.cancelar_edicion), color = MaterialTheme.colorScheme.error)
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 Text(
-                    text = "Nueva categor\u00EDa",
+                    text = stringResource(Res.string.nueva_categoria),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -212,7 +241,7 @@ fun ManageCategoriasDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Selecciona un color",
+                    text = stringResource(Res.string.selecciona_color),
                     style = MaterialTheme.typography.bodySmall
                 )
 
@@ -254,7 +283,7 @@ fun ManageCategoriasDialog(
                     OutlinedTextField(
                         value = nuevaCategoria,
                         onValueChange = onNuevaCategoriaChange,
-                        label = { Text("Nombre") },
+                        label = { Text(stringResource(Res.string.campo_nombre)) },
                         modifier = Modifier.weight(1f),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
@@ -263,7 +292,7 @@ fun ManageCategoriasDialog(
                         onClick = onAddCategoria,
                         enabled = nuevaCategoria.isNotBlank()
                     ) {
-                        Text("+")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.anadir_categoria))
                     }
                 }
 
@@ -273,9 +302,120 @@ fun ManageCategoriasDialog(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.End)
                 ) {
-                    Text("Cerrar")
+                    Text(stringResource(Res.string.accion_cerrar))
                 }
             }
         }
     }
+}
+
+/** [ManageCategoriasDialog] conectado al [HomeViewModel], incluida la pregunta al borrar una categoría con movimientos. */
+@Composable
+fun ManageCategoriasDialog(viewModel: HomeViewModel) {
+    val state by viewModel.manageCategoriasState.collectAsState()
+    val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
+
+    ManageCategoriasDialog(
+        categoriasPersonalizadas = categoriasPersonalizadas,
+        colorSeleccionado = state.colorSeleccionado,
+        nuevaCategoria = state.nuevaCategoria,
+        editCategoria = state.editCategoria,
+        editNombre = state.editNombre,
+        editColor = state.editColor,
+        onColorSeleccionado = viewModel::updateColorSeleccionado,
+        onNuevaCategoriaChange = viewModel::updateNuevaCategoria,
+        onAddCategoria = {
+            viewModel.addCategoriaPersonalizada(state.nuevaCategoria, state.colorSeleccionado)
+            viewModel.resetManageCategoriasState()
+        },
+        onDeleteCategoria = viewModel::solicitarEliminarCategoria,
+        onEditCategoria = viewModel::showEditCategoriaDialog,
+        onEditNombreChange = viewModel::updateEditNombre,
+        onEditColorChange = viewModel::updateEditColor,
+        onSaveEdit = viewModel::saveEditCategoria,
+        onCancelEdit = viewModel::cancelEditCategoria,
+        onDismiss = viewModel::hideManageCategoriasDialog
+    )
+
+    state.categoriaAEliminar?.let { categoria ->
+        ReasignarCategoriaDialog(
+            categoria = categoria,
+            movimientos = state.movimientosCategoriaAEliminar,
+            destino = state.destinoReasignacion,
+            otrasCategorias = categoriasPersonalizadas.filter { it.id != categoria.id },
+            onDestinoChange = viewModel::updateDestinoReasignacion,
+            onConfirmar = viewModel::confirmarEliminarCategoria,
+            onCancelar = viewModel::cancelarEliminarCategoria
+        )
+    }
+}
+
+/**
+ * Al borrar una categoría personalizada que tiene gastos o ingresos, pregunta a qué categoría pasarlos
+ * (por defecto "Otros"). La de ahorro no se ofrece: convertiría gastos e ingresos en ahorro.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReasignarCategoriaDialog(
+    categoria: CategoriaPersonalizada,
+    movimientos: Int,
+    destino: CategoriaDestino,
+    otrasCategorias: List<CategoriaPersonalizada>,
+    onDestinoChange: (CategoriaDestino) -> Unit,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(stringResource(Res.string.eliminar_categoria_titulo, categoria.nombre)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(pluralStringResource(Res.plurals.eliminar_categoria_mensaje, movimientos, movimientos))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Categoria.PARA_INGRESOS.forEach { predefinida ->
+                        OpcionDestino(
+                            texto = predefinida.nombre(),
+                            color = predefinida.color,
+                            seleccionada = destino == CategoriaDestino.Predefinida(predefinida),
+                            onClick = { onDestinoChange(CategoriaDestino.Predefinida(predefinida)) }
+                        )
+                    }
+                    otrasCategorias.forEach { personalizada ->
+                        OpcionDestino(
+                            texto = personalizada.nombre,
+                            color = personalizada.color,
+                            seleccionada = destino == CategoriaDestino.Personalizada(personalizada.id),
+                            onClick = { onDestinoChange(CategoriaDestino.Personalizada(personalizada.id)) }
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirmar) {
+                Text(stringResource(Res.string.accion_eliminar), color = MaterialTheme.colorScheme.error)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onCancelar) {
+                Text(stringResource(Res.string.accion_cancelar))
+            }
+        }
+    )
+}
+
+@Composable
+private fun OpcionDestino(texto: String, color: Long, seleccionada: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = seleccionada,
+        onClick = onClick,
+        label = { Text(texto, fontSize = 12.sp) },
+        colors = FilterChipDefaults.filterChipColors(
+            selectedContainerColor = Color(color).copy(alpha = 0.4f),
+            containerColor = Color(color).copy(alpha = 0.15f)
+        )
+    )
 }

@@ -13,18 +13,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
-import bas.orellana.gastostracker.navigation.NavRoutes
+import bas.orellana.gastostracker.presentation.navigation.NavRoutes
+import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.nav_balance
+import bas.orellana.gastostracker.presentation.resources.nav_gastos
+import bas.orellana.gastostracker.presentation.resources.nav_grafico
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 private data class NavTab(
     val route: String,
     val icon: ImageVector,
-    val label: String
+    val label: StringResource
 )
 
 private val tabs = listOf(
-    NavTab(NavRoutes.BALANCE, Icons.Default.Star, "Balance"),
-    NavTab(NavRoutes.HOME, Icons.Default.Home, "Gastos"),
-    NavTab(NavRoutes.GRAPH_SCREEN, Icons.Default.FavoriteBorder, "Gráfico")
+    NavTab(NavRoutes.BALANCE, Icons.Default.Star, Res.string.nav_balance),
+    NavTab(NavRoutes.HOME, Icons.Default.Home, Res.string.nav_gastos),
+    NavTab(NavRoutes.GRAPH_SCREEN, Icons.Default.FavoriteBorder, Res.string.nav_grafico)
 )
 
 @Composable
@@ -36,9 +42,10 @@ fun BottomNavBar(navController: NavController) {
         contentColor = MaterialTheme.colorScheme.onSurface
     ) {
         tabs.forEach { tab ->
+            val etiqueta = stringResource(tab.label)
             NavigationBarItem(
-                icon = { Icon(tab.icon, contentDescription = tab.label) },
-                label = { Text(tab.label) },
+                icon = { Icon(tab.icon, contentDescription = etiqueta) },
+                label = { Text(etiqueta) },
                 selected = currentRoute == tab.route,
                 onClick = {
                     if (currentRoute != tab.route) {

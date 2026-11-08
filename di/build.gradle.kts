@@ -20,6 +20,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":domain"))
             implementation(project(":data"))
+            implementation(project(":presentation"))
             implementation(libs.koin.core)
         }
         androidMain.dependencies {

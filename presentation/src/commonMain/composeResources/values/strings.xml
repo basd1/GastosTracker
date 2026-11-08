@@ -1,0 +1,145 @@
+<resources>
+    <!-- General -->
+    <string name="app_name">GastosTracker</string>
+    <string name="accion_cancelar">Cancelar</string>
+    <string name="accion_guardar">Guardar</string>
+    <string name="accion_actualizar">Actualizar</string>
+    <string name="accion_cerrar">Cerrar</string>
+    <string name="accion_seleccionar">Seleccionar</string>
+    <string name="accion_deshacer">Deshacer</string>
+    <string name="accion_eliminar">Eliminar</string>
+    <string name="accion_descartar">Descartar</string>
+    <string name="configuracion">Configuración</string>
+    <string name="mes_y_anio">%1$s %2$d</string>
+    <string name="seleccionar_mes">Seleccionar mes</string>
+    <string name="anio_anterior">Año anterior</string>
+    <string name="anio_siguiente">Año siguiente</string>
+
+    <!-- Navegación -->
+    <string name="nav_balance">Balance</string>
+    <string name="nav_gastos">Gastos</string>
+    <string name="nav_grafico">Gráfico</string>
+
+    <!-- Formularios de gasto e ingreso -->
+    <string name="campo_concepto">Concepto</string>
+    <string name="campo_precio">Precio</string>
+    <string name="campo_monto">Monto</string>
+    <string name="campo_fecha">Fecha</string>
+    <string name="campo_categoria">Categoría</string>
+    <string name="cambiar_fecha">Cambiar fecha</string>
+    <string name="importe_invalido">Introduce un importe mayor que 0</string>
+    <string name="sin_categoria">Sin categoría</string>
+    <string name="categorias_personalizadas">Personalizadas</string>
+
+    <!-- Categorías predefinidas -->
+    <string name="categoria_comida">Comida</string>
+    <string name="categoria_hogar">Hogar</string>
+    <string name="categoria_transporte">Transporte</string>
+    <string name="categoria_ocio">Ocio</string>
+    <string name="categoria_ropa">Ropa</string>
+    <string name="categoria_salud">Salud</string>
+    <string name="categoria_tecnologia">Tecnología</string>
+    <string name="categoria_servicios">Servicios</string>
+    <string name="categoria_regalos">Regalos</string>
+    <string name="categoria_ahorro">Ahorro</string>
+    <string name="categoria_otros">Otros</string>
+
+    <!-- Pantalla de gastos -->
+    <string name="titulo_gastos">Gastos</string>
+    <string name="anadir_gasto">Añadir gasto</string>
+    <string name="editar_gasto">Editar gasto</string>
+    <string name="gasto_eliminado">Gasto eliminado</string>
+    <string name="sin_gastos_titulo">No hay gastos todavía</string>
+    <string name="sin_gastos_mensaje">Pulsa + para añadir tu primer gasto</string>
+    <string name="buscar_gastos">Buscar gastos...</string>
+    <string name="buscar">Buscar</string>
+    <string name="limpiar_filtros">Limpiar filtros</string>
+    <string name="sin_resultados">No se encontraron gastos con esos criterios</string>
+    <string name="gastos_del_mes">Gastos del mes</string>
+    <plurals name="numero_gastos">
+        <item quantity="one">%1$d gasto</item>
+        <item quantity="other">%1$d gastos</item>
+    </plurals>
+    <string name="media_importe">media %1$s</string>
+    <string name="alerta_mas_gasto">Has gastado más en %1$s que el mes pasado</string>
+    <string name="alerta_comparativa">Este mes: %1$s  |  Mes pasado: %2$s</string>
+
+    <!-- Orden de la lista de gastos -->
+    <string name="orden_mas_reciente">Más reciente</string>
+    <string name="orden_mas_antiguo">Más antiguo</string>
+    <string name="orden_mayor_importe">Mayor importe</string>
+    <string name="orden_menor_importe">Menor importe</string>
+    <string name="orden_nombre_asc">A-Z</string>
+    <string name="orden_nombre_desc">Z-A</string>
+
+    <!-- Pantalla de balance -->
+    <string name="titulo_balance">Balance</string>
+    <string name="boton_ingreso">Ingreso</string>
+    <string name="anadir_ingreso">Añadir ingreso</string>
+    <string name="editar_ingreso">Editar ingreso</string>
+    <string name="ingreso_eliminado">Ingreso eliminado</string>
+    <string name="ingresos_con_numero">Ingresos (%1$d)</string>
+    <string name="resumen_ingresos">Ingresos</string>
+    <string name="resumen_gastos">Gastos</string>
+    <string name="resumen_ahorro">Ahorro</string>
+
+    <!-- Pantalla de gráfico -->
+    <string name="titulo_grafico">Gráfico</string>
+    <string name="sin_gastos_registrados">No hay gastos registrados</string>
+    <string name="sin_gastos_periodo">No hay gastos en este período</string>
+    <string name="periodo_este_mes">Este mes</string>
+    <string name="periodo_3_meses">3 meses</string>
+    <string name="periodo_total">Total</string>
+    <string name="resumen_total">Total</string>
+    <string name="resumen_top_categoria">Top categoría</string>
+    <string name="resumen_media_dia">Media/día</string>
+    <string name="ahorro_acumulado">Ahorro acumulado</string>
+    <string name="sin_datos_ahorro">No hay datos de ahorro</string>
+    <string name="toca_un_punto">Toca un punto para ver el valor</string>
+
+    <!-- Ajustes y categorías -->
+    <string name="modo_oscuro">Modo oscuro</string>
+    <string name="administrar_categorias">Administrar categorías</string>
+    <string name="categorias_existentes">Categorías existentes</string>
+    <string name="editar_categoria">Editar categoría</string>
+    <string name="nueva_categoria">Nueva categoría</string>
+    <string name="selecciona_color">Selecciona un color</string>
+    <string name="campo_nombre">Nombre</string>
+    <string name="cancelar_edicion">Cancelar edición</string>
+    <string name="anadir_categoria">Añadir categoría</string>
+    <string name="eliminar_categoria_titulo">Eliminar «%1$s»</string>
+    <plurals name="eliminar_categoria_mensaje">
+        <item quantity="one">Hay %1$d movimiento con esta categoría. ¿A qué categoría quieres pasarlo?</item>
+        <item quantity="other">Hay %1$d movimientos con esta categoría. ¿A qué categoría quieres pasarlos?</item>
+    </plurals>
+
+    <!-- Meses -->
+    <string-array name="meses">
+        <item>Enero</item>
+        <item>Febrero</item>
+        <item>Marzo</item>
+        <item>Abril</item>
+        <item>Mayo</item>
+        <item>Junio</item>
+        <item>Julio</item>
+        <item>Agosto</item>
+        <item>Septiembre</item>
+        <item>Octubre</item>
+        <item>Noviembre</item>
+        <item>Diciembre</item>
+    </string-array>
+    <string-array name="meses_cortos">
+        <item>Ene</item>
+        <item>Feb</item>
+        <item>Mar</item>
+        <item>Abr</item>
+        <item>May</item>
+        <item>Jun</item>
+        <item>Jul</item>
+        <item>Ago</item>
+        <item>Sep</item>
+        <item>Oct</item>
+        <item>Nov</item>
+        <item>Dic</item>
+    </string-array>
+</resources>

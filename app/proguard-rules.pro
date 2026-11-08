@@ -1,21 +1,11 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# Reglas de R8 propias de la app.
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Room, Koin, kotlinx.serialization, DataStore, SQLite bundled y Compose traen sus propias
+# reglas (consumer rules), así que de momento no hace falta ninguna más. Si una versión de
+# release falla al arrancar con ClassNotFoundException/NoSuchMethodException, añade aquí el
+# -keep de la clase afectada.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Conserva los números de línea para que los stack traces de release se puedan leer
+# (con el mapping.txt que genera el build en app/build/outputs/mapping/release/).
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

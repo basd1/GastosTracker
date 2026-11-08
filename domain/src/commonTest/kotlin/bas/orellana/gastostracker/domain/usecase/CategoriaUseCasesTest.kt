@@ -1,10 +1,13 @@
 package bas.orellana.gastostracker.domain.usecase
 
+import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class CategoriaUseCasesTest {
@@ -35,7 +38,7 @@ class CategoriaUseCasesTest {
     }
 
     @Test
-    fun `DeleteCategoriaPersonalizadaUseCase elimina la categoria indicada`() = runTest {
+    fun `DeleteCategoriaPersonalizadaUseCase elimina la categoria y reasigna a Otros por defecto`() = runTest {
         val repository = FakeCategoriasRepository()
         repository.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
         val id = repository.getCategoriasPersonalizadas().first().single().id
@@ -44,6 +47,42 @@ class CategoriaUseCasesTest {
         useCase(id)
 
         assertTrue(repository.getCategoriasPersonalizadas().first().isEmpty())
+        assertEquals(id to CategoriaDestino.Predefinida(Categoria.OTROS), repository.ultimaEliminacion)
+    }
+
+    @Test
+    fun `DeleteCategoriaPersonalizadaUseCase reasigna a la categoria elegida`() = runTest {
+        val repository = FakeCategoriasRepository()
+        repository.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
+        repository.addCategoriaPersonalizada("Animales", 0xFF80DEEA)
+        val (mascotas, animales) = repository.getCategoriasPersonalizadas().first()
+        val useCase = DeleteCategoriaPersonalizadaUseCase(repository)
+
+        useCase(mascotas.id, CategoriaDestino.Personalizada(animales.id))
+
+        assertEquals(listOf(animales), repository.getCategoriasPersonalizadas().first())
+        assertEquals(mascotas.id to CategoriaDestino.Personalizada(animales.id), repository.ultimaEliminacion)
+    }
+
+    @Test
+    fun `DeleteCategoriaPersonalizadaUseCase no permite reasignar a la misma categoria`() = runTest {
+        val repository = FakeCategoriasRepository()
+        repository.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
+        val id = repository.getCategoriasPersonalizadas().first().single().id
+        val useCase = DeleteCategoriaPersonalizadaUseCase(repository)
+
+        assertFailsWith<IllegalArgumentException> { useCase(id, CategoriaDestino.Personalizada(id)) }
+        assertEquals(1, repository.getCategoriasPersonalizadas().first().size)
+    }
+
+    @Test
+    fun `ContarMovimientosCategoriaUseCase devuelve los movimientos del repositorio`() = runTest {
+        val repository = FakeCategoriasRepository()
+        repository.movimientosPorCategoria["7"] = 3
+        val useCase = ContarMovimientosCategoriaUseCase(repository)
+
+        assertEquals(3, useCase("7"))
+        assertEquals(0, useCase("otra"))
     }
 
     @Test

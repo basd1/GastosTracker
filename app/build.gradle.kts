@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.koin.android)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.biometric)
     implementation(libs.kotlinx.datetime)
     implementation(libs.koin.compose)
     implementation(libs.androidx.lifecycle.viewmodel)

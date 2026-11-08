@@ -35,6 +35,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.Fingerprint
+import bas.orellana.gastostracker.presentation.util.bloqueoDisponible
+import bas.orellana.gastostracker.presentation.resources.ajustes_seccion_seguridad
+import bas.orellana.gastostracker.presentation.resources.ajustes_bloqueo
+import bas.orellana.gastostracker.presentation.resources.ajustes_bloqueo_detalle
+import bas.orellana.gastostracker.presentation.resources.ajustes_bloqueo_no_disponible
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -269,6 +275,26 @@ fun AjustesScreen(
                         detalle = stringResource(Res.string.ajustes_cuentas_detalle),
                         onClick = { navController.navigate(NavRoutes.CUENTAS) }
                     )
+                }
+
+                val puedeBloquear = bloqueoDisponible()
+                SeccionAjustes(stringResource(Res.string.ajustes_seccion_seguridad)) {
+                    AjusteItem(
+                        icono = Icons.Default.Fingerprint,
+                        titulo = stringResource(Res.string.ajustes_bloqueo),
+                        detalle = stringResource(
+                            if (puedeBloquear || ajustes.bloqueoActivo) Res.string.ajustes_bloqueo_detalle
+                            else Res.string.ajustes_bloqueo_no_disponible
+                        ),
+                        habilitado = puedeBloquear || ajustes.bloqueoActivo,
+                        onClick = { settingsViewModel.setBloqueo(!ajustes.bloqueoActivo) }
+                    ) {
+                        Switch(
+                            checked = ajustes.bloqueoActivo,
+                            enabled = puedeBloquear || ajustes.bloqueoActivo,
+                            onCheckedChange = { settingsViewModel.setBloqueo(it) }
+                        )
+                    }
                 }
 
                 SeccionAjustes(stringResource(Res.string.ajustes_seccion_datos)) {

@@ -31,7 +31,7 @@ val presentationModule = module {
     viewModelOf(::CuentasViewModel)
     viewModelOf(::CategoriasViewModel)
     viewModel { (metaId: String) -> MetaDetalleViewModel(metaId, get(), get(), get(), get(), get(), get()) }
-    single { TareasAlAbrir(get()) }
+    single { TareasAlAbrir(get(), get(), get()) }
     single { PeticionesFiltro() }
     single { AccionesPendientes() }
 }

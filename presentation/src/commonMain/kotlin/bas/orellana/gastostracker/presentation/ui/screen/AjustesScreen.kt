@@ -104,8 +104,9 @@ import bas.orellana.gastostracker.presentation.ui.components.AjusteItem
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.components.SeccionAjustes
 import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
-import bas.orellana.gastostracker.presentation.util.rememberAbrirArchivo
+import bas.orellana.gastostracker.presentation.util.rememberAbrirCopia
 import bas.orellana.gastostracker.presentation.util.rememberGuardarArchivo
+import bas.orellana.gastostracker.presentation.util.rememberGuardarCopia
 import bas.orellana.gastostracker.presentation.viewmodel.AvisoDatos
 import bas.orellana.gastostracker.presentation.viewmodel.DatosViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.CategoriasViewModel
@@ -141,16 +142,16 @@ fun AjustesScreen(
     val guardarCsv = rememberGuardarArchivo(DatosViewModel.MIME_CSV) {
         datosViewModel.resultadoGuardado(DatosViewModel.MIME_CSV, it)
     }
-    val guardarJson = rememberGuardarArchivo(DatosViewModel.MIME_JSON) {
-        datosViewModel.resultadoGuardado(DatosViewModel.MIME_JSON, it)
+    val guardarCopia = rememberGuardarCopia {
+        datosViewModel.resultadoGuardado(DatosViewModel.MIME_COPIA, it)
     }
-    val abrirCopia = rememberAbrirArchivo { datosViewModel.copiaElegida(it) }
+    val abrirCopia = rememberAbrirCopia { datosViewModel.copiaElegida(it) }
 
     LaunchedEffect(datos.archivoPendiente) {
         val archivo = datos.archivoPendiente ?: return@LaunchedEffect
         datosViewModel.archivoEntregado()
         if (archivo.mime == DatosViewModel.MIME_CSV) guardarCsv(archivo.nombre, archivo.contenido)
-        else guardarJson(archivo.nombre, archivo.contenido)
+        else guardarCopia(archivo.nombre, archivo.contenido, archivo.fotos)
     }
     LaunchedEffect(datos.aviso) {
         val aviso = datos.aviso ?: return@LaunchedEffect

@@ -25,7 +25,10 @@ import bas.orellana.gastostracker.presentation.resources.csv_tipo_gasto
 import bas.orellana.gastostracker.presentation.resources.csv_tipo_ingreso
 import bas.orellana.gastostracker.presentation.resources.sin_categoria
 import bas.orellana.gastostracker.presentation.ui.components.nombreRes
+import bas.orellana.gastostracker.presentation.util.AlmacenTickets
+import bas.orellana.gastostracker.presentation.util.CopiaLeida
 import bas.orellana.gastostracker.presentation.util.FilaCsv
+import bas.orellana.gastostracker.presentation.util.MIME_ZIP
 import bas.orellana.gastostracker.presentation.util.generarCsv
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,8 +39,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.getString
 
-/** Archivo listo para que la pantalla abra el selector de "Guardar como". */
-data class ArchivoParaGuardar(val nombre: String, val mime: String, val contenido: String)
+/** Archivo listo para que la pantalla abra el selector de "Guardar como". En la copia, [fotos] son las fotos de tickets que van dentro. */
+data class ArchivoParaGuardar(val nombre: String, val mime: String, val contenido: String, val fotos: List<String> = emptyList())
 
 sealed interface AvisoDatos {
     data object CsvGuardado : AvisoDatos
@@ -52,7 +55,7 @@ data class DatosState(
     val trabajando: Boolean = false,
     val archivoPendiente: ArchivoParaGuardar? = null,
     /** Contenido de la copia elegida, a la espera de que el usuario confirme que quiere sustituirlo todo. */
-    val copiaPorRestaurar: String? = null,
+    val copiaPorRestaurar: CopiaLeida? = null,
     val aviso: AvisoDatos? = null
 )
 
@@ -63,7 +66,8 @@ class DatosViewModel(
     private val getTodasLasAportacionesUseCase: GetTodasLasAportacionesUseCase,
     private val getProgresoMetasUseCase: GetProgresoMetasUseCase,
     private val exportarCopiaSeguridadUseCase: ExportarCopiaSeguridadUseCase,
-    private val importarCopiaSeguridadUseCase: ImportarCopiaSeguridadUseCase
+    private val importarCopiaSeguridadUseCase: ImportarCopiaSeguridadUseCase,
+    private val almacenTickets: AlmacenTickets
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DatosState())
@@ -78,8 +82,9 @@ class DatosViewModel(
 
     fun exportarCopia() = trabajar {
         val contenido = exportarCopiaSeguridadUseCase()
+        val fotos = getGastosUseCase().first().mapNotNull { it.fotoTicket }
         _state.update {
-            it.copy(archivoPendiente = ArchivoParaGuardar("gastostracker-copia-${todayLocalDate()}.json", MIME_JSON, contenido))
+            it.copy(archivoPendiente = ArchivoParaGuardar("gastostracker-copia-${todayLocalDate()}.zip", MIME_COPIA, contenido, fotos))
         }
     }
 
@@ -97,18 +102,20 @@ class DatosViewModel(
     }
 
     /** El usuario ha elegido un archivo para restaurar: hay que pedir confirmación antes de sustituir nada. */
-    fun copiaElegida(contenido: String?) {
-        if (contenido == null) return
-        _state.update { it.copy(copiaPorRestaurar = contenido) }
+    fun copiaElegida(copia: CopiaLeida?) {
+        if (copia == null) return
+        _state.update { it.copy(copiaPorRestaurar = copia) }
     }
 
     fun cancelarRestaurar() = _state.update { it.copy(copiaPorRestaurar = null) }
 
     fun confirmarRestaurar() {
-        val contenido = _state.value.copiaPorRestaurar ?: return
+        val copia = _state.value.copiaPorRestaurar ?: return
         _state.update { it.copy(copiaPorRestaurar = null) }
         trabajar {
-            val resumen = importarCopiaSeguridadUseCase(contenido)
+            val resumen = importarCopiaSeguridadUseCase(copia.json)
+            // Las fotos, después de los datos: si la copia no es válida no se toca nada.
+            if (copia.fotos > 0) almacenTickets.instalarFotosRestauradas()
             _state.update { it.copy(aviso = AvisoDatos.Restaurada(resumen)) }
         }
     }
@@ -181,6 +188,6 @@ class DatosViewModel(
 
     companion object {
         const val MIME_CSV = "text/csv"
-        const val MIME_JSON = "application/json"
+        const val MIME_COPIA = MIME_ZIP
     }
 }

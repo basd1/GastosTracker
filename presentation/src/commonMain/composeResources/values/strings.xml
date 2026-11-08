@@ -218,7 +218,7 @@
     <string name="exportar_csv">Exportar a Excel (CSV)</string>
     <string name="exportar_csv_detalle">Todos los movimientos en una hoja de cálculo</string>
     <string name="crear_copia">Crear copia de seguridad</string>
-    <string name="crear_copia_detalle">Guarda todos tus datos en un archivo JSON</string>
+    <string name="crear_copia_detalle">Guarda todos tus datos y las fotos de los tickets en un archivo</string>
     <string name="restaurar_copia">Restaurar copia de seguridad</string>
     <string name="restaurar_copia_detalle">Sustituye los datos actuales por los de una copia</string>
     <string name="restaurar_titulo">¿Restaurar la copia?</string>

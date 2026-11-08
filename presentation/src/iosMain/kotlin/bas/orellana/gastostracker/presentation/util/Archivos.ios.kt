@@ -10,4 +10,8 @@ actual fun rememberGuardarArchivo(mime: String, onResultado: (Boolean) -> Unit):
     { _, _ -> onResultado(false) }
 
 @Composable
-actual fun rememberAbrirArchivo(onLeido: (String?) -> Unit): () -> Unit = { onLeido(null) }
+actual fun rememberGuardarCopia(onResultado: (Boolean) -> Unit): (nombre: String, json: String, fotos: List<String>) -> Unit =
+    { _, _, _ -> onResultado(false) }
+
+@Composable
+actual fun rememberAbrirCopia(onLeida: (CopiaLeida?) -> Unit): () -> Unit = { onLeida(null) }

@@ -31,7 +31,42 @@ import java.io.File
 import kotlin.coroutines.resume
 
 /** Carpeta privada donde se guardan las fotos de los tickets (entra en la copia de seguridad de Android). */
-private fun carpetaTickets(context: Context): File = File(context.filesDir, "tickets").apply { mkdirs() }
+internal fun carpetaTickets(context: Context): File = File(context.filesDir, "tickets").apply { mkdirs() }
+
+/** Fichero de la foto guardada en [ruta], buscado por nombre en la carpeta de tickets (ver [nombreFotoTicket]). */
+internal fun archivoTicket(context: Context, ruta: String): File = File(carpetaTickets(context), nombreFotoTicket(ruta))
+
+/** Donde se dejan las fotos de una copia abierta hasta que se confirma la restauración. */
+internal fun carpetaRestaurar(context: Context): File = File(context.cacheDir, "restaurar-tickets")
+
+class AlmacenTicketsAndroid(private val context: Context) : AlmacenTickets {
+
+    override suspend fun fotos(): List<FotoGuardada> = withContext(Dispatchers.IO) {
+        carpetaTickets(context).listFiles().orEmpty()
+            .filter { it.isFile }
+            .map { FotoGuardada(it.name, it.lastModified()) }
+    }
+
+    override suspend fun borrar(nombres: Collection<String>) = withContext(Dispatchers.IO) {
+        nombres.forEach { archivoTicket(context, it).delete() }
+    }
+
+    override suspend fun instalarFotosRestauradas() = withContext(Dispatchers.IO) {
+        val origen = carpetaRestaurar(context)
+        origen.listFiles().orEmpty().filter { it.isFile }.forEach { foto ->
+            val destino = File(carpetaTickets(context), foto.name)
+            destino.delete()
+            if (!foto.renameTo(destino)) {
+                foto.copyTo(destino, overwrite = true)
+                foto.delete()
+            }
+            // Como recién guardada, para que la limpieza de fotos sin gasto no la toque hoy.
+            destino.setLastModified(System.currentTimeMillis())
+        }
+        origen.deleteRecursively()
+        Unit
+    }
+}
 
 /** Copia la imagen de [uri] a la carpeta de tickets y devuelve la ruta (null si falla). */
 private fun copiarATickets(context: Context, uri: Uri): String? = runCatching {
@@ -72,7 +107,7 @@ actual fun rememberLectorTicket(): suspend (ruta: String) -> String? {
         { ruta ->
             runCatching {
                 // fromFilePath respeta la orientación EXIF de la foto.
-                val imagen = InputImage.fromFilePath(context, Uri.fromFile(File(ruta)))
+                val imagen = InputImage.fromFilePath(context, Uri.fromFile(archivoTicket(context, ruta)))
                 val reconocedor = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
                 try {
                     suspendCancellableCoroutine { continuacion ->
@@ -90,8 +125,9 @@ actual fun rememberLectorTicket(): suspend (ruta: String) -> String? {
 
 @Composable
 actual fun ImagenTicket(ruta: String, modifier: Modifier, contentDescription: String?) {
+    val context = LocalContext.current
     val imagen by produceState<ImageBitmap?>(initialValue = null, ruta) {
-        value = withContext(Dispatchers.IO) { cargarReducida(ruta, ladoMaximo = 1600)?.asImageBitmap() }
+        value = withContext(Dispatchers.IO) { cargarReducida(archivoTicket(context, ruta).path, ladoMaximo = 1600)?.asImageBitmap() }
     }
     imagen?.let { Image(bitmap = it, contentDescription = contentDescription, modifier = modifier, contentScale = ContentScale.Fit) }
 }

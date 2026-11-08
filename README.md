@@ -35,7 +35,7 @@ Una app de finanzas personales hecha con Kotlin Multiplatform y Compose, que gua
 | 🔔 **Recordatorio diario** | "¿Has apuntado tus gastos de hoy?", a la hora que elijas, solo si aún no has apuntado nada. |
 | 🏠 **Widget y atajo** | Widget con lo gastado este mes y botón "+ Gasto"; atajo al mantener pulsado el icono. |
 | 🔒 **Bloqueo** | Huella, cara o el PIN/patrón del móvil para abrir la app. |
-| 💾 **Tus datos son tuyos** | Exporta a **CSV para Excel**, haz una **copia de seguridad** en JSON y restáurala cuando quieras. |
+| 💾 **Tus datos son tuyos** | Exporta a **CSV para Excel**, haz una **copia de seguridad** (con las fotos de los tickets) y restáurala cuando quieras. |
 | 🌍 **A tu manera** | Tema claro/oscuro, 14 monedas y formato de importes según el idioma del dispositivo. |
 
 > Sin cuentas, sin servidores, sin anuncios: todo se guarda en una base de datos local en el dispositivo.
@@ -182,7 +182,7 @@ GastosTracker/
 
 - Todo se guarda **solo en el dispositivo** (Room + DataStore). La app no tiene servidor ni analítica.
 - La copia de seguridad de Android incluye la base de datos, los ajustes y las fotos de los tickets, y solo se sube a la nube si va **cifrada**.
-- Desde **Ajustes → Datos** puedes exportar todo a CSV, crear una copia de seguridad JSON o restaurarla (se valida entera antes de sustituir nada).
+- Desde **Ajustes → Datos** puedes exportar todo a CSV, crear una copia de seguridad (un ZIP con los datos en JSON y las fotos de los tickets) o restaurarla; también acepta las copias JSON antiguas y se valida entera antes de sustituir nada.
 - El OCR de tickets se hace en el propio móvil con ML Kit.
 
 ---

@@ -15,3 +15,10 @@ actual fun rememberLectorTicket(): suspend (ruta: String) -> String? = { null }
 
 @Composable
 actual fun ImagenTicket(ruta: String, modifier: Modifier, contentDescription: String?) = Unit
+
+/** En iOS todavía no se guardan fotos de tickets (ver el TODO de arriba). */
+class AlmacenTicketsIos : AlmacenTickets {
+    override suspend fun fotos(): List<FotoGuardada> = emptyList()
+    override suspend fun borrar(nombres: Collection<String>) = Unit
+    override suspend fun instalarFotosRestauradas() = Unit
+}

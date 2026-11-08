@@ -11,6 +11,7 @@ import bas.orellana.gastostracker.presentation.viewmodel.MetaDetalleViewModel
 import org.koin.core.module.dsl.viewModel
 import bas.orellana.gastostracker.presentation.TareasAlAbrir
 import bas.orellana.gastostracker.presentation.navigation.PeticionesFiltro
+import bas.orellana.gastostracker.presentation.navigation.AccionesPendientes
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.koin.core.module.dsl.viewModelOf
@@ -30,4 +31,5 @@ val presentationModule = module {
     viewModel { (metaId: String) -> MetaDetalleViewModel(metaId, get(), get(), get(), get(), get(), get()) }
     single { TareasAlAbrir(get()) }
     single { PeticionesFiltro() }
+    single { AccionesPendientes() }
 }

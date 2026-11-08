@@ -16,6 +16,9 @@ import bas.orellana.gastostracker.presentation.navigation.AppNavHost
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.ui.theme.GastosTrackerTheme
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.android.ext.android.get
+import android.content.Intent
+import bas.orellana.gastostracker.presentation.navigation.AccionesPendientes
 
 class MainActivity : ComponentActivity() {
 
@@ -24,6 +27,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mantenerSplashHastaCargarPreferencias()
+        atenderIntent(intent)
         setContent {
             val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
@@ -52,5 +56,23 @@ class MainActivity : ComponentActivity() {
                 return true
             }
         })
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        atenderIntent(intent)
+    }
+
+    /** Atajo del icono, widget o notificación: abrir directamente el diálogo de añadir gasto. */
+    private fun atenderIntent(intent: Intent?) {
+        if (intent?.action == ACCION_ANADIR_GASTO) {
+            get<AccionesPendientes>().pedirAnadirGasto()
+            // Para no repetirlo al recrear la actividad (p. ej. al girar la pantalla).
+            intent.action = null
+        }
+    }
+
+    companion object {
+        const val ACCION_ANADIR_GASTO = "bas.orellana.gastostracker.ANADIR_GASTO"
     }
 }

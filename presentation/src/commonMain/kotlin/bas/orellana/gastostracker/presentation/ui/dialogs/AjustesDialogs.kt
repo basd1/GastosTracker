@@ -16,6 +16,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -30,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import bas.orellana.gastostracker.domain.model.Ajustes
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.accion_cancelar
+import bas.orellana.gastostracker.presentation.resources.accion_guardar
+import bas.orellana.gastostracker.presentation.resources.ajustes_recordatorio_hora
 import bas.orellana.gastostracker.presentation.resources.ajustes_dia_inicio
 import bas.orellana.gastostracker.presentation.resources.ajustes_moneda
 import bas.orellana.gastostracker.presentation.resources.dia_inicio_explicacion
@@ -99,3 +104,21 @@ fun DiaInicioMesDialog(actual: Int, onElegir: (Int) -> Unit, onCancelar: () -> U
         dismissButton = { TextButton(onClick = onCancelar) { Text(stringResource(Res.string.accion_cancelar)) } }
     )
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HoraDialog(hora: Int, minuto: Int, onElegir: (Int, Int) -> Unit, onCancelar: () -> Unit) {
+    val estado = rememberTimePickerState(initialHour = hora, initialMinute = minuto, is24Hour = true)
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(stringResource(Res.string.ajustes_recordatorio_hora)) },
+        text = { TimePicker(state = estado) },
+        confirmButton = {
+            TextButton(onClick = { onElegir(estado.hour, estado.minute) }) { Text(stringResource(Res.string.accion_guardar)) }
+        },
+        dismissButton = { TextButton(onClick = onCancelar) { Text(stringResource(Res.string.accion_cancelar)) } }
+    )
+}
+
+/** "08:05". */
+fun formatoHora(hora: Int, minuto: Int): String = "${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}"

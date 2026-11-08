@@ -97,6 +97,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.CuentasViewModel
 import org.koin.compose.koinInject
 import bas.orellana.gastostracker.presentation.navigation.PeticionesFiltro
+import bas.orellana.gastostracker.presentation.navigation.AccionesPendientes
 import kotlinx.coroutines.flow.filterNotNull
 import androidx.compose.runtime.LaunchedEffect
 import bas.orellana.gastostracker.presentation.resources.Res
@@ -139,6 +140,14 @@ fun HomeScreen(
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // "Añadir gasto" desde el atajo del icono, el widget o la notificación.
+    val acciones = koinInject<AccionesPendientes>()
+    LaunchedEffect(acciones) {
+        acciones.anadirGasto.collect { pedido ->
+            if (pedido && acciones.consumirAnadirGasto()) viewModel.showAddGastoDialog()
+        }
+    }
 
     // Peticiones de otras pantallas para abrir la lista ya filtrada (p. ej. desde el gráfico).
     val peticionesFiltro = koinInject<PeticionesFiltro>()

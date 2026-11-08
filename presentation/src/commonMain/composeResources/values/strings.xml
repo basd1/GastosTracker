@@ -294,6 +294,19 @@
     <string name="dia_inicio_explicacion">Útil si cobras a final de mes: con el día 25, el periodo «noviembre» va del 25 de octubre al 24 de noviembre. Afecta al balance, la lista de gastos, los presupuestos, las alertas y los gráficos.</string>
     <string name="periodo_rango">%1$s – %2$s</string>
 
+    <!-- Recordatorio y bloqueo -->
+    <string name="ajustes_recordatorio">Recordatorio diario</string>
+    <string name="ajustes_recordatorio_detalle">«¿Has apuntado tus gastos de hoy?» (solo si no has apuntado ninguno)</string>
+    <string name="ajustes_recordatorio_hora">Hora del recordatorio</string>
+    <string name="aviso_permiso_notificaciones">Sin permiso para notificaciones no se puede avisar. Puedes darlo en los ajustes del sistema.</string>
+    <string name="ajustes_bloqueo">Bloqueo con huella o PIN</string>
+    <string name="ajustes_bloqueo_detalle">Pide desbloquear al abrir la app</string>
+    <string name="ajustes_bloqueo_no_disponible">Configura una huella, un PIN o un patrón en el dispositivo para poder usarlo</string>
+    <string name="desbloquear_titulo">GastosTracker está bloqueada</string>
+    <string name="desbloquear_subtitulo">Usa tu huella, tu PIN o tu patrón</string>
+    <string name="desbloquear">Desbloquear</string>
+    <string name="hora_minuto">%1$s:%2$s</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

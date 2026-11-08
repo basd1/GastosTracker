@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">GastosTracker</string>
+    <string name="canal_recordatorio">Recordatorio diario</string>
+    <string name="canal_recordatorio_descripcion">Aviso para apuntar los gastos del día</string>
+    <string name="recordatorio_titulo">¿Has apuntado tus gastos de hoy?</string>
+    <string name="recordatorio_texto">Tarda un segundo y luego no se te olvida.</string>
+    <string name="atajo_anadir_gasto">Añadir gasto</string>
+    <string name="atajo_anadir_gasto_largo">Añadir un gasto</string>
+    <string name="widget_descripcion">Lo gastado este mes y un botón para añadir un gasto</string>
 </resources>

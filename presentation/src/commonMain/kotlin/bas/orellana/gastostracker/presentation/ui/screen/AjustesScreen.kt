@@ -35,6 +35,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Schedule
+import bas.orellana.gastostracker.presentation.ui.dialogs.HoraDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.formatoHora
+import bas.orellana.gastostracker.presentation.util.rememberPedirPermisoNotificaciones
+import bas.orellana.gastostracker.presentation.resources.ajustes_recordatorio
+import bas.orellana.gastostracker.presentation.resources.ajustes_recordatorio_detalle
+import bas.orellana.gastostracker.presentation.resources.ajustes_recordatorio_hora
+import bas.orellana.gastostracker.presentation.resources.aviso_permiso_notificaciones
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.filled.Euro
@@ -108,11 +119,18 @@ fun AjustesScreen(
 ) {
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val ajustes by settingsViewModel.ajustes.collectAsState()
+    val snackbar = remember { SnackbarHostState() }
     var mostrarMoneda by remember { mutableStateOf(false) }
     var mostrarDiaInicio by remember { mutableStateOf(false) }
+    var mostrarHora by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val pedirPermisoNotificaciones = rememberPedirPermisoNotificaciones { concedido ->
+        if (concedido) settingsViewModel.setRecordatorio(true)
+        else scope.launch { snackbar.showSnackbar(getString(Res.string.aviso_permiso_notificaciones)) }
+    }
     val homeState by homeViewModel.state.collectAsState()
     val datos by datosViewModel.state.collectAsState()
-    val snackbar = remember { SnackbarHostState() }
+
 
     val guardarCsv = rememberGuardarArchivo(DatosViewModel.MIME_CSV) {
         datosViewModel.resultadoGuardado(DatosViewModel.MIME_CSV, it)
@@ -200,6 +218,27 @@ fun AjustesScreen(
                         },
                         onClick = { mostrarDiaInicio = true }
                     )
+                    HorizontalDivider()
+                    AjusteItem(
+                        icono = Icons.Default.NotificationsActive,
+                        titulo = stringResource(Res.string.ajustes_recordatorio),
+                        detalle = stringResource(Res.string.ajustes_recordatorio_detalle),
+                        onClick = { if (ajustes.recordatorioActivo) settingsViewModel.setRecordatorio(false) else pedirPermisoNotificaciones() }
+                    ) {
+                        Switch(
+                            checked = ajustes.recordatorioActivo,
+                            onCheckedChange = { activar -> if (activar) pedirPermisoNotificaciones() else settingsViewModel.setRecordatorio(false) }
+                        )
+                    }
+                    if (ajustes.recordatorioActivo) {
+                        HorizontalDivider()
+                        AjusteItem(
+                            icono = Icons.Default.Schedule,
+                            titulo = stringResource(Res.string.ajustes_recordatorio_hora),
+                            detalle = formatoHora(ajustes.recordatorioHora, ajustes.recordatorioMinuto),
+                            onClick = { mostrarHora = true }
+                        )
+                    }
                 }
 
                 SeccionAjustes(stringResource(Res.string.ajustes_seccion_organizacion)) {
@@ -271,6 +310,14 @@ fun AjustesScreen(
                 actual = ajustes.moneda,
                 onElegir = { settingsViewModel.setMoneda(it); mostrarMoneda = false },
                 onCancelar = { mostrarMoneda = false }
+            )
+        }
+        if (mostrarHora) {
+            HoraDialog(
+                hora = ajustes.recordatorioHora,
+                minuto = ajustes.recordatorioMinuto,
+                onElegir = { hora, minuto -> settingsViewModel.setRecordatorio(true, hora, minuto); mostrarHora = false },
+                onCancelar = { mostrarHora = false }
             )
         }
         if (mostrarDiaInicio) {

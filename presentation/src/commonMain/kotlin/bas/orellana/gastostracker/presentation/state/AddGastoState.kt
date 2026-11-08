@@ -17,7 +17,8 @@ data class AddGastoState(
     val repetirMensual: Boolean = false,
     val nota: String = "",
     val metodoPago: MetodoPago? = null,
-    val cuentaId: String? = null
+    val cuentaId: String? = null,
+    val fotoTicket: String? = null
 ) {
     fun reset() = copy(
         concepto = "",
@@ -29,6 +30,7 @@ data class AddGastoState(
         repetirMensual = false,
         nota = "",
         metodoPago = null,
-        cuentaId = null
+        cuentaId = null,
+        fotoTicket = null
     )
 }

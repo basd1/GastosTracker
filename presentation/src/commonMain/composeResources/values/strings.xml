@@ -316,6 +316,15 @@
     <string name="resumen_mensual_top">Tu categoría más alta fue %1$s (%2$s).</string>
     <string name="entendido">Entendido</string>
 
+    <!-- Foto del ticket -->
+    <string name="ticket">Ticket</string>
+    <string name="ticket_camara">Cámara</string>
+    <string name="ticket_galeria">Galería</string>
+    <string name="ticket_leer_importe">Leer importe</string>
+    <string name="ticket_quitar">Quitar foto</string>
+    <string name="ticket_sin_importe">No se ha encontrado el importe en el ticket</string>
+    <string name="ticket_importe_leido">Importe leído del ticket: %1$s</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

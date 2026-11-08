@@ -37,7 +37,8 @@ internal fun GastoEntity.toModel() = GastoModel(
     categoriaPersonalizadaId = categoriaPersonalizadaId,
     nota = nota,
     metodoPago = MetodoPago.desdeNombre(metodoPago),
-    cuentaId = cuentaId
+    cuentaId = cuentaId,
+    fotoTicket = fotoTicket
 )
 
 internal fun GastoModel.toEntity() = GastoEntity(
@@ -49,7 +50,8 @@ internal fun GastoModel.toEntity() = GastoEntity(
     categoriaPersonalizadaId = categoriaPersonalizadaId,
     nota = nota,
     metodoPago = metodoPago?.name,
-    cuentaId = cuentaId
+    cuentaId = cuentaId,
+    fotoTicket = fotoTicket
 )
 
 internal fun IngresoEntity.toModel() = IngresoModel(

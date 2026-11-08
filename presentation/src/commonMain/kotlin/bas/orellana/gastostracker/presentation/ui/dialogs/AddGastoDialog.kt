@@ -7,6 +7,8 @@ import androidx.compose.foundation.verticalScroll
 import bas.orellana.gastostracker.presentation.ui.components.OpcionRepetirMensual
 import bas.orellana.gastostracker.presentation.ui.components.CamposExtraMovimiento
 import bas.orellana.gastostracker.presentation.ui.components.SelectorCuenta
+import bas.orellana.gastostracker.presentation.ui.components.CampoTicket
+import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
 import bas.orellana.gastostracker.domain.model.Cuenta
 import bas.orellana.gastostracker.domain.model.MetodoPago
 import androidx.compose.foundation.layout.Arrangement
@@ -103,7 +105,9 @@ fun AddGastoDialog(
     onMetodoPagoChange: (MetodoPago?) -> Unit = {},
     cuentas: List<Cuenta> = emptyList(),
     cuentaId: String? = null,
-    onCuentaChange: (String?) -> Unit = {}
+    onCuentaChange: (String?) -> Unit = {},
+    fotoTicket: String? = null,
+    onFotoTicketChange: (String?) -> Unit = {}
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val importeValido = parseImporte(precio) != null
@@ -178,6 +182,12 @@ fun AddGastoDialog(
                     Spacer(modifier = Modifier.height(12.dp))
                     SelectorCuenta(cuentas = cuentas, cuentaId = cuentaId, onElegir = onCuentaChange)
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                CampoTicket(
+                    foto = fotoTicket,
+                    onFoto = onFotoTicketChange,
+                    onImporteLeido = { importe -> onPrecioChange(importe.toPlainStringTrimmed().replace('.', ',')) }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 

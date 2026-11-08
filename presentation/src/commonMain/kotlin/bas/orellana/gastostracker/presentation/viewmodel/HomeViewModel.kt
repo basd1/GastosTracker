@@ -235,7 +235,8 @@ class HomeViewModel(
             gastoToEdit = gasto,
             nota = gasto.nota.orEmpty(),
             metodoPago = gasto.metodoPago,
-            cuentaId = gasto.cuentaId
+            cuentaId = gasto.cuentaId,
+            fotoTicket = gasto.fotoTicket
         )
         _state.update { it.copy(showAddGastoDialog = true) }
     }
@@ -259,6 +260,7 @@ class HomeViewModel(
         val nota = _addGastoState.value.nota.trim().ifEmpty { null }
         val metodoPago = _addGastoState.value.metodoPago
         val cuentaId = _addGastoState.value.cuentaId
+        val fotoTicket = _addGastoState.value.fotoTicket
         if (gastoToEdit == null && _addGastoState.value.repetirMensual) {
             // Gasto fijo: se guarda el recurrente y la generación crea el gasto de este mes (si ya toca).
             val recurrente = Recurrente(
@@ -287,7 +289,8 @@ class HomeViewModel(
                 categoriaPersonalizadaId = categoriaPersonalizadaId,
                 nota = nota,
                 metodoPago = metodoPago,
-                cuentaId = cuentaId
+                cuentaId = cuentaId,
+                fotoTicket = fotoTicket
             )
         } else {
             GastoModel(
@@ -299,7 +302,8 @@ class HomeViewModel(
                 categoriaPersonalizadaId = categoriaPersonalizadaId,
                 nota = nota,
                 metodoPago = metodoPago,
-                cuentaId = cuentaId
+                cuentaId = cuentaId,
+                fotoTicket = fotoTicket
             )
         }
         viewModelScope.launch {
@@ -453,6 +457,10 @@ class HomeViewModel(
 
     fun updateAddGastoMetodoPago(metodo: MetodoPago?) {
         _addGastoState.update { it.copy(metodoPago = metodo) }
+    }
+
+    fun updateAddGastoFoto(ruta: String?) {
+        _addGastoState.update { it.copy(fotoTicket = ruta) }
     }
 
     fun updateAddGastoCuenta(cuentaId: String?) {

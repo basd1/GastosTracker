@@ -11,5 +11,7 @@ data class GastoModel(
     val categoriaPersonalizadaId: String? = null,
     val nota: String? = null,
     val metodoPago: MetodoPago? = null,
-    val cuentaId: String? = null
+    val cuentaId: String? = null,
+    /** Ruta de la foto del ticket en el almacenamiento privado de la app. */
+    val fotoTicket: String? = null
 )

@@ -331,7 +331,9 @@ fun GraphScreen(
                 onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) },
                 cuentas = cuentasState.activas,
                 cuentaId = addGastoState.cuentaId,
-                onCuentaChange = { viewModel.updateAddGastoCuenta(it) }
+                onCuentaChange = { viewModel.updateAddGastoCuenta(it) },
+                fotoTicket = addGastoState.fotoTicket,
+                onFotoTicketChange = { viewModel.updateAddGastoFoto(it) }
             )
         }
     }

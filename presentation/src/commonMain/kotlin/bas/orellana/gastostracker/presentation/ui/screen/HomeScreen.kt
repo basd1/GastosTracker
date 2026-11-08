@@ -286,7 +286,9 @@ fun HomeScreen(
                 onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) },
                 cuentas = cuentasState.activas,
                 cuentaId = addGastoState.cuentaId,
-                onCuentaChange = { viewModel.updateAddGastoCuenta(it) }
+                onCuentaChange = { viewModel.updateAddGastoCuenta(it) },
+                fotoTicket = addGastoState.fotoTicket,
+                onFotoTicketChange = { viewModel.updateAddGastoFoto(it) }
             )
         }
 
@@ -808,7 +810,7 @@ private fun GastoItem(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = listOfNotNull(gasto.fecha.formatDDMMYYYY(), gasto.metodoPago?.nombre()).joinToString(" · "),
+                        text = listOfNotNull(gasto.fecha.formatDDMMYYYY(), gasto.metodoPago?.nombre(), if (gasto.fotoTicket != null) "🧾" else null).joinToString(" · "),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )

@@ -49,8 +49,12 @@ object ProgramadorRecordatorio {
     }
 
     /** Milisegundos hasta la próxima vez que el reloj marque [hora]:[minuto] (hoy o mañana). */
-    internal fun milisHastaLaProxima(hora: Int, minuto: Int, ahora: LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())): Long {
-        val zona = TimeZone.currentSystemDefault()
+    internal fun milisHastaLaProxima(
+        hora: Int,
+        minuto: Int,
+        zona: TimeZone = TimeZone.currentSystemDefault(),
+        ahora: LocalDateTime = Clock.System.now().toLocalDateTime(zona)
+    ): Long {
         var objetivo = ahora.date.atTime(LocalTime(hora, minuto))
         if (objetivo <= ahora) objetivo = ahora.date.plus(1, DateTimeUnit.DAY).atTime(LocalTime(hora, minuto))
         return objetivo.toInstant(zona).toEpochMilliseconds() - ahora.toInstant(zona).toEpochMilliseconds()

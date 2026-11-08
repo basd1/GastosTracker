@@ -14,6 +14,8 @@
     <string name="seleccionar_mes">Seleccionar mes</string>
     <string name="anio_anterior">Año anterior</string>
     <string name="anio_siguiente">Año siguiente</string>
+    <string name="mes_anterior">Mes anterior</string>
+    <string name="mes_siguiente">Mes siguiente</string>
 
     <!-- Navegación -->
     <string name="nav_balance">Balance</string>
@@ -82,6 +84,8 @@
     <string name="resumen_ingresos">Ingresos</string>
     <string name="resumen_gastos">Gastos</string>
     <string name="resumen_ahorro">Ahorro</string>
+    <string name="balance_disponible">Balance del mes: %1$s</string>
+    <string name="sin_gastos_mes">No hay gastos en este mes</string>
 
     <!-- Pantalla de gráfico -->
     <string name="titulo_grafico">Gráfico</string>

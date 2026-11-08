@@ -10,7 +10,7 @@ import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
-import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
@@ -25,6 +25,8 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import bas.orellana.gastostracker.domain.model.Mes
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -51,7 +53,7 @@ class HomeViewModelTest {
     fun limpiar() = Dispatchers.resetMain()
 
     private fun crearViewModel() = HomeViewModel(
-        getGastosUseCase = GetGastosUseCase(gastos),
+        getGastosEntreUseCase = GetGastosEntreUseCase(gastos),
         addGastoUseCase = AddGastoUseCase(gastos),
         updateGastoUseCase = UpdateGastoUseCase(gastos),
         deleteGastoUseCase = DeleteGastoUseCase(gastos),
@@ -160,9 +162,9 @@ class HomeViewModelTest {
     @Test
     fun `ordena por fecha, importe y nombre`() = runTest {
         anadir(
-            gasto("b", nombre = "banana", monto = 5.0, fecha = LocalDate(2026, 1, 2)),
-            gasto("a", nombre = "Agua", monto = 20.0, fecha = LocalDate(2026, 1, 3)),
-            gasto("c", nombre = "coco", monto = 1.0, fecha = LocalDate(2026, 1, 1))
+            gasto("b", nombre = "banana", monto = 5.0, fecha = inicioMes.plus(1, DateTimeUnit.DAY)),
+            gasto("a", nombre = "Agua", monto = 20.0, fecha = inicioMes.plus(2, DateTimeUnit.DAY)),
+            gasto("c", nombre = "coco", monto = 1.0, fecha = inicioMes)
         )
         val vm = crearViewModel()
 
@@ -186,6 +188,56 @@ class HomeViewModelTest {
         val vm = crearViewModel()
 
         assertEquals(listOf("tercero", "segundo", "primero"), vm.idsVisibles)
+    }
+
+
+    // ---------- Selector de mes ----------
+
+    @Test
+    fun `solo muestra los gastos del mes seleccionado y se puede cambiar de mes`() = runTest {
+        anadir(gasto("actual", fecha = inicioMes), gasto("anterior", fecha = inicioMesAnterior))
+        val vm = crearViewModel()
+
+        assertEquals(Mes.actual(), vm.state.value.mes)
+        assertEquals(listOf("actual"), vm.state.value.gastos.map { it.id })
+
+        vm.mesAnterior()
+        assertEquals(Mes.actual().anterior(), vm.state.value.mes)
+        assertEquals(listOf("anterior"), vm.state.value.gastos.map { it.id })
+
+        vm.mesSiguiente()
+        vm.mesSiguiente()
+        assertTrue(vm.state.value.gastos.isEmpty())
+    }
+
+    @Test
+    fun `elegir un mes en el selector lo aplica y cierra el dialogo`() = runTest {
+        anadir(gasto("viejo", fecha = LocalDate(2024, 3, 15)))
+        val vm = crearViewModel()
+
+        vm.showMonthPicker()
+        assertTrue(vm.state.value.showMonthPicker)
+        vm.seleccionarMes(Mes(2024, 3))
+
+        assertFalse(vm.state.value.showMonthPicker)
+        assertEquals(listOf("viejo"), vm.state.value.gastos.map { it.id })
+    }
+
+    @Test
+    fun `las alertas comparan el mes seleccionado con su mes anterior`() = runTest {
+        val mesPasado = Mes.actual().anterior()
+        anadir(
+            gasto("hace2", monto = 10.0, fecha = mesPasado.anterior().primerDia, categoria = Categoria.OCIO),
+            gasto("hace1", monto = 30.0, fecha = mesPasado.primerDia, categoria = Categoria.OCIO)
+        )
+        val vm = crearViewModel()
+        assertTrue(vm.state.value.alerts.isEmpty())
+
+        vm.seleccionarMes(mesPasado)
+
+        val alerta = vm.state.value.alerts.single()
+        assertEquals(Categoria.OCIO, alerta.categoria)
+        assertEquals(30.0, alerta.gastoActual)
     }
 
     // ---------- Alertas ----------
@@ -232,7 +284,7 @@ class HomeViewModelTest {
 
         val alerta = vm.state.value.alerts.single()
         assertEquals("Mascotas", alerta.categoriaPersonalizada?.nombre)
-        assertEquals(id, alerta.clave)
+        assertTrue(alerta.clave.endsWith(id))
     }
 
     @Test

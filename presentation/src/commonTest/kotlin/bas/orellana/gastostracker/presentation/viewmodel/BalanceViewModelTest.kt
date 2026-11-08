@@ -5,7 +5,8 @@ import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
-import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetIngresosEntreUseCase
+import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.usecase.GetTotalIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
@@ -45,7 +46,7 @@ class BalanceViewModelTest {
     fun limpiar() = Dispatchers.resetMain()
 
     private fun crearViewModel() = BalanceViewModel(
-        getIngresosUseCase = GetIngresosUseCase(ingresos),
+        getIngresosEntreUseCase = GetIngresosEntreUseCase(ingresos),
         addIngresoUseCase = AddIngresoUseCase(ingresos),
         updateIngresoUseCase = UpdateIngresoUseCase(ingresos),
         deleteIngresoUseCase = DeleteIngresoUseCase(ingresos),
@@ -58,11 +59,21 @@ class BalanceViewModelTest {
         GastoModel(id, "Gasto $id", monto, fecha, categoria)
 
     @Test
+    fun `la lista de ingresos es la del mes seleccionado`() = runTest {
+        ingresos.datos.value = listOf(ingreso("actual", 1000.0, inicioMes), ingreso("anterior", 800.0, mesAnterior))
+        val vm = crearViewModel()
+
+        assertEquals(listOf("actual"), vm.state.value.ingresos.map { it.id })
+        vm.mesAnterior()
+        assertEquals(listOf("anterior"), vm.state.value.ingresos.map { it.id })
+        assertEquals(800.0, vm.state.value.balanceMes)
+    }
+
+    @Test
     fun `por defecto muestra el mes actual`() = runTest {
         val vm = crearViewModel()
 
-        assertEquals(hoy.monthNumber, vm.state.value.selectedMonth)
-        assertEquals(hoy.year, vm.state.value.selectedYear)
+        assertEquals(Mes.de(hoy), vm.state.value.mes)
     }
 
     @Test
@@ -92,7 +103,7 @@ class BalanceViewModelTest {
         gastos.datos.value = listOf(gasto("anterior", 60.0, mesAnterior), gasto("ahorro", 40.0, mesAnterior, Categoria.AHORRO))
         val vm = crearViewModel()
 
-        vm.updateSelectedMonth(mesAnterior.monthNumber, mesAnterior.year)
+        vm.seleccionarMes(Mes.de(mesAnterior))
 
         assertEquals(800.0, vm.state.value.totalIngresosMes)
         assertEquals(60.0, vm.state.value.totalGastosMes)

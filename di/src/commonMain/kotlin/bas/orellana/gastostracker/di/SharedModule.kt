@@ -19,7 +19,9 @@ import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetIngresosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
@@ -43,6 +45,7 @@ val sharedModule = module {
     single { PreferencesRepository(get()) }
 
     factory { GetGastosUseCase(get()) }
+    factory { GetGastosEntreUseCase(get()) }
     factory { AddGastoUseCase(get()) }
     factory { DeleteGastoUseCase(get()) }
     factory { DeleteAllGastosUseCase(get()) }
@@ -55,6 +58,7 @@ val sharedModule = module {
     factory { ContarMovimientosCategoriaUseCase(get()) }
 
     factory { GetIngresosUseCase(get()) }
+    factory { GetIngresosEntreUseCase(get()) }
     factory { AddIngresoUseCase(get()) }
     factory { UpdateIngresoUseCase(get()) }
     factory { DeleteIngresoUseCase(get()) }

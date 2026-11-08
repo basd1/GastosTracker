@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,7 +23,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,6 +56,9 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
+import bas.orellana.gastostracker.domain.model.Mes
+import bas.orellana.gastostracker.presentation.ui.components.SelectorMes
+import bas.orellana.gastostracker.presentation.resources.balance_disponible
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddIngresoDialog
@@ -79,10 +80,8 @@ import bas.orellana.gastostracker.presentation.resources.ingresos_con_numero
 import bas.orellana.gastostracker.presentation.resources.resumen_ahorro
 import bas.orellana.gastostracker.presentation.resources.resumen_gastos
 import bas.orellana.gastostracker.presentation.resources.resumen_ingresos
-import bas.orellana.gastostracker.presentation.resources.seleccionar_mes
 import bas.orellana.gastostracker.presentation.resources.titulo_balance
 import bas.orellana.gastostracker.presentation.ui.components.etiquetaCategoria
-import bas.orellana.gastostracker.presentation.ui.components.mesYAnio
 import bas.orellana.gastostracker.presentation.util.formatMoney
 import org.jetbrains.compose.resources.stringResource
 
@@ -172,8 +171,10 @@ fun BalanceScreen(
                             totalIngresos = state.totalIngresosMes,
                             totalGastos = state.totalGastosMes,
                             totalAhorro = state.totalAhorroMes,
-                            selectedMonth = state.selectedMonth,
-                            selectedYear = state.selectedYear,
+                            mes = state.mes,
+                            balance = state.balanceMes,
+                            onMesAnterior = { viewModel.mesAnterior() },
+                            onMesSiguiente = { viewModel.mesSiguiente() },
                             showMonthPicker = { viewModel.showMonthPicker() }
                         )
                     }
@@ -215,10 +216,10 @@ fun BalanceScreen(
 
         if (state.showMonthPicker) {
             MonthYearPickerDialog(
-                currentMonth = state.selectedMonth,
-                currentYear = state.selectedYear,
+                currentMonth = state.mes.numero,
+                currentYear = state.mes.anio,
                 onConfirm = { month, year ->
-                    viewModel.updateSelectedMonth(month, year)
+                    viewModel.seleccionarMes(Mes(year, month))
                 },
                 onDismiss = { viewModel.hideMonthPicker() }
             )
@@ -269,8 +270,10 @@ private fun BalanceHeader(
     totalIngresos: Double,
     totalGastos: Double,
     totalAhorro: Double,
-    selectedMonth: Int,
-    selectedYear: Int,
+    mes: Mes,
+    balance: Double,
+    onMesAnterior: () -> Unit,
+    onMesSiguiente: () -> Unit,
     showMonthPicker: () -> Unit
 ) {
     Card(
@@ -283,27 +286,22 @@ private fun BalanceHeader(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showMonthPicker() },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = mesYAnio(selectedMonth, selectedYear),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = stringResource(Res.string.seleccionar_mes),
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            SelectorMes(
+                mes = mes,
+                onAnterior = onMesAnterior,
+                onSiguiente = onMesSiguiente,
+                onElegir = showMonthPicker
+            )
+
+            Text(
+                text = stringResource(Res.string.balance_disponible, formatMoney(balance)),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = if (balance >= 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
 
             Spacer(modifier = Modifier.height(12.dp))
 

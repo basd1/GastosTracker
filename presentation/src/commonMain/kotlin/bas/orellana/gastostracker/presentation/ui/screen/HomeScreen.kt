@@ -65,6 +65,10 @@ import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.Mes
+import bas.orellana.gastostracker.presentation.ui.components.SelectorMes
+import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
+import bas.orellana.gastostracker.presentation.resources.sin_gastos_mes
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.SortOrder
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
@@ -74,7 +78,6 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
-import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
 import bas.orellana.gastostracker.domain.model.sinAhorro
@@ -192,6 +195,10 @@ fun HomeScreen(
             },
             onEdit = { viewModel.showEditGastoDialog(it) },
             onDismissAlert = { viewModel.dismissAlert(it) },
+            mes = state.mes,
+            onMesAnterior = { viewModel.mesAnterior() },
+            onMesSiguiente = { viewModel.mesSiguiente() },
+            onElegirMes = { viewModel.showMonthPicker() },
             modifier = Modifier.padding(paddingValues)
         )
 
@@ -234,6 +241,15 @@ fun HomeScreen(
         if (state.showManageCategoriasDialog) {
             ManageCategoriasDialog(viewModel)
         }
+
+        if (state.showMonthPicker) {
+            MonthYearPickerDialog(
+                currentMonth = state.mes.numero,
+                currentYear = state.mes.anio,
+                onConfirm = { month, year -> viewModel.seleccionarMes(Mes(year, month)) },
+                onDismiss = { viewModel.hideMonthPicker() }
+            )
+        }
     }
     }
 }
@@ -258,6 +274,10 @@ private fun GastosList(
     onDelete: (GastoModel) -> Unit,
     onEdit: (GastoModel) -> Unit,
     onDismissAlert: (String) -> Unit = {},
+    mes: Mes = Mes.actual(),
+    onMesAnterior: () -> Unit = {},
+    onMesSiguiente: () -> Unit = {},
+    onElegirMes: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (isLoading) {
@@ -267,39 +287,9 @@ private fun GastosList(
         ) {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
-    } else if (gastos.isEmpty()) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = stringResource(Res.string.sin_gastos_titulo),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(Res.string.sin_gastos_mensaje),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
     } else {
-        val now = todayLocalDate()
-        val gastosDelMes = gastos.sinAhorro().filter {
-            it.fecha.year == now.year && it.fecha.month == now.month
-        }
+        // La lista ya viene filtrada por mes desde SQL; el ahorro no cuenta como gasto.
+        val gastosDelMes = gastos.sinAhorro()
         val totalMes = gastosDelMes.sumOf { it.monto }
 
         LazyColumn(
@@ -310,8 +300,12 @@ private fun GastosList(
         ) {
             item {
                 SummaryHeader(
+                    mes = mes,
                     totalMes = totalMes,
-                    cantidad = gastosDelMes.size
+                    cantidad = gastosDelMes.size,
+                    onMesAnterior = onMesAnterior,
+                    onMesSiguiente = onMesSiguiente,
+                    onElegirMes = onElegirMes
                 )
             }
             if (alerts.isNotEmpty()) {
@@ -322,6 +316,9 @@ private fun GastosList(
                     )
                 }
             }
+            if (gastos.isEmpty()) {
+                item { SinGastos(esMesActual = mes == Mes.actual()) }
+            } else {
             item {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -445,7 +442,39 @@ private fun GastosList(
                     )
                 }
             }
+            }
             item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun SinGastos(esMesActual: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            modifier = Modifier.size(72.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(if (esMesActual) Res.string.sin_gastos_titulo else Res.string.sin_gastos_mes),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        if (esMesActual) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(Res.string.sin_gastos_mensaje),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -515,14 +544,25 @@ private fun AlertsSection(
 
 @Composable
 private fun SummaryHeader(
+    mes: Mes,
     totalMes: Double,
-    cantidad: Int
+    cantidad: Int,
+    onMesAnterior: () -> Unit,
+    onMesSiguiente: () -> Unit,
+    onElegirMes: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.small
     ) {
+        SelectorMes(
+            mes = mes,
+            onAnterior = onMesAnterior,
+            onSiguiente = onMesSiguiente,
+            onElegir = onElegirMes,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
         Row(
             modifier = Modifier
                 .fillMaxWidth()

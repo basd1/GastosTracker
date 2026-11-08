@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.presentation.state
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.Mes
 
 /** Una categoría en la que este mes se ha gastado más que el mes pasado. */
 data class CategoryAlert(
@@ -26,7 +27,10 @@ data class HomeState(
     val searchQuery: String = "",
     val filterCategoria: Categoria? = null,
     val filterCategoriaPersonalizadaId: String? = null,
-    val sortOrder: SortOrder = SortOrder.DATE_DESC
+    val sortOrder: SortOrder = SortOrder.DATE_DESC,
+    /** Mes que se ve en la pantalla de Gastos: la lista, el total y las alertas son de este mes. */
+    val mes: Mes = Mes.actual(),
+    val showMonthPicker: Boolean = false
 ) {
     val hayFiltroCategoria: Boolean get() = filterCategoria != null || filterCategoriaPersonalizadaId != null
 

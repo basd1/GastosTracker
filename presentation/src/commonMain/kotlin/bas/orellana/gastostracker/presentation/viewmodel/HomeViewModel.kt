@@ -6,6 +6,7 @@ import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 import bas.orellana.gastostracker.domain.model.totalesSinAhorro
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
@@ -16,11 +17,9 @@ import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
-import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
-import bas.orellana.gastostracker.domain.util.rangoDelMes
-import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.state.AddGastoState
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
@@ -32,16 +31,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
-import kotlinx.datetime.minus
 import bas.orellana.gastostracker.presentation.util.randomId
 import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
 
 class HomeViewModel(
-    private val getGastosUseCase: GetGastosUseCase,
+    private val getGastosEntreUseCase: GetGastosEntreUseCase,
     private val addGastoUseCase: AddGastoUseCase,
     private val updateGastoUseCase: UpdateGastoUseCase,
     private val deleteGastoUseCase: DeleteGastoUseCase,
@@ -56,6 +55,8 @@ class HomeViewModel(
 
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
+
+    private val mesSeleccionado = MutableStateFlow(_state.value.mes)
 
     private val _categoriasPersonalizadas = MutableStateFlow<List<CategoriaPersonalizada>>(emptyList())
     val categoriasPersonalizadas: StateFlow<List<CategoriaPersonalizada>> = _categoriasPersonalizadas.asStateFlow()
@@ -72,10 +73,13 @@ class HomeViewModel(
         observarAlertas()
     }
 
+    /** Gastos del mes seleccionado, filtrados en SQL; cambian al cambiar de mes o de datos. */
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadGastos() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
-            getGastosUseCase()
+            mesSeleccionado
+                .flatMapLatest { mes -> getGastosEntreUseCase(mes.primerDia, mes.ultimoDia) }
                 .catch { e ->
                     _state.value = _state.value.copy(
                         isLoading = false,
@@ -104,18 +108,19 @@ class HomeViewModel(
         }
     }
 
-    /** Compara lo gastado por categoría este mes con el mes anterior, sumando en SQL. */
+    /** Compara lo gastado por categoría en el mes seleccionado con el mes anterior, sumando en SQL. */
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun observarAlertas() {
-        val hoy = todayLocalDate()
-        val mesAnterior = hoy.minus(1, DateTimeUnit.MONTH)
-        val rangoActual = rangoDelMes(hoy.year, hoy.monthNumber)
-        val rangoAnterior = rangoDelMes(mesAnterior.year, mesAnterior.monthNumber)
         viewModelScope.launch {
-            combine(
-                getTotalesGastosPorCategoriaUseCase(rangoActual.start, rangoActual.endInclusive),
-                getTotalesGastosPorCategoriaUseCase(rangoAnterior.start, rangoAnterior.endInclusive),
-                getCategoriasPersonalizadasUseCase()
-            ) { actual, anterior, categorias -> calculateAlerts(actual, anterior, categorias) }
+            mesSeleccionado
+                .flatMapLatest { mes ->
+                    val anterior = mes.anterior()
+                    combine(
+                        getTotalesGastosPorCategoriaUseCase(mes.primerDia, mes.ultimoDia),
+                        getTotalesGastosPorCategoriaUseCase(anterior.primerDia, anterior.ultimoDia),
+                        getCategoriasPersonalizadasUseCase()
+                    ) { actual, totalesAnterior, categorias -> calculateAlerts(mes, actual, totalesAnterior, categorias) }
+                }
                 .catch { }
                 .collect { alerts ->
                     _state.update { state ->
@@ -382,7 +387,25 @@ class HomeViewModel(
         }
     }
 
+    fun showMonthPicker() {
+        _state.update { it.copy(showMonthPicker = true) }
+    }
+
+    fun hideMonthPicker() {
+        _state.update { it.copy(showMonthPicker = false) }
+    }
+
+    fun seleccionarMes(mes: Mes) {
+        mesSeleccionado.value = mes
+        _state.update { it.copy(mes = mes, showMonthPicker = false) }
+    }
+
+    fun mesAnterior() = seleccionarMes(mesSeleccionado.value.anterior())
+
+    fun mesSiguiente() = seleccionarMes(mesSeleccionado.value.siguiente())
+
     private fun calculateAlerts(
+        mes: Mes,
         totalesMesActual: List<TotalPorCategoria>,
         totalesMesAnterior: List<TotalPorCategoria>,
         categoriasPersonalizadas: List<CategoriaPersonalizada>
@@ -398,7 +421,8 @@ class HomeViewModel(
                 if (totalAnterior <= 0 || actual.total <= totalAnterior) return@mapNotNull null
 
                 CategoryAlert(
-                    clave = actual.categoria?.name ?: actual.categoriaPersonalizadaId ?: CLAVE_SIN_CATEGORIA,
+                    // Con el mes en la clave, descartar una alerta no oculta la de otros meses.
+                    clave = "$mes:" + (actual.categoria?.name ?: actual.categoriaPersonalizadaId ?: CLAVE_SIN_CATEGORIA),
                     categoria = actual.categoria,
                     categoriaPersonalizada = actual.categoriaPersonalizadaId?.let { id ->
                         categoriasPersonalizadas.find { it.id == id }

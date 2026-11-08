@@ -63,6 +63,7 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.GraphViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import org.koin.compose.viewmodel.koinViewModel
@@ -102,11 +103,13 @@ private enum class PeriodFilter {
 fun GraphScreen(
     navController: NavController,
     viewModel: HomeViewModel = koinViewModel(),
+    graphViewModel: GraphViewModel = koinViewModel(),
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
-    val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
+    val categoriasPersonalizadas by graphViewModel.categoriasPersonalizadas.collectAsState()
+    val todosLosGastos by graphViewModel.gastos.collectAsState()
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
@@ -114,15 +117,15 @@ fun GraphScreen(
     var selectedYear by remember { mutableStateOf(todayLocalDate().year) }
     var showMonthPicker by remember { mutableStateOf(false) }
 
-    val filteredGastos = remember(state.gastos, selectedPeriod, selectedMonth, selectedYear) {
-        filterGastosByPeriod(state.gastos, selectedPeriod, selectedMonth, selectedYear)
+    val filteredGastos = remember(todosLosGastos, selectedPeriod, selectedMonth, selectedYear) {
+        filterGastosByPeriod(todosLosGastos, selectedPeriod, selectedMonth, selectedYear)
     }
 
     val gastosSinAhorro = remember(filteredGastos) { filteredGastos.sinAhorro() }
 
     val gastosAhorro = remember(filteredGastos) { filteredGastos.soloAhorro() }
 
-    val gastosAhorroTotal = remember(state.gastos) { state.gastos.soloAhorro() }
+    val gastosAhorroTotal = remember(todosLosGastos) { todosLosGastos.soloAhorro() }
 
     Box(
         modifier = Modifier
@@ -172,7 +175,7 @@ fun GraphScreen(
                     ) {
                         Text(
                             text = stringResource(
-                                if (state.gastos.isEmpty()) Res.string.sin_gastos_registrados
+                                if (todosLosGastos.isEmpty()) Res.string.sin_gastos_registrados
                                 else Res.string.sin_gastos_periodo
                             ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,

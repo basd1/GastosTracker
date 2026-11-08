@@ -9,6 +9,10 @@ import bas.orellana.gastostracker.data.repository.PreferencesRepository
 import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.RecurrenteRepositoryImpl
 import bas.orellana.gastostracker.data.repository.AhorroRepositoryImpl
+import bas.orellana.gastostracker.data.repository.CopiaSeguridadRepositoryImpl
+import bas.orellana.gastostracker.domain.repository.CopiaSeguridadRepository
+import bas.orellana.gastostracker.domain.usecase.ExportarCopiaSeguridadUseCase
+import bas.orellana.gastostracker.domain.usecase.ImportarCopiaSeguridadUseCase
 import bas.orellana.gastostracker.domain.repository.AhorroRepository
 import bas.orellana.gastostracker.domain.usecase.EliminarAportacionUseCase
 import bas.orellana.gastostracker.domain.usecase.EliminarMetaUseCase
@@ -68,6 +72,7 @@ val sharedModule = module {
     single<PresupuestoRepository> { PresupuestoRepositoryImpl(get<AppDatabase>().presupuestoDao(), get()) }
     single<RecurrenteRepository> { RecurrenteRepositoryImpl(get(), get()) }
     single<AhorroRepository> { AhorroRepositoryImpl(get(), get()) }
+    single<CopiaSeguridadRepository> { CopiaSeguridadRepositoryImpl(get(), get()) }
 
     factory { GetGastosUseCase(get()) }
     factory { GetGastosEntreUseCase(get()) }
@@ -107,4 +112,7 @@ val sharedModule = module {
     factory { EliminarMetaUseCase(get()) }
     factory { GuardarAportacionUseCase(get()) }
     factory { EliminarAportacionUseCase(get()) }
+
+    factory { ExportarCopiaSeguridadUseCase(get()) }
+    factory { ImportarCopiaSeguridadUseCase(get()) }
 }

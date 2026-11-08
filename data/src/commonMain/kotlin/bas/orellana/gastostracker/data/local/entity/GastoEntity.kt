@@ -4,8 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 import kotlinx.datetime.LocalDate
 
+@Serializable
 @Entity(tableName = "gastos", indices = [Index("fecha")])
 data class GastoEntity(
     @PrimaryKey val id: String,

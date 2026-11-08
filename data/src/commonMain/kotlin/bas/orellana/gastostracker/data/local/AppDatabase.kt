@@ -16,6 +16,7 @@ import bas.orellana.gastostracker.data.local.dao.IngresoDao
 import bas.orellana.gastostracker.data.local.dao.PresupuestoDao
 import bas.orellana.gastostracker.data.local.dao.RecurrenteDao
 import bas.orellana.gastostracker.data.local.dao.AhorroDao
+import bas.orellana.gastostracker.data.local.dao.CopiaSeguridadDao
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
@@ -55,6 +56,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun presupuestoDao(): PresupuestoDao
     abstract fun recurrenteDao(): RecurrenteDao
     abstract fun ahorroDao(): AhorroDao
+    abstract fun copiaSeguridadDao(): CopiaSeguridadDao
 }
 
 // Room genera el `actual` de cada plataforma.

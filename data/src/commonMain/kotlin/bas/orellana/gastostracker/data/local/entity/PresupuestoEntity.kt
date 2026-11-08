@@ -3,8 +3,10 @@ package bas.orellana.gastostracker.data.local.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /** El id es la clave del presupuesto (`global`, `cat:COMIDA`, `per:<id>`): uno por categoría. */
+@Serializable
 @Entity(tableName = "presupuestos")
 data class PresupuestoEntity(
     @PrimaryKey val id: String,

@@ -5,8 +5,10 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 import kotlinx.datetime.LocalDate
 
+@Serializable
 @Entity(tableName = "metas_ahorro")
 data class MetaAhorroEntity(
     @PrimaryKey val id: String,
@@ -19,6 +21,7 @@ data class MetaAhorroEntity(
 )
 
 /** Sin clave foránea: al borrar una meta se borran sus aportaciones en la misma transacción. */
+@Serializable
 @Entity(tableName = "aportaciones", indices = [Index("meta_id"), Index("fecha")])
 data class AportacionEntity(
     @PrimaryKey val id: String,

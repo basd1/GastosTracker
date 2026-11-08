@@ -198,6 +198,34 @@
     <string name="desarchivar">Desarchivar</string>
     <string name="archivada">Archivada</string>
 
+    <!-- Exportar e importar -->
+    <string name="exportar_csv">Exportar a Excel (CSV)</string>
+    <string name="exportar_csv_detalle">Todos los movimientos en una hoja de cálculo</string>
+    <string name="crear_copia">Crear copia de seguridad</string>
+    <string name="crear_copia_detalle">Guarda todos tus datos en un archivo JSON</string>
+    <string name="restaurar_copia">Restaurar copia de seguridad</string>
+    <string name="restaurar_copia_detalle">Sustituye los datos actuales por los de una copia</string>
+    <string name="restaurar_titulo">¿Restaurar la copia?</string>
+    <string name="restaurar_mensaje">Se borrarán todos los datos actuales (gastos, ingresos, categorías, presupuestos, fijos y metas) y se sustituirán por los de la copia. Te recomendamos crear antes una copia de lo que tienes ahora.</string>
+    <string name="restaurar_confirmar">Restaurar</string>
+    <string name="aviso_csv_guardado">CSV guardado</string>
+    <string name="aviso_copia_guardada">Copia de seguridad guardada</string>
+    <plurals name="aviso_copia_restaurada">
+        <item quantity="one">Copia restaurada: %1$d movimiento</item>
+        <item quantity="other">Copia restaurada: %1$d movimientos</item>
+    </plurals>
+    <string name="aviso_no_guardado">No se ha guardado el archivo</string>
+    <string name="aviso_copia_invalida">No se ha podido restaurar: %1$s</string>
+    <string name="aviso_error_inesperado">Algo ha fallado. Inténtalo de nuevo.</string>
+    <string name="csv_fecha">Fecha</string>
+    <string name="csv_tipo">Tipo</string>
+    <string name="csv_concepto">Concepto</string>
+    <string name="csv_categoria">Categoría</string>
+    <string name="csv_importe">Importe</string>
+    <string name="csv_tipo_gasto">Gasto</string>
+    <string name="csv_tipo_ingreso">Ingreso</string>
+    <string name="csv_tipo_ahorro">Ahorro</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

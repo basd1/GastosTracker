@@ -44,7 +44,9 @@ import kotlinx.coroutines.IO
         // 2 → 3: tabla de presupuestos.
         AutoMigration(from = 2, to = 3),
         // 3 → 4: gastos e ingresos recurrentes.
-        AutoMigration(from = 3, to = 4)
+        AutoMigration(from = 3, to = 4),
+        // 6 → 7: nota y método de pago en los movimientos.
+        AutoMigration(from = 6, to = 7)
     ]
 )
 @TypeConverters(Converters::class)
@@ -66,7 +68,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 }
 
 /** Versión actual del esquema (la de @Database). */
-internal const val VERSION_ACTUAL = 6
+internal const val VERSION_ACTUAL = 7
 
 // Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"

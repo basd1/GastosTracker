@@ -2,6 +2,7 @@ package bas.orellana.gastostracker.presentation.state
 
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import kotlinx.datetime.LocalDate
 
@@ -13,7 +14,9 @@ data class AddGastoState(
     val fecha: LocalDate = todayLocalDate(),
     val gastoToEdit: GastoModel? = null,
     /** Al crear: guardar como gasto fijo que se repite cada mes. */
-    val repetirMensual: Boolean = false
+    val repetirMensual: Boolean = false,
+    val nota: String = "",
+    val metodoPago: MetodoPago? = null
 ) {
     fun reset() = copy(
         concepto = "",
@@ -22,6 +25,8 @@ data class AddGastoState(
         categoriaPersonalizadaSeleccionada = null,
         fecha = todayLocalDate(),
         gastoToEdit = null,
-        repetirMensual = false
+        repetirMensual = false,
+        nota = "",
+        metodoPago = null
     )
 }

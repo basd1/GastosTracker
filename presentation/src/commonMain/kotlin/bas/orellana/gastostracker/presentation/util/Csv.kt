@@ -8,7 +8,9 @@ data class FilaCsv(
     val tipo: String,
     val concepto: String,
     val categoria: String,
-    val importe: Double
+    val importe: Double,
+    val nota: String = "",
+    val metodoPago: String = ""
 )
 
 /**
@@ -27,7 +29,9 @@ fun generarCsv(cabecera: List<String>, filas: List<FilaCsv>): String = buildStri
                 fila.tipo,
                 fila.concepto,
                 fila.categoria,
-                formatDecimal(fila.importe, 2).replace('.', ',')
+                formatDecimal(fila.importe, 2).replace('.', ','),
+                fila.nota,
+                fila.metodoPago
             ).joinToString(";") { escaparCsv(it) }
         )
         append("\r\n")

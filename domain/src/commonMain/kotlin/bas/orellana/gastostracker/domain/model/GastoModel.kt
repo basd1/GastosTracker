@@ -8,5 +8,7 @@ data class GastoModel(
     val monto: Double,
     val fecha: LocalDate,
     val categoria: Categoria? = null,
-    val categoriaPersonalizadaId: String? = null
+    val categoriaPersonalizadaId: String? = null,
+    val nota: String? = null,
+    val metodoPago: MetodoPago? = null
 )

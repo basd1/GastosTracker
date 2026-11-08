@@ -235,6 +235,16 @@
     <string name="csv_tipo_ingreso">Ingreso</string>
     <string name="csv_tipo_ahorro">Ahorro</string>
 
+    <!-- Nota y método de pago -->
+    <string name="campo_metodo_pago">Método de pago</string>
+    <string name="metodo_efectivo">Efectivo</string>
+    <string name="metodo_tarjeta">Tarjeta</string>
+    <string name="metodo_transferencia">Transferencia</string>
+    <string name="metodo_bizum">Bizum</string>
+    <string name="metodo_otro">Otro</string>
+    <string name="csv_nota">Nota</string>
+    <string name="csv_metodo_pago">Método de pago</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

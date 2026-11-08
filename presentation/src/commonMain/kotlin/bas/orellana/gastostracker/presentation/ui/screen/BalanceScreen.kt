@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -243,7 +244,9 @@ fun BalanceScreen(
                 },
                 onDismiss = { viewModel.hideAddIngresoDialog() },
                 repetirMensual = addIngresoState.repetirMensual,
-                onRepetirMensualChange = { viewModel.updateRepetir(it) }
+                onRepetirMensualChange = { viewModel.updateRepetir(it) },
+                nota = addIngresoState.nota,
+                onNotaChange = { viewModel.updateNota(it) }
             )
         }
 
@@ -425,6 +428,15 @@ private fun IngresoItem(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
+                    ingreso.nota?.let { nota ->
+                        Text(
+                            text = nota,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = ingreso.fecha.formatDDMMYYYY(),

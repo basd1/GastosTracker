@@ -9,6 +9,7 @@ import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.data.local.entity.TotalPorCategoriaRow
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
@@ -30,7 +31,9 @@ internal fun GastoEntity.toModel() = GastoModel(
     monto = monto,
     fecha = fecha,
     categoria = categoriaDesdeNombre(categoria),
-    categoriaPersonalizadaId = categoriaPersonalizadaId
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    nota = nota,
+    metodoPago = MetodoPago.desdeNombre(metodoPago)
 )
 
 internal fun GastoModel.toEntity() = GastoEntity(
@@ -39,7 +42,9 @@ internal fun GastoModel.toEntity() = GastoEntity(
     monto = monto,
     fecha = fecha,
     categoria = categoria?.name,
-    categoriaPersonalizadaId = categoriaPersonalizadaId
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    nota = nota,
+    metodoPago = metodoPago?.name
 )
 
 internal fun IngresoEntity.toModel() = IngresoModel(
@@ -48,7 +53,8 @@ internal fun IngresoEntity.toModel() = IngresoModel(
     monto = monto,
     fecha = fecha,
     categoria = CategoriaIngreso.desdeNombre(categoria),
-    categoriaPersonalizadaId = categoriaPersonalizadaId
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    nota = nota
 )
 
 internal fun IngresoModel.toEntity() = IngresoEntity(
@@ -57,7 +63,8 @@ internal fun IngresoModel.toEntity() = IngresoEntity(
     monto = monto,
     fecha = fecha,
     categoria = categoria?.name,
-    categoriaPersonalizadaId = categoriaPersonalizadaId
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    nota = nota
 )
 
 internal fun CategoriaPersonalizadaEntity.toModel() = CategoriaPersonalizada(

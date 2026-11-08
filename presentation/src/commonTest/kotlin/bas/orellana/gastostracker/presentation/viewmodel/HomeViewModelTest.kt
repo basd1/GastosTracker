@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.presentation.viewmodel
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.ContarMovimientosCategoriaUseCase
@@ -289,6 +290,28 @@ class HomeViewModelTest {
         assertEquals(12.99, gasto.monto)
         assertEquals(recurrente.idMovimiento(Mes.actual()), gasto.id)
         assertFalse(vm.state.value.showAddGastoDialog)
+    }
+
+
+    @Test
+    fun `guarda la nota y el metodo de pago, y la busqueda tambien mira la nota`() = runTest {
+        val vm = crearViewModel()
+        vm.showAddGastoDialog()
+        vm.updateAddGastoFecha(inicioMes)
+        vm.updateAddGastoNota("  Cumple de Ana  ")
+        vm.updateAddGastoMetodoPago(MetodoPago.BIZUM)
+
+        vm.saveGasto("Cena", "30", Categoria.OCIO, null)
+
+        val gasto = gastos.datos.value.single()
+        assertEquals("Cumple de Ana", gasto.nota)
+        assertEquals(MetodoPago.BIZUM, gasto.metodoPago)
+        vm.updateSearchQuery("ana")
+        assertEquals(listOf(gasto.id), vm.idsVisibles)
+
+        vm.showEditGastoDialog(gasto)
+        assertEquals("Cumple de Ana", vm.addGastoState.value.nota)
+        assertEquals(MetodoPago.BIZUM, vm.addGastoState.value.metodoPago)
     }
 
     // ---------- Alertas ----------

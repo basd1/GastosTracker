@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.data.repository
 import bas.orellana.gastostracker.data.EntornoDatos
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -114,5 +115,13 @@ class GastoRepositoryImplTest {
         repo.addGasto(original)
 
         assertEquals(listOf(original), repo.getGastos().first())
+    }
+
+    @Test
+    fun `guarda y lee la nota y el metodo de pago`() = runTest {
+        val gasto = GastoModel("n1", "Cena", 45.0, LocalDate(2026, 11, 8), Categoria.OCIO, nota = "Cumple de Ana", metodoPago = MetodoPago.TARJETA)
+        repo.addGasto(gasto)
+
+        assertEquals(gasto, repo.getGastos().first().single())
     }
 }

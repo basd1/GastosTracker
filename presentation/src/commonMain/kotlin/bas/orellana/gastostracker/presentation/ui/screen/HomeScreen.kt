@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -228,7 +229,11 @@ fun HomeScreen(
                 },
                 onDismiss = { viewModel.hideAddGastoDialog() },
                 repetirMensual = addGastoState.repetirMensual,
-                onRepetirMensualChange = { viewModel.updateAddGastoRepetir(it) }
+                onRepetirMensualChange = { viewModel.updateAddGastoRepetir(it) },
+                nota = addGastoState.nota,
+                onNotaChange = { viewModel.updateAddGastoNota(it) },
+                metodoPago = addGastoState.metodoPago,
+                onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) }
             )
         }
 
@@ -741,10 +746,19 @@ private fun GastoItem(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = gasto.fecha.formatDDMMYYYY(),
+                        text = listOfNotNull(gasto.fecha.formatDDMMYYYY(), gasto.metodoPago?.nombre()).joinToString(" · "),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
+                    gasto.nota?.let { nota ->
+                        Text(
+                            text = nota,
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Text(
                     text = formatMoney(gasto.monto),

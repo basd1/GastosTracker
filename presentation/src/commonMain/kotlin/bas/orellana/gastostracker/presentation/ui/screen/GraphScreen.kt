@@ -277,7 +277,11 @@ fun GraphScreen(
                 },
                 onDismiss = { viewModel.hideAddGastoDialog() },
                 repetirMensual = addGastoState.repetirMensual,
-                onRepetirMensualChange = { viewModel.updateAddGastoRepetir(it) }
+                onRepetirMensualChange = { viewModel.updateAddGastoRepetir(it) },
+                nota = addGastoState.nota,
+                onNotaChange = { viewModel.updateAddGastoNota(it) },
+                metodoPago = addGastoState.metodoPago,
+                onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) }
             )
         }
     }

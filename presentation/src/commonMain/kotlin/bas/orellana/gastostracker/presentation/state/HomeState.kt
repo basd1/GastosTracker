@@ -53,7 +53,7 @@ internal fun filtrarYOrdenarGastos(
 ): List<GastoModel> {
     val texto = busqueda.trim()
     val filtrados = gastos.filter { gasto ->
-        (texto.isEmpty() || gasto.nombre.contains(texto, ignoreCase = true)) &&
+        (texto.isEmpty() || gasto.nombre.contains(texto, ignoreCase = true) || gasto.nota?.contains(texto, ignoreCase = true) == true) &&
             (categoria == null || gasto.categoria == categoria) &&
             (categoriaPersonalizadaId == null || gasto.categoriaPersonalizadaId == categoriaPersonalizadaId)
     }

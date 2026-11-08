@@ -17,6 +17,8 @@ import bas.orellana.gastostracker.presentation.resources.csv_categoria
 import bas.orellana.gastostracker.presentation.resources.csv_concepto
 import bas.orellana.gastostracker.presentation.resources.csv_fecha
 import bas.orellana.gastostracker.presentation.resources.csv_importe
+import bas.orellana.gastostracker.presentation.resources.csv_metodo_pago
+import bas.orellana.gastostracker.presentation.resources.csv_nota
 import bas.orellana.gastostracker.presentation.resources.csv_tipo
 import bas.orellana.gastostracker.presentation.resources.csv_tipo_ahorro
 import bas.orellana.gastostracker.presentation.resources.csv_tipo_gasto
@@ -148,12 +150,18 @@ class DatosViewModel(
         val tipoAhorro = getString(Res.string.csv_tipo_ahorro)
         val filas = buildList {
             getGastosUseCase().first().forEach {
-                add(FilaCsv(it.fecha, tipoGasto, it.nombre, nombreCategoria(it.categoria, it.categoriaPersonalizadaId), -it.monto))
+                add(
+                    FilaCsv(
+                        it.fecha, tipoGasto, it.nombre, nombreCategoria(it.categoria, it.categoriaPersonalizadaId), -it.monto,
+                        nota = it.nota.orEmpty(),
+                        metodoPago = it.metodoPago?.let { metodo -> getString(metodo.nombreRes) }.orEmpty()
+                    )
+                )
             }
             getIngresosUseCase().first().forEach {
                 val categoriaIngreso = it.categoria
                 val nombre = if (categoriaIngreso != null) getString(categoriaIngreso.nombreRes) else nombreCategoria(null, it.categoriaPersonalizadaId)
-                add(FilaCsv(it.fecha, tipoIngreso, it.nombre, nombre, it.monto))
+                add(FilaCsv(it.fecha, tipoIngreso, it.nombre, nombre, it.monto, nota = it.nota.orEmpty()))
             }
             getTodasLasAportacionesUseCase().first().forEach {
                 add(FilaCsv(it.fecha, tipoAhorro, it.nota.orEmpty(), metas[it.metaId].orEmpty(), -it.monto))
@@ -164,7 +172,9 @@ class DatosViewModel(
             getString(Res.string.csv_tipo),
             getString(Res.string.csv_concepto),
             getString(Res.string.csv_categoria),
-            getString(Res.string.csv_importe)
+            getString(Res.string.csv_importe),
+            getString(Res.string.csv_nota),
+            getString(Res.string.csv_metodo_pago)
         )
         return generarCsv(cabecera, filas)
     }

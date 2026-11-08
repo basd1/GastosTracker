@@ -7,6 +7,7 @@ import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Mes
+import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
@@ -160,7 +161,9 @@ class HomeViewModel(
             categoriaSeleccionada = gasto.categoria,
             categoriaPersonalizadaSeleccionada = gasto.categoriaPersonalizadaId,
             fecha = gasto.fecha,
-            gastoToEdit = gasto
+            gastoToEdit = gasto,
+            nota = gasto.nota.orEmpty(),
+            metodoPago = gasto.metodoPago
         )
         _state.update { it.copy(showAddGastoDialog = true) }
     }
@@ -181,6 +184,8 @@ class HomeViewModel(
         val monto = parseImporte(precio) ?: return
         val fecha = _addGastoState.value.fecha
         val gastoToEdit = _addGastoState.value.gastoToEdit
+        val nota = _addGastoState.value.nota.trim().ifEmpty { null }
+        val metodoPago = _addGastoState.value.metodoPago
         if (gastoToEdit == null && _addGastoState.value.repetirMensual) {
             // Gasto fijo: se guarda el recurrente y la generación crea el gasto de este mes (si ya toca).
             val recurrente = Recurrente(
@@ -206,7 +211,9 @@ class HomeViewModel(
                 monto = monto,
                 fecha = fecha,
                 categoria = categoria,
-                categoriaPersonalizadaId = categoriaPersonalizadaId
+                categoriaPersonalizadaId = categoriaPersonalizadaId,
+                nota = nota,
+                metodoPago = metodoPago
             )
         } else {
             GastoModel(
@@ -215,7 +222,9 @@ class HomeViewModel(
                 monto = monto,
                 fecha = fecha,
                 categoria = categoria,
-                categoriaPersonalizadaId = categoriaPersonalizadaId
+                categoriaPersonalizadaId = categoriaPersonalizadaId,
+                nota = nota,
+                metodoPago = metodoPago
             )
         }
         viewModelScope.launch {
@@ -361,6 +370,14 @@ class HomeViewModel(
         _addGastoState.update { current: AddGastoState ->
             current.copy(categoriaPersonalizadaSeleccionada = id, categoriaSeleccionada = null)
         }
+    }
+
+    fun updateAddGastoNota(nota: String) {
+        _addGastoState.update { it.copy(nota = nota) }
+    }
+
+    fun updateAddGastoMetodoPago(metodo: MetodoPago?) {
+        _addGastoState.update { it.copy(metodoPago = metodo) }
     }
 
     fun updateAddGastoRepetir(repetir: Boolean) {

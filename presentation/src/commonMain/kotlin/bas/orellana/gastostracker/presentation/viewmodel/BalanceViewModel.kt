@@ -113,7 +113,8 @@ class BalanceViewModel(
             categoriaSeleccionada = ingreso.categoria,
             categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId,
             fecha = ingreso.fecha,
-            ingresoToEdit = ingreso
+            ingresoToEdit = ingreso,
+            nota = ingreso.nota.orEmpty()
         )
         _state.update { it.copy(showAddIngresoDialog = true) }
     }
@@ -155,6 +156,10 @@ class BalanceViewModel(
         _addIngresoState.update { it.copy(categoriaPersonalizadaId = id) }
     }
 
+    fun updateNota(nota: String) {
+        _addIngresoState.update { it.copy(nota = nota) }
+    }
+
     fun updateRepetir(repetir: Boolean) {
         _addIngresoState.update { it.copy(repetirMensual = repetir) }
     }
@@ -167,6 +172,7 @@ class BalanceViewModel(
         val montoDouble = parseImporte(monto) ?: return
         val ingresoToEdit = _addIngresoState.value.ingresoToEdit
         val fecha = _addIngresoState.value.fecha
+        val nota = _addIngresoState.value.nota.trim().ifEmpty { null }
         if (ingresoToEdit == null && _addIngresoState.value.repetirMensual) {
             // Ingreso fijo: se guarda el recurrente y la generación crea el ingreso de este mes (si ya toca).
             val recurrente = Recurrente(
@@ -192,7 +198,8 @@ class BalanceViewModel(
                 monto = montoDouble,
                 fecha = fecha,
                 categoria = _addIngresoState.value.categoriaSeleccionada,
-                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId
+                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId,
+                nota = nota
             )
         } else {
             IngresoModel(
@@ -201,7 +208,8 @@ class BalanceViewModel(
                 monto = montoDouble,
                 fecha = fecha,
                 categoria = _addIngresoState.value.categoriaSeleccionada,
-                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId
+                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId,
+                nota = nota
             )
         }
         viewModelScope.launch {

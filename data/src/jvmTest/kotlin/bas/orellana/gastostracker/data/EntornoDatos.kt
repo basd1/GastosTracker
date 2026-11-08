@@ -13,6 +13,7 @@ import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.RecurrenteRepositoryImpl
 import bas.orellana.gastostracker.data.repository.AhorroRepositoryImpl
 import bas.orellana.gastostracker.data.repository.CopiaSeguridadRepositoryImpl
+import bas.orellana.gastostracker.data.repository.CuentaRepositoryImpl
 import okio.FileSystem
 import okio.Path
 import kotlin.uuid.ExperimentalUuidApi
@@ -44,6 +45,7 @@ internal class EntornoDatos(
     val recurrentes = RecurrenteRepositoryImpl(db, migrador)
     val ahorro = AhorroRepositoryImpl(db, migrador)
     val copias = CopiaSeguridadRepositoryImpl(db, migrador)
+    val cuentas = CuentaRepositoryImpl(db, migrador)
 
     override fun close() {
         db.close()

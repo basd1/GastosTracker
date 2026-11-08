@@ -114,7 +114,8 @@ class BalanceViewModel(
             categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId,
             fecha = ingreso.fecha,
             ingresoToEdit = ingreso,
-            nota = ingreso.nota.orEmpty()
+            nota = ingreso.nota.orEmpty(),
+            cuentaId = ingreso.cuentaId
         )
         _state.update { it.copy(showAddIngresoDialog = true) }
     }
@@ -160,6 +161,10 @@ class BalanceViewModel(
         _addIngresoState.update { it.copy(nota = nota) }
     }
 
+    fun updateCuenta(cuentaId: String?) {
+        _addIngresoState.update { it.copy(cuentaId = cuentaId) }
+    }
+
     fun updateRepetir(repetir: Boolean) {
         _addIngresoState.update { it.copy(repetirMensual = repetir) }
     }
@@ -199,7 +204,8 @@ class BalanceViewModel(
                 fecha = fecha,
                 categoria = _addIngresoState.value.categoriaSeleccionada,
                 categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId,
-                nota = nota
+                nota = nota,
+                cuentaId = _addIngresoState.value.cuentaId
             )
         } else {
             IngresoModel(
@@ -209,7 +215,8 @@ class BalanceViewModel(
                 fecha = fecha,
                 categoria = _addIngresoState.value.categoriaSeleccionada,
                 categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId,
-                nota = nota
+                nota = nota,
+                cuentaId = _addIngresoState.value.cuentaId
             )
         }
         viewModelScope.launch {

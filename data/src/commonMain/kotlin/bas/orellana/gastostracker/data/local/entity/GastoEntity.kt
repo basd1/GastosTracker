@@ -19,5 +19,6 @@ data class GastoEntity(
     @ColumnInfo(name = "categoria_personalizada_id") val categoriaPersonalizadaId: String?,
     // Columnas añadidas después: con valor por defecto para poder leer copias de seguridad antiguas.
     val nota: String? = null,
-    @ColumnInfo(name = "metodo_pago") val metodoPago: String? = null
+    @ColumnInfo(name = "metodo_pago") val metodoPago: String? = null,
+    @ColumnInfo(name = "cuenta_id") val cuentaId: String? = null
 )

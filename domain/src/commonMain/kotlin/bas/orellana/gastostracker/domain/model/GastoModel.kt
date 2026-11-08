@@ -10,5 +10,6 @@ data class GastoModel(
     val categoria: Categoria? = null,
     val categoriaPersonalizadaId: String? = null,
     val nota: String? = null,
-    val metodoPago: MetodoPago? = null
+    val metodoPago: MetodoPago? = null,
+    val cuentaId: String? = null
 )

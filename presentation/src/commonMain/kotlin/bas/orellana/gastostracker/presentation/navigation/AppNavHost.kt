@@ -15,6 +15,7 @@ import bas.orellana.gastostracker.presentation.ui.screen.GraphScreen
 import bas.orellana.gastostracker.presentation.ui.screen.HomeScreen
 import bas.orellana.gastostracker.presentation.ui.screen.PresupuestosScreen
 import bas.orellana.gastostracker.presentation.ui.screen.RecurrentesScreen
+import bas.orellana.gastostracker.presentation.ui.screen.CuentasScreen
 import bas.orellana.gastostracker.presentation.ui.screen.MetasScreen
 import bas.orellana.gastostracker.presentation.ui.screen.MetaDetalleScreen
 import org.koin.compose.koinInject
@@ -49,6 +50,9 @@ fun AppNavHost(navController: NavHostController) {
         composable(NavRoutes.META_DETALLE) { entrada ->
             val id = entrada.savedStateHandle.get<String>(NavRoutes.ARG_ID).orEmpty()
             MetaDetalleScreen(navController = navController, metaId = id)
+        }
+        composable(NavRoutes.CUENTAS) {
+            CuentasScreen(navController = navController)
         }
         composable(NavRoutes.RECURRENTES) {
             RecurrentesScreen(navController = navController)

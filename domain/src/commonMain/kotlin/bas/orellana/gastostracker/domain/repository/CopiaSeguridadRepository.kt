@@ -22,7 +22,8 @@ data class ResumenCopia(
     val presupuestos: Int,
     val recurrentes: Int,
     val metas: Int,
-    val aportaciones: Int
+    val aportaciones: Int,
+    val cuentas: Int = 0
 ) {
     val movimientos: Int get() = gastos + ingresos + aportaciones
 }

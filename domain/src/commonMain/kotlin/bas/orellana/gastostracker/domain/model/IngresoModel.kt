@@ -9,5 +9,6 @@ data class IngresoModel(
     val fecha: LocalDate,
     val categoria: CategoriaIngreso? = null,
     val categoriaPersonalizadaId: String? = null,
-    val nota: String? = null
+    val nota: String? = null,
+    val cuentaId: String? = null
 )

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DarkMode
@@ -68,6 +69,8 @@ import bas.orellana.gastostracker.presentation.resources.restaurar_mensaje
 import bas.orellana.gastostracker.presentation.resources.restaurar_titulo
 import bas.orellana.gastostracker.presentation.resources.titulo_ajustes
 import bas.orellana.gastostracker.presentation.resources.titulo_presupuestos
+import bas.orellana.gastostracker.presentation.resources.titulo_cuentas
+import bas.orellana.gastostracker.presentation.resources.ajustes_cuentas_detalle
 import bas.orellana.gastostracker.presentation.ui.components.AjusteItem
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.components.SeccionAjustes
@@ -184,6 +187,13 @@ fun AjustesScreen(
                         titulo = stringResource(Res.string.ajustes_recurrentes),
                         detalle = stringResource(Res.string.ajustes_recurrentes_detalle),
                         onClick = { navController.navigate(NavRoutes.RECURRENTES) }
+                    )
+                    HorizontalDivider()
+                    AjusteItem(
+                        icono = Icons.Default.AccountBalance,
+                        titulo = stringResource(Res.string.titulo_cuentas),
+                        detalle = stringResource(Res.string.ajustes_cuentas_detalle),
+                        onClick = { navController.navigate(NavRoutes.CUENTAS) }
                     )
                 }
 

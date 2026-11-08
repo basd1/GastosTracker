@@ -10,6 +10,11 @@ import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.RecurrenteRepositoryImpl
 import bas.orellana.gastostracker.data.repository.AhorroRepositoryImpl
 import bas.orellana.gastostracker.data.repository.CopiaSeguridadRepositoryImpl
+import bas.orellana.gastostracker.data.repository.CuentaRepositoryImpl
+import bas.orellana.gastostracker.domain.repository.CuentaRepository
+import bas.orellana.gastostracker.domain.usecase.EliminarCuentaUseCase
+import bas.orellana.gastostracker.domain.usecase.GetSaldosCuentasUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarCuentaUseCase
 import bas.orellana.gastostracker.domain.repository.CopiaSeguridadRepository
 import bas.orellana.gastostracker.domain.usecase.ExportarCopiaSeguridadUseCase
 import bas.orellana.gastostracker.domain.usecase.ImportarCopiaSeguridadUseCase
@@ -73,6 +78,7 @@ val sharedModule = module {
     single<RecurrenteRepository> { RecurrenteRepositoryImpl(get(), get()) }
     single<AhorroRepository> { AhorroRepositoryImpl(get(), get()) }
     single<CopiaSeguridadRepository> { CopiaSeguridadRepositoryImpl(get(), get()) }
+    single<CuentaRepository> { CuentaRepositoryImpl(get(), get()) }
 
     factory { GetGastosUseCase(get()) }
     factory { GetGastosEntreUseCase(get()) }
@@ -115,4 +121,8 @@ val sharedModule = module {
 
     factory { ExportarCopiaSeguridadUseCase(get()) }
     factory { ImportarCopiaSeguridadUseCase(get()) }
+
+    factory { GetSaldosCuentasUseCase(get()) }
+    factory { GuardarCuentaUseCase(get()) }
+    factory { EliminarCuentaUseCase(get()) }
 }

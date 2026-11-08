@@ -8,6 +8,7 @@ object NavRoutes {
     const val AJUSTES = "ajustes"
     const val PRESUPUESTOS = "presupuestos"
     const val RECURRENTES = "recurrentes"
+    const val CUENTAS = "cuentas"
 
     const val ARG_ID = "id"
     const val META_DETALLE = "meta/{$ARG_ID}"

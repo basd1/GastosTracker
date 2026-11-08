@@ -18,5 +18,6 @@ data class IngresoEntity(
     val categoria: String?,
     @ColumnInfo(name = "categoria_personalizada_id") val categoriaPersonalizadaId: String?,
     // Columna añadida después: con valor por defecto para poder leer copias de seguridad antiguas.
-    val nota: String? = null
+    val nota: String? = null,
+    @ColumnInfo(name = "cuenta_id") val cuentaId: String? = null
 )

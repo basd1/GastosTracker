@@ -16,7 +16,8 @@ data class AddGastoState(
     /** Al crear: guardar como gasto fijo que se repite cada mes. */
     val repetirMensual: Boolean = false,
     val nota: String = "",
-    val metodoPago: MetodoPago? = null
+    val metodoPago: MetodoPago? = null,
+    val cuentaId: String? = null
 ) {
     fun reset() = copy(
         concepto = "",
@@ -27,6 +28,7 @@ data class AddGastoState(
         gastoToEdit = null,
         repetirMensual = false,
         nota = "",
-        metodoPago = null
+        metodoPago = null,
+        cuentaId = null
     )
 }

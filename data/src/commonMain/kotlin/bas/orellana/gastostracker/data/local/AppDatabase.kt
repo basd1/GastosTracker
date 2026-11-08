@@ -17,6 +17,7 @@ import bas.orellana.gastostracker.data.local.dao.PresupuestoDao
 import bas.orellana.gastostracker.data.local.dao.RecurrenteDao
 import bas.orellana.gastostracker.data.local.dao.AhorroDao
 import bas.orellana.gastostracker.data.local.dao.CopiaSeguridadDao
+import bas.orellana.gastostracker.data.local.dao.CuentaDao
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
@@ -24,6 +25,7 @@ import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
 import bas.orellana.gastostracker.data.local.entity.RecurrenteEntity
 import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
+import bas.orellana.gastostracker.data.local.entity.CuentaEntity
 import bas.orellana.gastostracker.domain.model.Categoria
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -36,7 +38,8 @@ import kotlinx.coroutines.IO
         PresupuestoEntity::class,
         RecurrenteEntity::class,
         MetaAhorroEntity::class,
-        AportacionEntity::class
+        AportacionEntity::class,
+        CuentaEntity::class
     ],
     version = VERSION_ACTUAL,
     exportSchema = true,
@@ -46,7 +49,9 @@ import kotlinx.coroutines.IO
         // 3 → 4: gastos e ingresos recurrentes.
         AutoMigration(from = 3, to = 4),
         // 6 → 7: nota y método de pago en los movimientos.
-        AutoMigration(from = 6, to = 7)
+        AutoMigration(from = 6, to = 7),
+        // 7 → 8: cuentas y cuenta de cada movimiento.
+        AutoMigration(from = 7, to = 8)
     ]
 )
 @TypeConverters(Converters::class)
@@ -59,6 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun recurrenteDao(): RecurrenteDao
     abstract fun ahorroDao(): AhorroDao
     abstract fun copiaSeguridadDao(): CopiaSeguridadDao
+    abstract fun cuentaDao(): CuentaDao
 }
 
 // Room genera el `actual` de cada plataforma.
@@ -68,7 +74,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 }
 
 /** Versión actual del esquema (la de @Database). */
-internal const val VERSION_ACTUAL = 7
+internal const val VERSION_ACTUAL = 8
 
 // Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"

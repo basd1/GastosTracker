@@ -76,6 +76,7 @@ import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.GraphViewModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import org.koin.compose.viewmodel.koinViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.CuentasViewModel
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
@@ -110,10 +111,12 @@ private enum class PeriodFilter {
 fun GraphScreen(
     navController: NavController,
     viewModel: HomeViewModel = koinViewModel(),
-    graphViewModel: GraphViewModel = koinViewModel()
+    graphViewModel: GraphViewModel = koinViewModel(),
+    cuentasViewModel: CuentasViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
+    val cuentasState by cuentasViewModel.state.collectAsState()
     val categoriasPersonalizadas by graphViewModel.categoriasPersonalizadas.collectAsState()
     val todosLosGastos by graphViewModel.gastos.collectAsState()
 
@@ -322,7 +325,10 @@ fun GraphScreen(
                 nota = addGastoState.nota,
                 onNotaChange = { viewModel.updateAddGastoNota(it) },
                 metodoPago = addGastoState.metodoPago,
-                onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) }
+                onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) },
+                cuentas = cuentasState.activas,
+                cuentaId = addGastoState.cuentaId,
+                onCuentaChange = { viewModel.updateAddGastoCuenta(it) }
             )
         }
     }

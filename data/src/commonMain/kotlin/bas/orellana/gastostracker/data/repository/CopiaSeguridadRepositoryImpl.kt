@@ -9,6 +9,7 @@ import bas.orellana.gastostracker.data.local.VERSION_ACTUAL
 import bas.orellana.gastostracker.data.local.SQL_NORMALIZAR_CATEGORIAS_INGRESO
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
+import bas.orellana.gastostracker.data.local.entity.CuentaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
 import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
@@ -41,7 +42,8 @@ internal data class CopiaSeguridadDto(
     val presupuestos: List<PresupuestoEntity> = emptyList(),
     val recurrentes: List<RecurrenteEntity> = emptyList(),
     val metas: List<MetaAhorroEntity> = emptyList(),
-    val aportaciones: List<AportacionEntity> = emptyList()
+    val aportaciones: List<AportacionEntity> = emptyList(),
+    val cuentas: List<CuentaEntity> = emptyList()
 ) {
     companion object {
         const val FORMATO = "gastostracker-copia"
@@ -74,7 +76,8 @@ class CopiaSeguridadRepositoryImpl(
             presupuestos = dao.presupuestos(),
             recurrentes = dao.recurrentes(),
             metas = dao.metas(),
-            aportaciones = dao.aportaciones()
+            aportaciones = dao.aportaciones(),
+            cuentas = dao.cuentas()
         )
         return withContext(Dispatchers.Default) { jsonCopia.encodeToString(CopiaSeguridadDto.serializer(), copia) }
     }
@@ -85,6 +88,7 @@ class CopiaSeguridadRepositoryImpl(
         db.useWriterConnection { conexion ->
             conexion.immediateTransaction {
                 dao.borrarAportaciones()
+                dao.borrarCuentas()
                 dao.borrarMetas()
                 dao.borrarRecurrentes()
                 dao.borrarPresupuestos()
@@ -93,6 +97,7 @@ class CopiaSeguridadRepositoryImpl(
                 dao.borrarCategorias()
 
                 dao.insertarCategorias(copia.categorias)
+                dao.insertarCuentas(copia.cuentas)
                 dao.insertarGastos(copia.gastos)
                 dao.insertarIngresos(copia.ingresos)
                 dao.insertarPresupuestos(copia.presupuestos)
@@ -102,6 +107,8 @@ class CopiaSeguridadRepositoryImpl(
                 // Por si la copia viene de una versión que dejaba movimientos sin categoría existente.
                 db.gastoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
                 db.ingresoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
+                dao.desasignarGastosSinCuenta()
+                dao.desasignarIngresosSinCuenta()
                 SQL_NORMALIZAR_CATEGORIAS_INGRESO.forEach { sql -> conexion.usePrepared(sql) { it.step() } }
             }
         }
@@ -136,6 +143,7 @@ class CopiaSeguridadRepositoryImpl(
         sinIdsRepetidos(copia.recurrentes, "recurrentes") { it.id }
         sinIdsRepetidos(copia.metas, "metas") { it.id }
         sinIdsRepetidos(copia.aportaciones, "aportaciones") { it.id }
+        sinIdsRepetidos(copia.cuentas, "cuentas") { it.id }
         (copia.gastos.map { it.monto } + copia.ingresos.map { it.monto }).forEach { monto ->
             comprobar(monto.isFinite()) { "Importe no válido: $monto" }
         }
@@ -153,6 +161,7 @@ class CopiaSeguridadRepositoryImpl(
         presupuestos = presupuestos.size,
         recurrentes = recurrentes.size,
         metas = metas.size,
-        aportaciones = aportaciones.size
+        aportaciones = aportaciones.size,
+        cuentas = cuentas.size
     )
 }

@@ -266,6 +266,26 @@
     <string name="gastos_del_periodo">Gastos del periodo</string>
     <string name="quitar_rango">Quitar rango de fechas</string>
 
+    <!-- Cuentas -->
+    <string name="titulo_cuentas">Cuentas</string>
+    <string name="ajustes_cuentas_detalle">Banco, efectivo, tarjeta… cada una con su saldo</string>
+    <string name="saldo_total">Saldo total</string>
+    <string name="nueva_cuenta">Nueva cuenta</string>
+    <string name="editar_cuenta">Editar cuenta</string>
+    <string name="campo_cuenta">Cuenta</string>
+    <string name="sin_cuenta">Ninguna</string>
+    <string name="campo_tipo_cuenta">Tipo</string>
+    <string name="campo_saldo_inicial">Saldo inicial</string>
+    <string name="saldo_inicial_invalido">Escribe un número (puede ser negativo)</string>
+    <string name="tipo_cuenta_banco">Banco</string>
+    <string name="tipo_cuenta_efectivo">Efectivo</string>
+    <string name="tipo_cuenta_tarjeta_credito">Tarjeta de crédito</string>
+    <string name="tipo_cuenta_otra">Otra</string>
+    <string name="sin_cuentas">Sin cuentas. Crea una para llevar el saldo de tu banco, tu cartera o tu tarjeta.</string>
+    <string name="cuentas_explicacion">El saldo es el saldo inicial más los ingresos y menos los gastos asignados a la cuenta. Asignar cuenta a un movimiento es opcional.</string>
+    <string name="eliminar_cuenta_titulo">¿Eliminar «%1$s»?</string>
+    <string name="eliminar_cuenta_mensaje">Sus gastos e ingresos no se borran: se quedan sin cuenta.</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

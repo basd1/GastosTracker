@@ -94,6 +94,7 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.CuentasViewModel
 import org.koin.compose.koinInject
 import bas.orellana.gastostracker.presentation.navigation.PeticionesFiltro
 import kotlinx.coroutines.flow.filterNotNull
@@ -128,10 +129,12 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    cuentasViewModel: CuentasViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
+    val cuentasState by cuentasViewModel.state.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -257,7 +260,10 @@ fun HomeScreen(
                 nota = addGastoState.nota,
                 onNotaChange = { viewModel.updateAddGastoNota(it) },
                 metodoPago = addGastoState.metodoPago,
-                onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) }
+                onMetodoPagoChange = { viewModel.updateAddGastoMetodoPago(it) },
+                cuentas = cuentasState.activas,
+                cuentaId = addGastoState.cuentaId,
+                onCuentaChange = { viewModel.updateAddGastoCuenta(it) }
             )
         }
 

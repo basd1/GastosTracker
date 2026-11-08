@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
+import bas.orellana.gastostracker.data.local.entity.CuentaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
 import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
@@ -33,6 +34,9 @@ interface CopiaSeguridadDao {
     @Query("SELECT * FROM metas_ahorro ORDER BY rowid ASC")
     suspend fun metas(): List<MetaAhorroEntity>
 
+    @Query("SELECT * FROM cuentas ORDER BY rowid ASC")
+    suspend fun cuentas(): List<CuentaEntity>
+
     @Query("SELECT * FROM aportaciones ORDER BY rowid ASC")
     suspend fun aportaciones(): List<AportacionEntity>
 
@@ -53,6 +57,9 @@ interface CopiaSeguridadDao {
 
     @Query("DELETE FROM metas_ahorro")
     suspend fun borrarMetas()
+
+    @Query("DELETE FROM cuentas")
+    suspend fun borrarCuentas()
 
     @Query("DELETE FROM aportaciones")
     suspend fun borrarAportaciones()
@@ -77,4 +84,14 @@ interface CopiaSeguridadDao {
 
     @Insert
     suspend fun insertarAportaciones(filas: List<AportacionEntity>)
+
+    @Insert
+    suspend fun insertarCuentas(filas: List<CuentaEntity>)
+
+    /** Movimientos que apuntan a una cuenta que no está en la copia: se quedan sin cuenta. */
+    @Query("UPDATE gastos SET cuenta_id = NULL WHERE cuenta_id IS NOT NULL AND cuenta_id NOT IN (SELECT id FROM cuentas)")
+    suspend fun desasignarGastosSinCuenta()
+
+    @Query("UPDATE ingresos SET cuenta_id = NULL WHERE cuenta_id IS NOT NULL AND cuenta_id NOT IN (SELECT id FROM cuentas)")
+    suspend fun desasignarIngresosSinCuenta()
 }

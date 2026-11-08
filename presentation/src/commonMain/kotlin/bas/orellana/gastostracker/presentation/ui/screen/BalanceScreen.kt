@@ -69,6 +69,7 @@ import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.CuentasViewModel
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.accion_deshacer
 import bas.orellana.gastostracker.presentation.resources.accion_eliminar
@@ -89,10 +90,12 @@ import org.jetbrains.compose.resources.stringResource
 fun BalanceScreen(
     navController: NavController,
     viewModel: BalanceViewModel = koinViewModel(),
+    cuentasViewModel: CuentasViewModel = koinViewModel(),
     homeViewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addIngresoState by viewModel.addIngresoState.collectAsState()
+    val cuentasState by cuentasViewModel.state.collectAsState()
     val categoriasPersonalizadas by homeViewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -246,7 +249,10 @@ fun BalanceScreen(
                 repetirMensual = addIngresoState.repetirMensual,
                 onRepetirMensualChange = { viewModel.updateRepetir(it) },
                 nota = addIngresoState.nota,
-                onNotaChange = { viewModel.updateNota(it) }
+                onNotaChange = { viewModel.updateNota(it) },
+                cuentas = cuentasState.activas,
+                cuentaId = addIngresoState.cuentaId,
+                onCuentaChange = { viewModel.updateCuenta(it) }
             )
         }
 

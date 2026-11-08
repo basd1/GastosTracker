@@ -7,8 +7,11 @@ import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
 import bas.orellana.gastostracker.data.local.entity.RecurrenteEntity
 import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
+import bas.orellana.gastostracker.data.local.entity.CuentaEntity
 import bas.orellana.gastostracker.data.local.entity.TotalPorCategoriaRow
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.Cuenta
+import bas.orellana.gastostracker.domain.model.TipoCuenta
 import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
@@ -33,7 +36,8 @@ internal fun GastoEntity.toModel() = GastoModel(
     categoria = categoriaDesdeNombre(categoria),
     categoriaPersonalizadaId = categoriaPersonalizadaId,
     nota = nota,
-    metodoPago = MetodoPago.desdeNombre(metodoPago)
+    metodoPago = MetodoPago.desdeNombre(metodoPago),
+    cuentaId = cuentaId
 )
 
 internal fun GastoModel.toEntity() = GastoEntity(
@@ -44,7 +48,8 @@ internal fun GastoModel.toEntity() = GastoEntity(
     categoria = categoria?.name,
     categoriaPersonalizadaId = categoriaPersonalizadaId,
     nota = nota,
-    metodoPago = metodoPago?.name
+    metodoPago = metodoPago?.name,
+    cuentaId = cuentaId
 )
 
 internal fun IngresoEntity.toModel() = IngresoModel(
@@ -54,7 +59,8 @@ internal fun IngresoEntity.toModel() = IngresoModel(
     fecha = fecha,
     categoria = CategoriaIngreso.desdeNombre(categoria),
     categoriaPersonalizadaId = categoriaPersonalizadaId,
-    nota = nota
+    nota = nota,
+    cuentaId = cuentaId
 )
 
 internal fun IngresoModel.toEntity() = IngresoEntity(
@@ -64,7 +70,8 @@ internal fun IngresoModel.toEntity() = IngresoEntity(
     fecha = fecha,
     categoria = categoria?.name,
     categoriaPersonalizadaId = categoriaPersonalizadaId,
-    nota = nota
+    nota = nota,
+    cuentaId = cuentaId
 )
 
 internal fun CategoriaPersonalizadaEntity.toModel() = CategoriaPersonalizada(
@@ -156,3 +163,21 @@ internal fun MetaAhorro.toEntity() = MetaAhorroEntity(
 internal fun AportacionEntity.toModel() = Aportacion(id = id, metaId = metaId, monto = monto, fecha = fecha, nota = nota)
 
 internal fun Aportacion.toEntity() = AportacionEntity(id = id, metaId = metaId, monto = monto, fecha = fecha, nota = nota)
+
+internal fun CuentaEntity.toModel() = Cuenta(
+    id = id,
+    nombre = nombre,
+    tipo = TipoCuenta.entries.find { it.name == tipo } ?: TipoCuenta.OTRA,
+    saldoInicial = saldoInicial,
+    color = color,
+    archivada = archivada
+)
+
+internal fun Cuenta.toEntity() = CuentaEntity(
+    id = id,
+    nombre = nombre,
+    tipo = tipo.name,
+    saldoInicial = saldoInicial,
+    color = color,
+    archivada = archivada
+)

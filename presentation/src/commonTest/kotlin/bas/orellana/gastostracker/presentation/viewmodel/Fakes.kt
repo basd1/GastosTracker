@@ -12,6 +12,9 @@ import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import bas.orellana.gastostracker.domain.repository.PresupuestoRepository
 import bas.orellana.gastostracker.domain.repository.RecurrenteRepository
 import bas.orellana.gastostracker.domain.repository.AhorroRepository
+import bas.orellana.gastostracker.domain.repository.CuentaRepository
+import bas.orellana.gastostracker.domain.model.Cuenta
+import bas.orellana.gastostracker.domain.model.SaldoCuenta
 import bas.orellana.gastostracker.domain.model.Aportacion
 import bas.orellana.gastostracker.domain.model.MetaAhorro
 import bas.orellana.gastostracker.domain.model.ProgresoMeta
@@ -205,5 +208,29 @@ class FakeAhorroRepository : AhorroRepository {
 
     override suspend fun eliminarAportacion(id: String) {
         aportaciones.value = aportaciones.value.filterNot { it.id == id }
+    }
+}
+
+class FakeCuentaRepository(private val gastos: FakeGastoRepository, private val ingresos: FakeIngresoRepository) : CuentaRepository {
+    val cuentas = MutableStateFlow<List<Cuenta>>(emptyList())
+
+    override fun getSaldos(): Flow<List<SaldoCuenta>> = combine(cuentas, gastos.datos, ingresos.datos) { lista, g, i ->
+        lista.map { cuenta ->
+            SaldoCuenta(
+                cuenta,
+                cuenta.saldoInicial + i.filter { it.cuentaId == cuenta.id }.sumOf { it.monto } -
+                    g.filter { it.cuentaId == cuenta.id }.sumOf { it.monto }
+            )
+        }
+    }
+
+    override suspend fun guardarCuenta(cuenta: Cuenta) {
+        cuentas.value = cuentas.value.filterNot { it.id == cuenta.id } + cuenta
+    }
+
+    override suspend fun eliminarCuenta(id: String) {
+        gastos.datos.value = gastos.datos.value.map { if (it.cuentaId == id) it.copy(cuentaId = null) else it }
+        ingresos.datos.value = ingresos.datos.value.map { if (it.cuentaId == id) it.copy(cuentaId = null) else it }
+        cuentas.value = cuentas.value.filterNot { it.id == id }
     }
 }

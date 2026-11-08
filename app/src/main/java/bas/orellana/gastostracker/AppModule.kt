@@ -7,7 +7,7 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
-    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    viewModel { HomeViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     viewModel { SettingsViewModel(get()) }
-    viewModel { BalanceViewModel(get(), get(), get(), get(), get()) }
+    viewModel { BalanceViewModel(get(), get(), get(), get(), get(), get()) }
 }

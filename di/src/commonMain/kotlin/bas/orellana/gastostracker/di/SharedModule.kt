@@ -1,5 +1,7 @@
 package bas.orellana.gastostracker.di
 
+import bas.orellana.gastostracker.data.legacy.MigradorDatosLegacy
+import bas.orellana.gastostracker.data.local.AppDatabase
 import bas.orellana.gastostracker.data.repository.CategoriasRepositoryImpl
 import bas.orellana.gastostracker.data.repository.GastoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.IngresoRepositoryImpl
@@ -17,6 +19,8 @@ import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
@@ -24,12 +28,18 @@ import org.koin.dsl.module
 
 /**
  * Bindings de dominio/datos que no dependen de ninguna plataforma concreta.
- * El DataStore que consumen los repos se registra por plataforma (ver [platformModule]).
+ * La base de datos, el DataStore de preferencias y los ficheros antiguos a migrar se
+ * registran por plataforma (ver [platformModule]).
  */
 val sharedModule = module {
-    single<CategoriasRepository> { CategoriasRepositoryImpl(get()) }
-    single<GastoRepository> { GastoRepositoryImpl(get()) }
-    single<IngresoRepository> { IngresoRepositoryImpl(get()) }
+    single { MigradorDatosLegacy(get(), get(), get()) }
+    single { get<AppDatabase>().gastoDao() }
+    single { get<AppDatabase>().ingresoDao() }
+    single { get<AppDatabase>().categoriaPersonalizadaDao() }
+
+    single<CategoriasRepository> { CategoriasRepositoryImpl(get(), get()) }
+    single<GastoRepository> { GastoRepositoryImpl(get(), get()) }
+    single<IngresoRepository> { IngresoRepositoryImpl(get(), get()) }
     single { PreferencesRepository(get()) }
 
     factory { GetGastosUseCase(get()) }
@@ -37,6 +47,7 @@ val sharedModule = module {
     factory { DeleteGastoUseCase(get()) }
     factory { DeleteAllGastosUseCase(get()) }
     factory { UpdateGastoUseCase(get()) }
+    factory { GetTotalesGastosPorCategoriaUseCase(get()) }
     factory { GetCategoriasPersonalizadasUseCase(get()) }
     factory { AddCategoriaPersonalizadaUseCase(get()) }
     factory { UpdateCategoriaPersonalizadaUseCase(get()) }
@@ -46,4 +57,5 @@ val sharedModule = module {
     factory { AddIngresoUseCase(get()) }
     factory { UpdateIngresoUseCase(get()) }
     factory { DeleteIngresoUseCase(get()) }
+    factory { GetTotalIngresosUseCase(get()) }
 }

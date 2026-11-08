@@ -45,7 +45,9 @@ import androidx.compose.ui.unit.sp
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
+import bas.orellana.gastostracker.presentation.util.esEntradaImporteValida
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
+import bas.orellana.gastostracker.presentation.util.parseImporte
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -71,6 +73,8 @@ fun AddIngresoDialog(
     onDismiss: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    val importeValido = parseImporte(monto) != null
+    val importeInvalido = monto.isNotEmpty() && !importeValido
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -103,10 +107,14 @@ fun AddIngresoDialog(
                 OutlinedTextField(
                     value = monto,
                     onValueChange = { newValue ->
-                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*[,.]?\\d*$"))) {
+                        if (esEntradaImporteValida(newValue)) {
                             onMontoChange(newValue)
                         }
                     },
+                    isError = importeInvalido,
+                    supportingText = if (importeInvalido) {
+                        { Text("Introduce un importe mayor que 0") }
+                    } else null,
                     label = { Text("Monto") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -202,7 +210,7 @@ fun AddIngresoDialog(
                     }
                     Button(
                         onClick = onSave,
-                        enabled = concepto.isNotBlank() && monto.isNotBlank(),
+                        enabled = concepto.isNotBlank() && importeValido,
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(if (ingresoToEdit != null) "Actualizar" else "Guardar")

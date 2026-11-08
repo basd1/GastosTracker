@@ -25,14 +25,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -96,7 +92,6 @@ fun GraphScreen(
     var selectedMonth by remember { mutableStateOf(todayLocalDate().monthNumber) }
     var selectedYear by remember { mutableStateOf(todayLocalDate().year) }
     var showMonthPicker by remember { mutableStateOf(false) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val filteredGastos = remember(state.gastos, selectedPeriod, selectedMonth, selectedYear) {
         filterGastosByPeriod(state.gastos, selectedPeriod, selectedMonth, selectedYear)
@@ -220,29 +215,6 @@ fun GraphScreen(
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text("A\u00F1adir gasto", fontSize = 15.sp)
                                 }
-                                Button(
-                                    onClick = {
-                                        selectedPeriod = PeriodFilter.ALL
-                                        viewModel.seedTestAhorro45Meses()
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                                    shape = MaterialTheme.shapes.small,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(Icons.Default.Refresh, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("A\u00F1adir datos 45 meses", fontSize = 15.sp)
-                                }
-                                Button(
-                                    onClick = { showDeleteConfirm = true },
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                                    shape = MaterialTheme.shapes.small,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(Icons.Default.Delete, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text("Eliminar todos los ahorros", fontSize = 15.sp)
-                                }
                             }
                         }
 
@@ -326,29 +298,6 @@ fun GraphScreen(
                     viewModel.resetAddGastoState()
                 },
                 onDismiss = { viewModel.hideAddGastoDialog() }
-            )
-        }
-
-        if (showDeleteConfirm) {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirm = false },
-                title = { Text("Eliminar todos los ahorros") },
-                text = { Text("Se eliminar\u00E1n todos los ahorros. \u00BFEst\u00E1s seguro?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.deleteAllAhorros()
-                            showDeleteConfirm = false
-                        }
-                    ) {
-                        Text("Eliminar", color = MaterialTheme.colorScheme.error)
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteConfirm = false }) {
-                        Text("Cancelar")
-                    }
-                }
             )
         }
     }

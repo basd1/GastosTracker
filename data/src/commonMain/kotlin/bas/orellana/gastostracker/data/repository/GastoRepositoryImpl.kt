@@ -1,96 +1,50 @@
 package bas.orellana.gastostracker.data.repository
 
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
-import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.data.legacy.MigradorDatosLegacy
+import bas.orellana.gastostracker.data.local.dao.GastoDao
+import bas.orellana.gastostracker.data.local.toEntity
+import bas.orellana.gastostracker.data.local.toModel
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 import bas.orellana.gastostracker.domain.repository.GastoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 
 class GastoRepositoryImpl(
-    private val dataStore: DataStore<Preferences>
+    private val dao: GastoDao,
+    private val migrador: MigradorDatosLegacy
 ) : GastoRepository {
 
-    companion object {
-        private val GASTOS_KEY = stringPreferencesKey("gastos")
-    }
+    override fun getGastos(): Flow<List<GastoModel>> =
+        migrador.despuesDeMigrar { dao.observarTodos() }
+            .map { gastos -> gastos.map { it.toModel() } }
 
-    override fun getGastos(): Flow<List<GastoModel>> {
-        return dataStore.data.map { preferences ->
-            val json = preferences[GASTOS_KEY] ?: "[]"
-            parseGastosFromJson(json)
-        }
-    }
+    override fun getGastosEntre(desde: LocalDate, hasta: LocalDate): Flow<List<GastoModel>> =
+        migrador.despuesDeMigrar { dao.observarEntre(desde, hasta) }
+            .map { gastos -> gastos.map { it.toModel() } }
+
+    override fun getTotalesPorCategoria(desde: LocalDate, hasta: LocalDate): Flow<List<TotalPorCategoria>> =
+        migrador.despuesDeMigrar { dao.observarTotalesPorCategoria(desde, hasta) }
+            .map { filas -> filas.map { it.toModel() } }
 
     override suspend fun addGasto(gasto: GastoModel) {
-        dataStore.edit { preferences ->
-            val json = preferences[GASTOS_KEY] ?: "[]"
-            val gastos = parseGastosFromJson(json).toMutableList()
-            gastos.add(0, gasto)
-            preferences[GASTOS_KEY] = gastosToJson(gastos)
-        }
+        migrador.asegurarMigracion()
+        dao.insertar(gasto.toEntity())
     }
 
     override suspend fun updateGasto(gasto: GastoModel) {
-        dataStore.edit { preferences ->
-            val json = preferences[GASTOS_KEY] ?: "[]"
-            val gastos = parseGastosFromJson(json).toMutableList()
-            val index = gastos.indexOfFirst { it.id == gasto.id }
-            if (index != -1) {
-                gastos[index] = gasto
-                preferences[GASTOS_KEY] = gastosToJson(gastos)
-            }
-        }
+        migrador.asegurarMigracion()
+        dao.actualizar(gasto.toEntity())
     }
 
     override suspend fun deleteGasto(id: String) {
-        dataStore.edit { preferences ->
-            val json = preferences[GASTOS_KEY] ?: "[]"
-            val gastos = parseGastosFromJson(json).filter { it.id != id }
-            preferences[GASTOS_KEY] = gastosToJson(gastos)
-        }
+        migrador.asegurarMigracion()
+        dao.eliminar(id)
     }
 
     override suspend fun deleteAllGastos() {
-        dataStore.edit { preferences ->
-            preferences[GASTOS_KEY] = "[]"
-        }
-    }
-
-    private fun parseGastosFromJson(json: String): List<GastoModel> {
-        return try {
-            repositoryJson.decodeFromString<List<GastoDto>>(json).map { dto ->
-                GastoModel(
-                    id = dto.id,
-                    nombre = dto.nombre,
-                    monto = dto.monto,
-                    fecha = LocalDate.parse(dto.fecha),
-                    categoria = dto.categoria?.let { name -> Categoria.entries.find { it.name == name } },
-                    categoriaPersonalizadaId = dto.categoriaPersonalizadaId
-                )
-            }
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-
-    private fun gastosToJson(gastos: List<GastoModel>): String {
-        val dtos = gastos.map { gasto ->
-            GastoDto(
-                id = gasto.id,
-                nombre = gasto.nombre,
-                monto = gasto.monto,
-                fecha = gasto.fecha.toString(),
-                categoria = gasto.categoria?.name,
-                categoriaPersonalizadaId = gasto.categoriaPersonalizadaId
-            )
-        }
-        return repositoryJson.encodeToString(dtos)
+        migrador.asegurarMigracion()
+        dao.eliminarTodos()
     }
 }

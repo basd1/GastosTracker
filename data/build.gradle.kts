@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 kotlin {
@@ -18,6 +20,11 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    compilerOptions {
+        // Room necesita un `expect object` (AppDatabaseConstructor); las expect/actual classes siguen en Beta.
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     sourceSets {
         commonMain.dependencies {
             implementation(project(":domain"))
@@ -25,10 +32,23 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             api(libs.androidx.datastore.preferences.core)
+            api(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
             implementation(libs.okio)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
         }
     }
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
 }

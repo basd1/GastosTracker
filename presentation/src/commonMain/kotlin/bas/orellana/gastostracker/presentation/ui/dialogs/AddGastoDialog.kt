@@ -44,7 +44,9 @@ import androidx.compose.ui.unit.sp
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.presentation.util.esEntradaImporteValida
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
+import bas.orellana.gastostracker.presentation.util.parseImporte
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -70,6 +72,8 @@ fun AddGastoDialog(
     onDismiss: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    val importeValido = parseImporte(precio) != null
+    val importeInvalido = precio.isNotEmpty() && !importeValido
 
     BasicAlertDialog(onDismissRequest = onDismiss) {
         Card(
@@ -103,10 +107,14 @@ fun AddGastoDialog(
                 OutlinedTextField(
                     value = precio,
                     onValueChange = { newValue ->
-                        if (newValue.isEmpty() || newValue.matches(Regex("^\\d*[,.]?\\d*$"))) {
+                        if (esEntradaImporteValida(newValue)) {
                             onPrecioChange(newValue)
                         }
                     },
+                    isError = importeInvalido,
+                    supportingText = if (importeInvalido) {
+                        { Text("Introduce un importe mayor que 0") }
+                    } else null,
                     label = { Text("Precio") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -225,7 +233,7 @@ fun AddGastoDialog(
                     }
                     Button(
                         onClick = onSave,
-                        enabled = concepto.isNotBlank() && precio.isNotBlank(),
+                        enabled = concepto.isNotBlank() && importeValido,
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(if (gastoToEdit != null) "Actualizar" else "Guardar")

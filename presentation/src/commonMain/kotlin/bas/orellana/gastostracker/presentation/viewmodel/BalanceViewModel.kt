@@ -6,27 +6,34 @@ import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
-import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalIngresosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
+import bas.orellana.gastostracker.domain.util.rangoDelMes
 import bas.orellana.gastostracker.presentation.state.AddIngresoState
 import bas.orellana.gastostracker.presentation.state.BalanceState
+import bas.orellana.gastostracker.presentation.util.parseImporte
+import bas.orellana.gastostracker.presentation.util.randomId
+import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
-import bas.orellana.gastostracker.presentation.util.randomId
-import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
 
 class BalanceViewModel(
     private val getIngresosUseCase: GetIngresosUseCase,
     private val addIngresoUseCase: AddIngresoUseCase,
     private val updateIngresoUseCase: UpdateIngresoUseCase,
     private val deleteIngresoUseCase: DeleteIngresoUseCase,
-    private val getGastosUseCase: GetGastosUseCase
+    private val getTotalIngresosUseCase: GetTotalIngresosUseCase,
+    private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BalanceState())
@@ -35,48 +42,51 @@ class BalanceViewModel(
     private val _addIngresoState = MutableStateFlow(AddIngresoState())
     val addIngresoState: StateFlow<AddIngresoState> = _addIngresoState.asStateFlow()
 
+    /** (año, mes) seleccionado en el Balance. */
+    private val mesSeleccionado = MutableStateFlow(_state.value.selectedYear to _state.value.selectedMonth)
+
     init {
         loadIngresos()
-        loadGastos()
+        observarTotalesDelMes()
     }
 
     private fun loadIngresos() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            _state.update { it.copy(isLoading = true) }
             getIngresosUseCase()
-                .catch { e ->
-                    _state.value = _state.value.copy(isLoading = false)
-                }
+                .catch { _state.update { it.copy(isLoading = false) } }
                 .collect { ingresos ->
-                    val selectedMonth = _state.value.selectedMonth
-                    val selectedYear = _state.value.selectedYear
-                    val totalIngresosMes = ingresos.filter {
-                        it.fecha.monthNumber == selectedMonth && it.fecha.year == selectedYear
-                    }.sumOf { it.monto }
-                    _state.value = _state.value.copy(
-                        ingresos = ingresos,
-                        totalIngresosMes = totalIngresosMes,
-                        isLoading = false
-                    )
+                    _state.update { it.copy(ingresos = ingresos, isLoading = false) }
                 }
         }
     }
 
-    private fun loadGastos() {
+    /** Totales del mes seleccionado calculados en SQL; se recalculan al cambiar de mes o de datos. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observarTotalesDelMes() {
         viewModelScope.launch {
-            getGastosUseCase()
-                .catch { }
-                .collect { gastos ->
-                    val selectedMonth = _state.value.selectedMonth
-                    val selectedYear = _state.value.selectedYear
-                    val gastosDelMes = gastos.filter {
-                        it.fecha.monthNumber == selectedMonth && it.fecha.year == selectedYear
+            mesSeleccionado
+                .flatMapLatest { (year, month) ->
+                    val rango = rangoDelMes(year, month)
+                    val desde = rango.start
+                    val hasta = rango.endInclusive
+                    combine(
+                        getTotalIngresosUseCase(desde, hasta),
+                        getTotalesGastosPorCategoriaUseCase(desde, hasta)
+                    ) { totalIngresos, totalesGastos ->
+                        val (ahorro, gastos) = totalesGastos.partition { it.categoria == Categoria.AHORRO }
+                        Triple(totalIngresos, gastos.sumOf { it.total }, ahorro.sumOf { it.total })
                     }
-                    val gastosSinAhorro = gastosDelMes.filter { it.categoria != Categoria.AHORRO }
-                    val ahorroDelMes = gastosDelMes.filter { it.categoria == Categoria.AHORRO }
-                    val totalGastosMes = gastosSinAhorro.sumOf { it.monto }
-                    val totalAhorroMes = ahorroDelMes.sumOf { it.monto }
-                    _state.update { it.copy(totalGastosMes = totalGastosMes, totalAhorroMes = totalAhorroMes) }
+                }
+                .catch { }
+                .collect { (totalIngresos, totalGastos, totalAhorro) ->
+                    _state.update {
+                        it.copy(
+                            totalIngresosMes = totalIngresos,
+                            totalGastosMes = totalGastos,
+                            totalAhorroMes = totalAhorro
+                        )
+                    }
                 }
         }
     }
@@ -89,7 +99,7 @@ class BalanceViewModel(
     fun showEditIngresoDialog(ingreso: IngresoModel) {
         _addIngresoState.value = AddIngresoState(
             concepto = ingreso.nombre,
-            monto = ingreso.monto.toPlainStringTrimmed(),
+            monto = ingreso.monto.toPlainStringTrimmed().replace('.', ','),
             categoriaSeleccionada = ingreso.categoria,
             categoriaPersonalizadaId = ingreso.categoriaPersonalizadaId,
             fecha = ingreso.fecha,
@@ -122,8 +132,7 @@ class BalanceViewModel(
         _state.update {
             it.copy(selectedMonth = month, selectedYear = year, showMonthPicker = false)
         }
-        loadIngresos()
-        loadGastos()
+        mesSeleccionado.value = year to month
     }
 
     fun updateConcepto(concepto: String) {
@@ -147,7 +156,7 @@ class BalanceViewModel(
     }
 
     fun saveIngreso(nombre: String, monto: String) {
-        val montoDouble = monto.toDoubleOrNull() ?: 0.0
+        val montoDouble = parseImporte(monto) ?: return
         val ingresoToEdit = _addIngresoState.value.ingresoToEdit
         val fecha = _addIngresoState.value.fecha
         val ingreso = if (ingresoToEdit != null) {
@@ -175,7 +184,6 @@ class BalanceViewModel(
                 addIngresoUseCase(ingreso)
             }
             _state.update { it.copy(showAddIngresoDialog = false) }
-            loadIngresos()
         }
     }
 
@@ -189,8 +197,6 @@ class BalanceViewModel(
     fun restoreIngreso(ingreso: IngresoModel) {
         viewModelScope.launch {
             addIngresoUseCase(ingreso)
-            _state.update { state -> state.copy(ingresos = state.ingresos + ingreso) }
-            loadIngresos()
         }
     }
 

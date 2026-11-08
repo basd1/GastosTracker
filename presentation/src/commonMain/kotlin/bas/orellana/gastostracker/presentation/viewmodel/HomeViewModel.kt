@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
@@ -13,17 +14,21 @@ import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
+import bas.orellana.gastostracker.domain.util.rangoDelMes
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.state.AddGastoState
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
 import bas.orellana.gastostracker.presentation.state.SortOrder
+import bas.orellana.gastostracker.presentation.util.parseImporte
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DateTimeUnit
@@ -41,7 +46,8 @@ class HomeViewModel(
     private val getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
     private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
     private val updateCategoriaPersonalizadaUseCase: UpdateCategoriaPersonalizadaUseCase,
-    private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase
+    private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase,
+    private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -59,6 +65,7 @@ class HomeViewModel(
     init {
         loadGastos()
         loadCategoriasPersonalizadas()
+        observarAlertas()
     }
 
     private fun loadGastos() {
@@ -72,14 +79,13 @@ class HomeViewModel(
                     )
                 }
                 .collect { gastos ->
-                    val allAlerts = calculateAlerts(gastos, _categoriasPersonalizadas.value)
-                    val alerts = allAlerts.filter { it.categoriaNombre !in _state.value.dismissedAlertKeys }
-                    _state.value = _state.value.copy(
-                        gastos = gastos,
-                        isLoading = false,
-                        error = null,
-                        alerts = alerts
-                    )
+                    _state.update {
+                        it.copy(
+                            gastos = gastos,
+                            isLoading = false,
+                            error = null
+                        )
+                    }
                 }
         }
     }
@@ -90,10 +96,27 @@ class HomeViewModel(
                 .catch { }
                 .collect { categorias ->
                     _categoriasPersonalizadas.value = categorias
-                    val currentGastos = _state.value.gastos
-                    val allAlerts = calculateAlerts(currentGastos, categorias)
-                    val alerts = allAlerts.filter { it.categoriaNombre !in _state.value.dismissedAlertKeys }
-                    _state.update { it.copy(alerts = alerts) }
+                }
+        }
+    }
+
+    /** Compara lo gastado por categoría este mes con el mes anterior, sumando en SQL. */
+    private fun observarAlertas() {
+        val hoy = todayLocalDate()
+        val mesAnterior = hoy.minus(1, DateTimeUnit.MONTH)
+        val rangoActual = rangoDelMes(hoy.year, hoy.monthNumber)
+        val rangoAnterior = rangoDelMes(mesAnterior.year, mesAnterior.monthNumber)
+        viewModelScope.launch {
+            combine(
+                getTotalesGastosPorCategoriaUseCase(rangoActual.start, rangoActual.endInclusive),
+                getTotalesGastosPorCategoriaUseCase(rangoAnterior.start, rangoAnterior.endInclusive),
+                getCategoriasPersonalizadasUseCase()
+            ) { actual, anterior, categorias -> calculateAlerts(actual, anterior, categorias) }
+                .catch { }
+                .collect { alerts ->
+                    _state.update { state ->
+                        state.copy(alerts = alerts.filter { it.categoriaNombre !in state.dismissedAlertKeys })
+                    }
                 }
         }
     }
@@ -106,7 +129,7 @@ class HomeViewModel(
     fun showEditGastoDialog(gasto: GastoModel) {
         _addGastoState.value = AddGastoState(
             concepto = gasto.nombre,
-            precio = gasto.monto.toPlainStringTrimmed(),
+            precio = gasto.monto.toPlainStringTrimmed().replace('.', ','),
             categoriaSeleccionada = gasto.categoria,
             categoriaPersonalizadaSeleccionada = gasto.categoriaPersonalizadaId,
             fecha = gasto.fecha,
@@ -136,7 +159,7 @@ class HomeViewModel(
     }
 
     fun saveGasto(nombre: String, precio: String, categoria: Categoria?, categoriaPersonalizadaId: String?) {
-        val monto = precio.toDoubleOrNull() ?: 0.0
+        val monto = parseImporte(precio) ?: return
         val fecha = _addGastoState.value.fecha
         val gastoToEdit = _addGastoState.value.gastoToEdit
         val gasto = if (gastoToEdit != null) {
@@ -164,7 +187,6 @@ class HomeViewModel(
                 addGastoUseCase(gasto)
             }
             _state.update { it.copy(showAddGastoDialog = false) }
-            loadGastos()
         }
     }
 
@@ -178,61 +200,12 @@ class HomeViewModel(
     fun restoreGasto(gasto: GastoModel) {
         viewModelScope.launch {
             addGastoUseCase(gasto)
-            _state.update { state -> state.copy(gastos = state.gastos + gasto) }
-            loadGastos()
-        }
-    }
-
-    fun seedTestAhorroData() {
-        viewModelScope.launch {
-            val montos = listOf(200.0, 350.0, 150.0, 400.0, 250.0, 300.0, 180.0, 420.0, 310.0, 275.0, 500.0, 380.0)
-            val now = todayLocalDate()
-            montos.forEachIndexed { index, monto ->
-                val gasto = GastoModel(
-                    id = randomId(),
-                    nombre = "Ahorro ${index + 1}",
-                    monto = monto,
-                    fecha = now.minus(11 - index, DateTimeUnit.MONTH),
-                    categoria = Categoria.AHORRO,
-                    categoriaPersonalizadaId = null
-                )
-                addGastoUseCase(gasto)
-            }
-            loadGastos()
-        }
-    }
-
-    fun seedTestAhorro45Meses() {
-        viewModelScope.launch {
-            val now = todayLocalDate()
-            (0 until 45).forEach { i ->
-                val monto = (100..600).random().toDouble()
-                val gasto = GastoModel(
-                    id = randomId(),
-                    nombre = "Ahorro ${i + 1}",
-                    monto = monto,
-                    fecha = now.minus(44 - i, DateTimeUnit.MONTH),
-                    categoria = Categoria.AHORRO,
-                    categoriaPersonalizadaId = null
-                )
-                addGastoUseCase(gasto)
-            }
-            loadGastos()
         }
     }
 
     fun deleteAllGastos() {
         viewModelScope.launch {
             deleteAllGastosUseCase()
-            loadGastos()
-        }
-    }
-
-    fun deleteAllAhorros() {
-        viewModelScope.launch {
-            val ahorros = _state.value.gastos.filter { it.categoria == Categoria.AHORRO }
-            ahorros.forEach { deleteGastoUseCase(it.id) }
-            loadGastos()
         }
     }
 
@@ -363,72 +336,30 @@ class HomeViewModel(
     }
 
     private fun calculateAlerts(
-        gastos: List<GastoModel>,
+        totalesMesActual: List<TotalPorCategoria>,
+        totalesMesAnterior: List<TotalPorCategoria>,
         categoriasPersonalizadas: List<CategoriaPersonalizada>
     ): List<CategoryAlert> {
-        val now = todayLocalDate()
-        val currentMonth = gastos.filter {
-            it.fecha.year == now.year && it.fecha.month == now.month && it.categoria != Categoria.AHORRO
-        }
-        val previousMonth = now.minus(1, DateTimeUnit.MONTH)
-        val previousMonthGastos = gastos.filter {
-            it.fecha.year == previousMonth.year && it.fecha.month == previousMonth.month && it.categoria != Categoria.AHORRO
-        }
+        val anteriorPorCategoria = totalesMesAnterior
+            .filter { it.categoria != Categoria.AHORRO }
+            .associate { (it.categoria to it.categoriaPersonalizadaId) to it.total }
 
-        val currentByCategory = mutableMapOf<String, MutableList<GastoModel>>()
-        currentMonth.forEach { gasto ->
-            val cat = gasto.categoria
-            val catPersonalizadaId = gasto.categoriaPersonalizadaId
-            val key = when {
-                cat != null -> "enum:${cat.name}"
-                catPersonalizadaId != null -> "custom:$catPersonalizadaId"
-                else -> "sin_categoria"
-            }
-            currentByCategory.getOrPut(key) { mutableListOf() }.add(gasto)
-        }
+        return totalesMesActual
+            .filter { it.categoria != Categoria.AHORRO }
+            .mapNotNull { actual ->
+                val totalAnterior = anteriorPorCategoria[actual.categoria to actual.categoriaPersonalizadaId] ?: 0.0
+                if (totalAnterior <= 0 || actual.total <= totalAnterior) return@mapNotNull null
 
-        val previousByCategory = mutableMapOf<String, MutableList<GastoModel>>()
-        previousMonthGastos.forEach { gasto ->
-            val cat = gasto.categoria
-            val catPersonalizadaId = gasto.categoriaPersonalizadaId
-            val key = when {
-                cat != null -> "enum:${cat.name}"
-                catPersonalizadaId != null -> "custom:$catPersonalizadaId"
-                else -> "sin_categoria"
-            }
-            previousByCategory.getOrPut(key) { mutableListOf() }.add(gasto)
-        }
-
-        val alerts = mutableListOf<CategoryAlert>()
-        currentByCategory.forEach { (key, currentGastos) ->
-            val currentTotal = currentGastos.sumOf { it.monto }
-            val previousTotal = previousByCategory[key]?.sumOf { it.monto } ?: 0.0
-
-            if (previousTotal > 0 && currentTotal > previousTotal) {
-                val (nombre, color) = when {
-                    key.startsWith("enum:") -> {
-                        val enumName = key.removePrefix("enum:")
-                        val cat = Categoria.entries.find { it.name == enumName }
-                        cat?.displayName to (cat?.color ?: 0xFF607D8B)
-                    }
-                    key.startsWith("custom:") -> {
-                        val customId = key.removePrefix("custom:")
-                        val cat = categoriasPersonalizadas.find { it.id == customId }
-                        cat?.nombre to (cat?.color ?: 0xFF607D8B)
-                    }
-                    else -> "Sin categoría" to 0xFF607D8B
+                val categoria = actual.categoria
+                val personalizada = actual.categoriaPersonalizadaId?.let { id ->
+                    categoriasPersonalizadas.find { it.id == id }
                 }
-                alerts.add(
-                    CategoryAlert(
-                        categoriaNombre = nombre ?: "Sin categoría",
-                        categoriaColor = color ?: 0xFF607D8B,
-                        gastoActual = currentTotal,
-                        gastoAnterior = previousTotal
-                    )
+                CategoryAlert(
+                    categoriaNombre = categoria?.displayName ?: personalizada?.nombre ?: "Sin categor\u00EDa",
+                    categoriaColor = categoria?.color ?: personalizada?.color ?: 0xFF607D8B,
+                    gastoActual = actual.total,
+                    gastoAnterior = totalAnterior
                 )
             }
-        }
-
-        return alerts
     }
 }

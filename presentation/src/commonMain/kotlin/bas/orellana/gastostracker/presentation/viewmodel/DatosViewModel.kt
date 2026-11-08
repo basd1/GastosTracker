@@ -151,7 +151,9 @@ class DatosViewModel(
                 add(FilaCsv(it.fecha, tipoGasto, it.nombre, nombreCategoria(it.categoria, it.categoriaPersonalizadaId), -it.monto))
             }
             getIngresosUseCase().first().forEach {
-                add(FilaCsv(it.fecha, tipoIngreso, it.nombre, nombreCategoria(it.categoria, it.categoriaPersonalizadaId), it.monto))
+                val categoriaIngreso = it.categoria
+                val nombre = if (categoriaIngreso != null) getString(categoriaIngreso.nombreRes) else nombreCategoria(null, it.categoriaPersonalizadaId)
+                add(FilaCsv(it.fecha, tipoIngreso, it.nombre, nombre, it.monto))
             }
             getTodasLasAportacionesUseCase().first().forEach {
                 add(FilaCsv(it.fecha, tipoAhorro, it.nota.orEmpty(), metas[it.metaId].orEmpty(), -it.monto))

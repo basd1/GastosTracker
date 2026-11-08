@@ -8,6 +8,7 @@ import androidx.room.useWriterConnection
 import bas.orellana.gastostracker.data.local.AppDatabase
 import bas.orellana.gastostracker.data.local.CATEGORIA_PARA_HUERFANOS
 import bas.orellana.gastostracker.data.local.SQL_MOVER_AHORRO_A_METAS
+import bas.orellana.gastostracker.data.local.SQL_NORMALIZAR_CATEGORIAS_INGRESO
 import bas.orellana.gastostracker.data.preferences.ClavesPreferencias
 import bas.orellana.gastostracker.data.util.registrarError
 import bas.orellana.gastostracker.data.util.registrarInfo
@@ -80,6 +81,8 @@ class MigradorDatosLegacy(
                 db.ingresoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
                 // Lo que se apuntaba en la antigua categoría "Ahorro" pasa a la meta "Ahorro".
                 SQL_MOVER_AHORRO_A_METAS.forEach { sql -> conexion.usePrepared(sql) { it.step() } }
+                // Los ingresos antiguos usaban categorías de gasto.
+                SQL_NORMALIZAR_CATEGORIAS_INGRESO.forEach { sql -> conexion.usePrepared(sql) { it.step() } }
             }
         }
 

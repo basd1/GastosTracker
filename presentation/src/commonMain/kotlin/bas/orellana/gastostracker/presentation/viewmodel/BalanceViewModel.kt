@@ -2,7 +2,7 @@ package bas.orellana.gastostracker.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
@@ -147,7 +147,7 @@ class BalanceViewModel(
         _addIngresoState.update { it.copy(monto = monto) }
     }
 
-    fun updateCategoria(categoria: Categoria?) {
+    fun updateCategoria(categoria: CategoriaIngreso?) {
         _addIngresoState.update { it.copy(categoriaSeleccionada = categoria) }
     }
 
@@ -174,7 +174,7 @@ class BalanceViewModel(
                 tipo = TipoMovimiento.INGRESO,
                 nombre = nombre,
                 monto = montoDouble,
-                categoria = _addIngresoState.value.categoriaSeleccionada,
+                categoriaIngreso = _addIngresoState.value.categoriaSeleccionada,
                 categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId,
                 diaDelMes = fecha.dayOfMonth,
                 fechaInicio = fecha

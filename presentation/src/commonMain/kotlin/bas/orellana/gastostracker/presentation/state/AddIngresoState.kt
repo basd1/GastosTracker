@@ -1,6 +1,6 @@
 package bas.orellana.gastostracker.presentation.state
 
-import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import kotlinx.datetime.LocalDate
@@ -8,7 +8,7 @@ import kotlinx.datetime.LocalDate
 data class AddIngresoState(
     val concepto: String = "",
     val monto: String = "",
-    val categoriaSeleccionada: Categoria? = null,
+    val categoriaSeleccionada: CategoriaIngreso? = null,
     val categoriaPersonalizadaId: String? = null,
     val fecha: LocalDate = todayLocalDate(),
     val ingresoToEdit: IngresoModel? = null,

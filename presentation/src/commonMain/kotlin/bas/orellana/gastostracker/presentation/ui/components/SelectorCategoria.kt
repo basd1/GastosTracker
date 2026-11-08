@@ -13,17 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.categorias_personalizadas
 import bas.orellana.gastostracker.presentation.resources.sin_categoria
 import org.jetbrains.compose.resources.stringResource
 
-/**
- * Chips para elegir la categoría de un movimiento: "Sin categoría", las predefinidas de [predefinidas]
- * y las personalizadas. Solo una a la vez.
- */
-@OptIn(ExperimentalLayoutApi::class)
+/** Chips de categorías de gasto. */
 @Composable
 fun SelectorCategoria(
     predefinidas: List<Categoria>,
@@ -33,6 +30,54 @@ fun SelectorCategoria(
     onElegir: (categoria: Categoria?, categoriaPersonalizadaId: String?) -> Unit,
     modifier: Modifier = Modifier,
     permitirSinCategoria: Boolean = true
+) = SelectorCategoriaGenerico(
+    predefinidas = predefinidas,
+    nombre = { it.nombre() },
+    color = { it.color },
+    categoriasPersonalizadas = categoriasPersonalizadas,
+    seleccionada = categoria,
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    onElegir = onElegir,
+    modifier = modifier,
+    permitirSinCategoria = permitirSinCategoria
+)
+
+/** Chips de categorías de ingreso. */
+@Composable
+fun SelectorCategoriaIngreso(
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    categoria: CategoriaIngreso?,
+    categoriaPersonalizadaId: String?,
+    onElegir: (categoria: CategoriaIngreso?, categoriaPersonalizadaId: String?) -> Unit,
+    modifier: Modifier = Modifier
+) = SelectorCategoriaGenerico(
+    predefinidas = CategoriaIngreso.entries,
+    nombre = { it.nombre() },
+    color = { it.color },
+    categoriasPersonalizadas = categoriasPersonalizadas,
+    seleccionada = categoria,
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    onElegir = onElegir,
+    modifier = modifier,
+    permitirSinCategoria = true
+)
+
+/**
+ * Chips para elegir la categoría de un movimiento: "Sin categoría", las predefinidas y las
+ * personalizadas. Solo una a la vez.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun <T> SelectorCategoriaGenerico(
+    predefinidas: List<T>,
+    nombre: @Composable (T) -> String,
+    color: (T) -> Long,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    seleccionada: T?,
+    categoriaPersonalizadaId: String?,
+    onElegir: (categoria: T?, categoriaPersonalizadaId: String?) -> Unit,
+    modifier: Modifier,
+    permitirSinCategoria: Boolean
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         FlowRow(
@@ -41,19 +86,19 @@ fun SelectorCategoria(
         ) {
             if (permitirSinCategoria) {
                 FilterChip(
-                    selected = categoria == null && categoriaPersonalizadaId == null,
+                    selected = seleccionada == null && categoriaPersonalizadaId == null,
                     onClick = { onElegir(null, null) },
                     label = { Text(stringResource(Res.string.sin_categoria)) }
                 )
             }
             predefinidas.forEach { opcion ->
                 FilterChip(
-                    selected = categoria == opcion,
+                    selected = seleccionada == opcion,
                     onClick = { onElegir(opcion, null) },
-                    label = { Text(opcion.nombre()) },
+                    label = { Text(nombre(opcion)) },
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = Color(opcion.color).copy(alpha = 0.4f),
-                        containerColor = Color(opcion.color).copy(alpha = 0.15f)
+                        selectedContainerColor = Color(color(opcion)).copy(alpha = 0.4f),
+                        containerColor = Color(color(opcion)).copy(alpha = 0.15f)
                     )
                 )
             }

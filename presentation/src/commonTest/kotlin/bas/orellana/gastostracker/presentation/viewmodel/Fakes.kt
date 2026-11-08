@@ -1,6 +1,7 @@
 package bas.orellana.gastostracker.presentation.viewmodel
 
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.IngresoModel
@@ -114,7 +115,7 @@ class FakeCategoriasRepository(
             if (it.categoriaPersonalizadaId == id) it.copy(categoria = categoria, categoriaPersonalizadaId = personalizada) else it
         }
         ingresos.datos.value = ingresos.datos.value.map {
-            if (it.categoriaPersonalizadaId == id) it.copy(categoria = categoria, categoriaPersonalizadaId = personalizada) else it
+            if (it.categoriaPersonalizadaId == id) it.copy(categoria = categoria?.let { c -> CategoriaIngreso.equivalente(c) }, categoriaPersonalizadaId = personalizada) else it
         }
         datos.value = datos.value.filterNot { it.id == id }
     }

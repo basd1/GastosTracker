@@ -103,4 +103,32 @@ class MigracionesTest {
             }
         }
     }
+
+    @Test
+    fun `la 5 a 6 pasa a Otros las categorias de ingreso que no existen`() {
+        val ruta = directorio.resolve("ingresos.db")
+        val pasoHelper = MigrationTestHelper(Path("schemas"), ruta, BundledSQLiteDriver(), AppDatabase::class)
+        pasoHelper.createDatabase(5).use { conexion ->
+            conexion.execSQL("INSERT INTO ingresos VALUES ('i1', 'Venta', 10, '2026-10-01', 'ROPA', NULL)")
+            conexion.execSQL("INSERT INTO ingresos VALUES ('i2', 'Cumple', 20, '2026-10-01', 'REGALOS', NULL)")
+            conexion.execSQL("INSERT INTO ingresos VALUES ('i3', 'Sin', 30, '2026-10-01', NULL, NULL)")
+            conexion.execSQL(
+                "INSERT INTO recurrentes VALUES ('r1', 'INGRESO', 'Nómina', 1800, 'COMIDA', NULL, 28, '2026-10-28', NULL, 1)"
+            )
+            conexion.execSQL(
+                "INSERT INTO recurrentes VALUES ('r2', 'GASTO', 'Súper', 50, 'COMIDA', NULL, 1, '2026-10-01', NULL, 1)"
+            )
+        }
+
+        pasoHelper.runMigrationsAndValidate(6, MIGRACIONES).use { conexion ->
+            val ingresos = conexion.prepare("SELECT categoria FROM ingresos ORDER BY id").use { st ->
+                buildList { while (st.step()) add(if (st.isNull(0)) null else st.getText(0)) }
+            }
+            assertEquals(listOf("OTROS", "REGALOS", null), ingresos)
+            val recurrentes = conexion.prepare("SELECT categoria FROM recurrentes ORDER BY id").use { st ->
+                buildList { while (st.step()) add(st.getText(0)) }
+            }
+            assertEquals(listOf("OTROS", "COMIDA"), recurrentes)
+        }
+    }
 }

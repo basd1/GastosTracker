@@ -2,6 +2,7 @@ package bas.orellana.gastostracker.data.repository
 
 import bas.orellana.gastostracker.data.EntornoDatos
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.IngresoModel
@@ -84,7 +85,7 @@ class CategoriasRepositoryImplTest {
         assertEquals(otra, gastos.getValue("g2").categoriaPersonalizadaId)
         assertEquals(Categoria.COMIDA, gastos.getValue("g3").categoria)
         val ingreso = ingresosPorId().getValue("i1")
-        assertEquals(Categoria.OTROS, ingreso.categoria)
+        assertEquals(CategoriaIngreso.OTROS, ingreso.categoria)
         assertEquals(null, ingreso.categoriaPersonalizadaId)
     }
 

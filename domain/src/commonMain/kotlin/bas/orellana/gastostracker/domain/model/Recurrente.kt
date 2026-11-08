@@ -17,7 +17,10 @@ data class Recurrente(
     val tipo: TipoMovimiento,
     val nombre: String,
     val monto: Double,
+    /** Categoría si es un gasto. */
     val categoria: Categoria? = null,
+    /** Categoría si es un ingreso. */
+    val categoriaIngreso: CategoriaIngreso? = null,
     val categoriaPersonalizadaId: String? = null,
     val diaDelMes: Int,
     /** Primer día en el que puede haber un movimiento. */
@@ -72,6 +75,6 @@ fun Recurrente.ingresoEn(mes: Mes): IngresoModel = IngresoModel(
     nombre = nombre,
     monto = monto,
     fecha = fechaEn(mes),
-    categoria = categoria,
+    categoria = categoriaIngreso,
     categoriaPersonalizadaId = categoriaPersonalizadaId
 )

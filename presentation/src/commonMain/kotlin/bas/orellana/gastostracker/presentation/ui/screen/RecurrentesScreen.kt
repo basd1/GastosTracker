@@ -74,6 +74,7 @@ import bas.orellana.gastostracker.presentation.resources.titulo_recurrentes
 import bas.orellana.gastostracker.presentation.resources.total_al_mes
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.components.SelectorCategoria
+import bas.orellana.gastostracker.presentation.ui.components.SelectorCategoriaIngreso
 import bas.orellana.gastostracker.presentation.ui.components.etiquetaCategoria
 import bas.orellana.gastostracker.presentation.util.esEntradaImporteValida
 import bas.orellana.gastostracker.presentation.util.formatMoney
@@ -237,7 +238,11 @@ private fun FilaRecurrente(
     onClick: () -> Unit,
     onActivo: (Boolean) -> Unit
 ) {
-    val etiqueta = etiquetaCategoria(recurrente.categoria, recurrente.categoriaPersonalizadaId, state.categoriasPersonalizadas)
+    val etiqueta = if (recurrente.tipo == TipoMovimiento.GASTO) {
+        etiquetaCategoria(recurrente.categoria, recurrente.categoriaPersonalizadaId, state.categoriasPersonalizadas)
+    } else {
+        etiquetaCategoria(recurrente.categoriaIngreso, recurrente.categoriaPersonalizadaId, state.categoriasPersonalizadas)
+    }
     val color = etiqueta?.color ?: MaterialTheme.colorScheme.primary
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
@@ -302,11 +307,6 @@ private fun EditorRecurrenteDialog(
         editor.tipo == TipoMovimiento.GASTO -> Res.string.nuevo_gasto_fijo
         else -> Res.string.nuevo_ingreso_fijo
     }
-    val predefinidas = if (editor.tipo == TipoMovimiento.GASTO) {
-        Categoria.entries
-    } else {
-        Categoria.PARA_INGRESOS
-    }
 
     BasicAlertDialog(onDismissRequest = onCancelar) {
         Card(modifier = Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
@@ -356,15 +356,26 @@ private fun EditorRecurrenteDialog(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                SelectorCategoria(
-                    predefinidas = predefinidas,
-                    categoriasPersonalizadas = state.categoriasPersonalizadas,
-                    categoria = editor.categoria,
-                    categoriaPersonalizadaId = editor.categoriaPersonalizadaId,
-                    onElegir = { categoria, personalizada ->
-                        onCambio { it.copy(categoria = categoria, categoriaPersonalizadaId = personalizada) }
-                    }
-                )
+                if (editor.tipo == TipoMovimiento.GASTO) {
+                    SelectorCategoria(
+                        predefinidas = Categoria.entries,
+                        categoriasPersonalizadas = state.categoriasPersonalizadas,
+                        categoria = editor.categoria,
+                        categoriaPersonalizadaId = editor.categoriaPersonalizadaId,
+                        onElegir = { categoria, personalizada ->
+                            onCambio { it.copy(categoria = categoria, categoriaPersonalizadaId = personalizada) }
+                        }
+                    )
+                } else {
+                    SelectorCategoriaIngreso(
+                        categoriasPersonalizadas = state.categoriasPersonalizadas,
+                        categoria = editor.categoriaIngreso,
+                        categoriaPersonalizadaId = editor.categoriaPersonalizadaId,
+                        onElegir = { categoria, personalizada ->
+                            onCambio { it.copy(categoriaIngreso = categoria, categoriaPersonalizadaId = personalizada) }
+                        }
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(stringResource(Res.string.activo), modifier = Modifier.weight(1f))
                     Switch(checked = editor.activo, onCheckedChange = { nuevo -> onCambio { it.copy(activo = nuevo) } })

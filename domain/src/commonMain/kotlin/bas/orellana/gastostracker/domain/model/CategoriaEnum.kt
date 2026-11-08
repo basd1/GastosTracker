@@ -23,8 +23,5 @@ enum class Categoria(val color: Long) {
             0xFFA5D6A7, 0xFFC5E1A5, 0xFFDCE775, 0xFFFFE082,
             0xFFFFCC80, 0xFFFFAB91, 0xFFBCAAA4, 0xFFB0BEC5
         )
-
-        /** Categorías que se pueden asignar a un ingreso. */
-        val PARA_INGRESOS: List<Categoria> get() = entries
     }
 }

@@ -6,6 +6,7 @@ import bas.orellana.gastostracker.data.legacy.MigradorDatosLegacy
 import bas.orellana.gastostracker.data.local.AppDatabase
 import bas.orellana.gastostracker.data.local.CATEGORIA_PARA_HUERFANOS
 import bas.orellana.gastostracker.data.local.VERSION_ACTUAL
+import bas.orellana.gastostracker.data.local.SQL_NORMALIZAR_CATEGORIAS_INGRESO
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
@@ -101,6 +102,7 @@ class CopiaSeguridadRepositoryImpl(
                 // Por si la copia viene de una versión que dejaba movimientos sin categoría existente.
                 db.gastoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
                 db.ingresoDao().reasignarHuerfanos(CATEGORIA_PARA_HUERFANOS.name)
+                SQL_NORMALIZAR_CATEGORIAS_INGRESO.forEach { sql -> conexion.usePrepared(sql) { it.step() } }
             }
         }
         return copia.resumen()

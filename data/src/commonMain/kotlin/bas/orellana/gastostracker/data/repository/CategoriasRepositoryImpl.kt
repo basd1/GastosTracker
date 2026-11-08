@@ -10,6 +10,8 @@ import bas.orellana.gastostracker.data.local.toModel
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.Presupuesto
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
+import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -57,12 +59,15 @@ class CategoriasRepositoryImpl(
             is CategoriaDestino.Predefinida -> destino.categoria.name to null
             is CategoriaDestino.Personalizada -> null to destino.id
         }
+        // Los ingresos tienen sus propias categorías: una de gasto se traduce a la equivalente (u "Otros").
+        val categoriaIngreso = (destino as? CategoriaDestino.Predefinida)?.let { CategoriaIngreso.equivalente(it.categoria).name }
         // Todo o nada: si algo falla, la categoría y sus movimientos se quedan como estaban.
         db.useWriterConnection { conexion ->
             conexion.immediateTransaction {
                 db.gastoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
-                db.ingresoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
-                db.recurrenteDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
+                db.ingresoDao().reasignarCategoriaPersonalizada(id, categoriaIngreso, categoriaPersonalizadaId)
+                db.recurrenteDao().reasignarCategoriaPersonalizada(id, TipoMovimiento.GASTO.name, categoria, categoriaPersonalizadaId)
+                db.recurrenteDao().reasignarCategoriaPersonalizada(id, TipoMovimiento.INGRESO.name, categoriaIngreso, categoriaPersonalizadaId)
                 db.presupuestoDao().eliminar(Presupuesto.claveDe(null, id))
                 dao.eliminar(id)
             }

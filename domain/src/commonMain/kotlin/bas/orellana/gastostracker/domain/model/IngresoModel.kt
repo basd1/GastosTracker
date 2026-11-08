@@ -7,6 +7,6 @@ data class IngresoModel(
     val nombre: String,
     val monto: Double,
     val fecha: LocalDate,
-    val categoria: Categoria? = null,
+    val categoria: CategoriaIngreso? = null,
     val categoriaPersonalizadaId: String? = null
 )

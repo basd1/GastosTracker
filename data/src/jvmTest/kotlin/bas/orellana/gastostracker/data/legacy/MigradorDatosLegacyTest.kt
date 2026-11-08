@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import bas.orellana.gastostracker.data.EntornoDatos
 import bas.orellana.gastostracker.data.preferences.ClavesPreferencias
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.MetaAhorro
 import kotlinx.datetime.LocalDate
 import kotlinx.coroutines.flow.first
@@ -78,7 +79,7 @@ class MigradorDatosLegacyTest {
 
         assertEquals(Categoria.OTROS, gasto.categoria)
         assertEquals(null, gasto.categoriaPersonalizadaId)
-        assertEquals(Categoria.OTROS, ingreso.categoria)
+        assertEquals(CategoriaIngreso.OTROS, ingreso.categoria)
         assertEquals(null, ingreso.categoriaPersonalizadaId)
     }
 
@@ -132,5 +133,21 @@ class MigradorDatosLegacyTest {
         assertEquals(LocalDate(2026, 9, 1), meta.meta.creada)
         assertEquals(listOf("a2", "a1"), entorno.ahorro.getAportaciones(MetaAhorro.ID_AHORRO_GENERAL).first().map { it.id })
         assertEquals(null, entorno.ingresos.getIngresos().first().single().categoria)
+    }
+
+    @Test
+    fun `los ingresos antiguos con categorias de gasto pasan a Otros salvo Regalos`() = runTest {
+        val entorno = entorno()
+        escribirLegacy(
+            entorno.rutaLegacy,
+            ingresos = """[
+                {"id":"i1","nombre":"Venta","monto":10,"fecha":"2026-10-01","categoria":"ROPA"},
+                {"id":"i2","nombre":"Cumple","monto":20,"fecha":"2026-10-02","categoria":"REGALOS"}
+            ]"""
+        )
+
+        val porId = entorno.ingresos.getIngresos().first().associateBy { it.id }
+        assertEquals(CategoriaIngreso.OTROS, porId.getValue("i1").categoria)
+        assertEquals(CategoriaIngreso.REGALOS, porId.getValue("i2").categoria)
     }
 }

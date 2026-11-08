@@ -29,3 +29,19 @@ class CategoriaTest {
     }
 
 }
+
+class CategoriaIngresoTest {
+
+    @Test
+    fun `las categorias de gasto se convierten en la de ingreso con el mismo nombre o en Otros`() {
+        assertEquals(CategoriaIngreso.REGALOS, CategoriaIngreso.equivalente(Categoria.REGALOS))
+        assertEquals(CategoriaIngreso.OTROS, CategoriaIngreso.equivalente(Categoria.OTROS))
+        assertEquals(CategoriaIngreso.OTROS, CategoriaIngreso.equivalente(Categoria.COMIDA))
+        assertEquals(null, CategoriaIngreso.desdeNombre("COMIDA"))
+    }
+
+    @Test
+    fun `cada categoria de ingreso tiene un color opaco`() {
+        CategoriaIngreso.entries.forEach { assertEquals(0xFF, ((it.color ushr 24) and 0xFF).toInt(), "$it") }
+    }
+}

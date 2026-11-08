@@ -24,12 +24,12 @@ interface RecurrenteDao {
     @Query("DELETE FROM recurrentes WHERE id = :id")
     suspend fun eliminar(id: String)
 
-    /** Pasa a otra categoría los recurrentes que usaban la categoría personalizada [idOrigen]. */
+    /** Pasa a otra categoría los recurrentes de [tipo] que usaban la categoría personalizada [idOrigen]. */
     @Query(
         """
         UPDATE recurrentes SET categoria = :categoria, categoria_personalizada_id = :categoriaPersonalizadaId
-        WHERE categoria_personalizada_id = :idOrigen
+        WHERE categoria_personalizada_id = :idOrigen AND tipo = :tipo
         """
     )
-    suspend fun reasignarCategoriaPersonalizada(idOrigen: String, categoria: String?, categoriaPersonalizadaId: String?)
+    suspend fun reasignarCategoriaPersonalizada(idOrigen: String, tipo: String, categoria: String?, categoriaPersonalizadaId: String?)
 }

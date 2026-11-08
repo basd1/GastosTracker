@@ -9,6 +9,7 @@ import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
 import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.data.local.entity.TotalPorCategoriaRow
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.IngresoModel
@@ -46,7 +47,7 @@ internal fun IngresoEntity.toModel() = IngresoModel(
     nombre = nombre,
     monto = monto,
     fecha = fecha,
-    categoria = categoriaDesdeNombre(categoria),
+    categoria = CategoriaIngreso.desdeNombre(categoria),
     categoriaPersonalizadaId = categoriaPersonalizadaId
 )
 
@@ -99,7 +100,8 @@ internal fun RecurrenteEntity.toModel(): Recurrente? {
             tipo = tipoModelo,
             nombre = nombre,
             monto = monto,
-            categoria = categoriaDesdeNombre(categoria),
+            categoria = if (tipoModelo == TipoMovimiento.GASTO) categoriaDesdeNombre(categoria) else null,
+            categoriaIngreso = if (tipoModelo == TipoMovimiento.INGRESO) CategoriaIngreso.desdeNombre(categoria) else null,
             categoriaPersonalizadaId = categoriaPersonalizadaId,
             diaDelMes = diaDelMes,
             fechaInicio = fechaInicio,
@@ -114,7 +116,7 @@ internal fun Recurrente.toEntity() = RecurrenteEntity(
     tipo = tipo.name,
     nombre = nombre,
     monto = monto,
-    categoria = categoria?.name,
+    categoria = categoria?.name ?: categoriaIngreso?.name,
     categoriaPersonalizadaId = categoriaPersonalizadaId,
     diaDelMes = diaDelMes,
     fechaInicio = fechaInicio,

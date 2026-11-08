@@ -3,9 +3,17 @@ package bas.orellana.gastostracker.presentation.ui.components
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.categoria_comida
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_freelance
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_intereses
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_nomina
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_otros
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_reembolsos
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_regalos
+import bas.orellana.gastostracker.presentation.resources.categoria_ingreso_ventas
 import bas.orellana.gastostracker.presentation.resources.categoria_hogar
 import bas.orellana.gastostracker.presentation.resources.categoria_ocio
 import bas.orellana.gastostracker.presentation.resources.categoria_otros
@@ -42,6 +50,32 @@ data class EtiquetaCategoria(val nombre: String, val color: Color)
 @Composable
 fun etiquetaCategoria(
     categoria: Categoria?,
+    categoriaPersonalizadaId: String?,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>
+): EtiquetaCategoria? {
+    if (categoria != null) return EtiquetaCategoria(categoria.nombre(), Color(categoria.color))
+    val personalizada = categoriaPersonalizadaId?.let { id -> categoriasPersonalizadas.find { it.id == id } }
+    return personalizada?.let { EtiquetaCategoria(it.nombre, Color(it.color)) }
+}
+
+val CategoriaIngreso.nombreRes: StringResource
+    get() = when (this) {
+        CategoriaIngreso.NOMINA -> Res.string.categoria_ingreso_nomina
+        CategoriaIngreso.FREELANCE -> Res.string.categoria_ingreso_freelance
+        CategoriaIngreso.VENTAS -> Res.string.categoria_ingreso_ventas
+        CategoriaIngreso.REEMBOLSOS -> Res.string.categoria_ingreso_reembolsos
+        CategoriaIngreso.INTERESES -> Res.string.categoria_ingreso_intereses
+        CategoriaIngreso.REGALOS -> Res.string.categoria_ingreso_regalos
+        CategoriaIngreso.OTROS -> Res.string.categoria_ingreso_otros
+    }
+
+/** Nombre visible de la categoría de ingreso, en el idioma del dispositivo. */
+@Composable
+fun CategoriaIngreso.nombre(): String = stringResource(nombreRes)
+
+@Composable
+fun etiquetaCategoria(
+    categoria: CategoriaIngreso?,
     categoriaPersonalizadaId: String?,
     categoriasPersonalizadas: List<CategoriaPersonalizada>
 ): EtiquetaCategoria? {

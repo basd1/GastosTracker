@@ -66,7 +66,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 }
 
 /** Versión actual del esquema (la de @Database). */
-internal const val VERSION_ACTUAL = 5
+internal const val VERSION_ACTUAL = 6
 
 // Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"
@@ -105,4 +105,4 @@ internal fun construirAppDatabase(builder: RoomDatabase.Builder<AppDatabase>): A
         .build()
 
 /** Migraciones manuales (las que solo añaden tablas o columnas son AutoMigration en @Database). */
-internal val MIGRACIONES: List<Migration> = listOf(MIGRACION_1_2, MIGRACION_4_5)
+internal val MIGRACIONES: List<Migration> = listOf(MIGRACION_1_2, MIGRACION_4_5, MIGRACION_5_6)

@@ -375,7 +375,7 @@ private fun ReasignarCategoriaDialog(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Categoria.PARA_INGRESOS.forEach { predefinida ->
+                    Categoria.entries.forEach { predefinida ->
                         OpcionDestino(
                             texto = predefinida.nombre(),
                             color = predefinida.color,

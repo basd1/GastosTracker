@@ -45,7 +45,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.presentation.util.esEntradaImporteValida
@@ -79,14 +79,14 @@ import org.jetbrains.compose.resources.stringResource
 fun AddIngresoDialog(
     concepto: String,
     monto: String,
-    categoriaSeleccionada: Categoria?,
+    categoriaSeleccionada: CategoriaIngreso?,
     categoriaPersonalizadaId: String?,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     ingresoToEdit: IngresoModel?,
     fecha: LocalDate,
     onConceptoChange: (String) -> Unit,
     onMontoChange: (String) -> Unit,
-    onCategoriaChange: (Categoria?) -> Unit,
+    onCategoriaChange: (CategoriaIngreso?) -> Unit,
     onCategoriaPersonalizadaChange: (String?) -> Unit,
     onFechaChange: (LocalDate) -> Unit,
     onSave: () -> Unit,
@@ -183,7 +183,7 @@ fun AddIngresoDialog(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Categoria.PARA_INGRESOS.forEach { cat ->
+                    CategoriaIngreso.entries.forEach { cat ->
                         FilterChip(
                             selected = categoriaSeleccionada == cat && categoriaPersonalizadaId == null,
                             onClick = {

@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
@@ -30,6 +31,7 @@ data class EditorRecurrente(
     val monto: String = "",
     val dia: String = todayLocalDate().dayOfMonth.toString(),
     val categoria: Categoria? = null,
+    val categoriaIngreso: CategoriaIngreso? = null,
     val categoriaPersonalizadaId: String? = null,
     val activo: Boolean = true
 ) {
@@ -83,6 +85,7 @@ class RecurrentesViewModel(
                 monto = recurrente.monto.toPlainStringTrimmed().replace('.', ','),
                 dia = recurrente.diaDelMes.toString(),
                 categoria = recurrente.categoria,
+                categoriaIngreso = recurrente.categoriaIngreso,
                 categoriaPersonalizadaId = recurrente.categoriaPersonalizadaId,
                 activo = recurrente.activo
             )
@@ -100,7 +103,8 @@ class RecurrentesViewModel(
             nombre = editor.nombre.trim(),
             monto = editor.importe!!,
             diaDelMes = editor.diaValido!!,
-            categoria = editor.categoria,
+            categoria = editor.categoria.takeIf { editor.tipo == TipoMovimiento.GASTO },
+            categoriaIngreso = editor.categoriaIngreso.takeIf { editor.tipo == TipoMovimiento.INGRESO },
             categoriaPersonalizadaId = editor.categoriaPersonalizadaId,
             activo = editor.activo
         ) ?: Recurrente(
@@ -108,7 +112,8 @@ class RecurrentesViewModel(
             tipo = editor.tipo,
             nombre = editor.nombre.trim(),
             monto = editor.importe!!,
-            categoria = editor.categoria,
+            categoria = editor.categoria.takeIf { editor.tipo == TipoMovimiento.GASTO },
+            categoriaIngreso = editor.categoriaIngreso.takeIf { editor.tipo == TipoMovimiento.INGRESO },
             categoriaPersonalizadaId = editor.categoriaPersonalizadaId,
             diaDelMes = editor.diaValido!!,
             // Desde hoy: no se crean movimientos de días que ya han pasado.

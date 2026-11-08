@@ -45,6 +45,15 @@
     <string name="categoria_regalos">Regalos</string>
     <string name="categoria_otros">Otros</string>
 
+    <!-- Categorías de ingreso -->
+    <string name="categoria_ingreso_nomina">Nómina</string>
+    <string name="categoria_ingreso_freelance">Freelance</string>
+    <string name="categoria_ingreso_ventas">Ventas</string>
+    <string name="categoria_ingreso_reembolsos">Reembolsos</string>
+    <string name="categoria_ingreso_intereses">Intereses</string>
+    <string name="categoria_ingreso_regalos">Regalos</string>
+    <string name="categoria_ingreso_otros">Otros</string>
+
     <!-- Pantalla de gastos -->
     <string name="titulo_gastos">Gastos</string>
     <string name="anadir_gasto">Añadir gasto</string>

@@ -11,6 +11,7 @@ import bas.orellana.gastostracker.data.repository.GastoDto
 import bas.orellana.gastostracker.data.repository.IngresoDto
 import bas.orellana.gastostracker.data.repository.repositoryJson
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import kotlinx.datetime.LocalDate
 
 /** Datos antiguos ya convertidos, en el orden en que se deben insertar (del más antiguo al más reciente). */
@@ -117,5 +118,8 @@ internal object LegacyJsonParser {
      * categoría "Ahorro" de los gastos se conserva para pasarla después a metas de ahorro.
      */
     private fun normalizarCategoria(nombre: String?, admiteAhorro: Boolean): String? =
-        normalizarTexto(nombre)?.takeIf { categoriaDesdeNombre(it) != null || (admiteAhorro && it == CATEGORIA_AHORRO_ANTIGUA) }
+        normalizarTexto(nombre)?.takeIf {
+            categoriaDesdeNombre(it) != null || CategoriaIngreso.desdeNombre(it) != null ||
+                (admiteAhorro && it == CATEGORIA_AHORRO_ANTIGUA)
+        }
 }

@@ -1,6 +1,6 @@
 package bas.orellana.gastostracker.domain.usecase
 
-import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.CategoriaIngreso
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -15,7 +15,7 @@ class IngresoUseCasesTest {
         nombre = "Sueldo",
         monto = monto,
         fecha = LocalDate(2026, 1, 1),
-        categoria = Categoria.OTROS
+        categoria = CategoriaIngreso.NOMINA
     )
 
     @Test

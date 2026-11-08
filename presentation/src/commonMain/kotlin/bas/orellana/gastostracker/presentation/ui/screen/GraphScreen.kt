@@ -56,6 +56,7 @@ import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.Aportacion
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
 import bas.orellana.gastostracker.presentation.navigation.NavRoutes
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
@@ -70,8 +71,6 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.daysUntil
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
-import bas.orellana.gastostracker.domain.model.sinAhorro
-import bas.orellana.gastostracker.domain.model.soloAhorro
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.ahorro_acumulado
 import bas.orellana.gastostracker.presentation.resources.anadir_gasto
@@ -117,11 +116,10 @@ fun GraphScreen(
         filterGastosByPeriod(todosLosGastos, selectedPeriod, selectedMonth, selectedYear)
     }
 
-    val gastosSinAhorro = remember(filteredGastos) { filteredGastos.sinAhorro() }
+    val gastosSinAhorro = filteredGastos
 
-    val gastosAhorro = remember(filteredGastos) { filteredGastos.soloAhorro() }
 
-    val gastosAhorroTotal = remember(todosLosGastos) { todosLosGastos.soloAhorro() }
+    val aportaciones by graphViewModel.aportaciones.collectAsState()
 
     Box(
         modifier = Modifier
@@ -162,7 +160,7 @@ fun GraphScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                if (gastosSinAhorro.isEmpty() && gastosAhorro.isEmpty()) {
+                if (gastosSinAhorro.isEmpty() && aportaciones.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -211,7 +209,7 @@ fun GraphScreen(
 
                         item {
                             MonthlySavingsLineChart(
-                                gastos = gastosAhorroTotal
+                                aportaciones = aportaciones
                             )
                         }
 
@@ -579,10 +577,10 @@ private data class MonthlySaving(
 
 @Composable
 private fun MonthlySavingsLineChart(
-    gastos: List<GastoModel>
+    aportaciones: List<Aportacion>
 ) {
-    val monthlyData = remember(gastos) {
-        val sorted = gastos
+    val monthlyData = remember(aportaciones) {
+        val sorted = aportaciones
             .groupBy { it.fecha.year * 12 + (it.fecha.monthNumber - 1) }
             .map { (key, items) ->
                 val year = key / 12

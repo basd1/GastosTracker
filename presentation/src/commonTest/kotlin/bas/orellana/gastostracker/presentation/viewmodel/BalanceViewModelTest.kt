@@ -12,6 +12,8 @@ import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUse
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalAhorradoUseCase
+import bas.orellana.gastostracker.domain.model.Aportacion
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -36,6 +38,7 @@ class BalanceViewModelTest {
     private val gastos = FakeGastoRepository()
     private val ingresos = FakeIngresoRepository()
     private val recurrentes = FakeRecurrenteRepository(gastos, ingresos)
+    private val ahorro = FakeAhorroRepository()
 
     private val hoy = todayLocalDate()
     private val inicioMes = LocalDate(hoy.year, hoy.month, 1)
@@ -56,7 +59,8 @@ class BalanceViewModelTest {
         getTotalIngresosUseCase = GetTotalIngresosUseCase(ingresos),
         getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
         guardarRecurrenteUseCase = GuardarRecurrenteUseCase(recurrentes),
-        generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes)
+        generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes),
+        getTotalAhorradoUseCase = GetTotalAhorradoUseCase(ahorro)
     )
 
     private fun ingreso(id: String, monto: Double, fecha: LocalDate) = IngresoModel(id, "Ingreso $id", monto, fecha)
@@ -91,8 +95,12 @@ class BalanceViewModelTest {
         gastos.datos.value = listOf(
             gasto("super", 100.0, inicioMes, Categoria.COMIDA),
             gasto("sin-cat", 20.5, finMes),
-            gasto("hucha", 300.0, inicioMes, Categoria.AHORRO),
             gasto("otro-mes", 50.0, mesAnterior, Categoria.COMIDA)
+        )
+        ahorro.aportaciones.value = listOf(
+            Aportacion("hucha", "meta", 350.0, inicioMes),
+            Aportacion("retirada", "meta", -50.0, finMes),
+            Aportacion("otro-mes", "meta", 70.0, mesAnterior)
         )
 
         val vm = crearViewModel()
@@ -105,7 +113,8 @@ class BalanceViewModelTest {
     @Test
     fun `al cambiar de mes se recalculan los totales`() = runTest {
         ingresos.datos.value = listOf(ingreso("actual", 1000.0, inicioMes), ingreso("anterior", 800.0, mesAnterior))
-        gastos.datos.value = listOf(gasto("anterior", 60.0, mesAnterior), gasto("ahorro", 40.0, mesAnterior, Categoria.AHORRO))
+        gastos.datos.value = listOf(gasto("anterior", 60.0, mesAnterior))
+        ahorro.aportaciones.value = listOf(Aportacion("ap", "meta", 40.0, mesAnterior))
         val vm = crearViewModel()
 
         vm.seleccionarMes(Mes.de(mesAnterior))

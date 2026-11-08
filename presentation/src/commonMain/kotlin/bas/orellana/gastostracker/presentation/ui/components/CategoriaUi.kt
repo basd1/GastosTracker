@@ -5,7 +5,6 @@ import androidx.compose.ui.graphics.Color
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.presentation.resources.Res
-import bas.orellana.gastostracker.presentation.resources.categoria_ahorro
 import bas.orellana.gastostracker.presentation.resources.categoria_comida
 import bas.orellana.gastostracker.presentation.resources.categoria_hogar
 import bas.orellana.gastostracker.presentation.resources.categoria_ocio
@@ -30,7 +29,6 @@ val Categoria.nombreRes: StringResource
         Categoria.TECNOLOGIA -> Res.string.categoria_tecnologia
         Categoria.SERVICIOS -> Res.string.categoria_servicios
         Categoria.REGALOS -> Res.string.categoria_regalos
-        Categoria.AHORRO -> Res.string.categoria_ahorro
         Categoria.OTROS -> Res.string.categoria_otros
     }
 

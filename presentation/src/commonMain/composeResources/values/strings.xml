@@ -43,7 +43,6 @@
     <string name="categoria_tecnologia">Tecnología</string>
     <string name="categoria_servicios">Servicios</string>
     <string name="categoria_regalos">Regalos</string>
-    <string name="categoria_ahorro">Ahorro</string>
     <string name="categoria_otros">Otros</string>
 
     <!-- Pantalla de gastos -->
@@ -165,6 +164,39 @@
     <string name="sin_fijos">Todavía no tienes gastos ni ingresos fijos.</string>
     <string name="fijos_explicacion">Se apuntan solos al abrir la app el día que toca. Si el mes es más corto, el último día del mes.</string>
     <string name="sobrante_fijo">Te quedan %1$s al mes después de los fijos</string>
+
+    <!-- Metas de ahorro -->
+    <string name="nav_ahorro">Ahorro</string>
+    <string name="titulo_ahorro">Ahorro</string>
+    <string name="total_ahorrado">Total ahorrado</string>
+    <string name="ahorrado_este_mes">Este mes: %1$s</string>
+    <string name="nueva_meta">Nueva meta</string>
+    <string name="editar_meta">Editar meta</string>
+    <string name="campo_objetivo_opcional">Objetivo (opcional)</string>
+    <string name="campo_fecha_objetivo">Fecha objetivo</string>
+    <string name="sin_fecha">Sin fecha</string>
+    <string name="quitar_fecha">Quitar fecha</string>
+    <string name="meta_progreso">%1$s de %2$s</string>
+    <string name="meta_sin_objetivo">%1$s ahorrados</string>
+    <string name="meta_cuota_mensual">Aparta %1$s al mes para llegar el %2$s</string>
+    <string name="meta_completada">¡Meta conseguida!</string>
+    <string name="meta_vencida">La fecha objetivo ya pasó: faltan %1$s</string>
+    <string name="meta_faltan">Faltan %1$s</string>
+    <string name="aportar">Aportar</string>
+    <string name="retirar">Retirar</string>
+    <string name="aportar_a">Aportar a «%1$s»</string>
+    <string name="retirar_de">Retirar de «%1$s»</string>
+    <string name="campo_nota_opcional">Nota (opcional)</string>
+    <string name="aportaciones">Movimientos</string>
+    <string name="sin_aportaciones">Todavía no hay movimientos en esta meta</string>
+    <string name="aportacion_eliminada">Movimiento eliminado</string>
+    <string name="sin_metas_titulo">Sin metas de ahorro</string>
+    <string name="sin_metas_mensaje">Crea una meta («Viaje a Japón: 3.000 €») y ve apartando dinero. Te diremos cuánto ahorrar cada mes para llegar a tiempo.</string>
+    <string name="eliminar_meta_titulo">¿Eliminar «%1$s»?</string>
+    <string name="eliminar_meta_mensaje">Se borrarán también todos sus movimientos. No se puede deshacer.</string>
+    <string name="archivar">Archivar</string>
+    <string name="desarchivar">Desarchivar</string>
+    <string name="archivada">Archivada</string>
 
     <!-- Meses -->
     <string-array name="meses">

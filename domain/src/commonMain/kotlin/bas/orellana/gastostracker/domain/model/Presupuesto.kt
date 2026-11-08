@@ -2,7 +2,7 @@ package bas.orellana.gastostracker.domain.model
 
 /**
  * Límite de gasto mensual. Si no tiene categoría (ni predefinida ni personalizada) es el
- * presupuesto global, que se compara con todo lo gastado en el mes (sin contar el ahorro).
+ * presupuesto global, que se compara con todo lo gastado en el mes.
  */
 data class Presupuesto(
     val categoria: Categoria?,
@@ -11,7 +11,6 @@ data class Presupuesto(
 ) {
     init {
         require(categoria == null || categoriaPersonalizadaId == null) { "Un presupuesto solo puede tener una categoría" }
-        require(!categoria.esAhorro) { "El ahorro no lleva presupuesto" }
     }
 
     val esGlobal: Boolean get() = categoria == null && categoriaPersonalizadaId == null
@@ -65,7 +64,7 @@ fun calcularEstadoPresupuestos(
     presupuestos: List<Presupuesto>,
     totalesPorCategoria: List<TotalPorCategoria>
 ): List<EstadoPresupuesto> {
-    val gastos = totalesPorCategoria.totalesSinAhorro()
+    val gastos = totalesPorCategoria
     val totalGeneral = gastos.sumOf { it.total }
     return presupuestos
         .map { presupuesto ->

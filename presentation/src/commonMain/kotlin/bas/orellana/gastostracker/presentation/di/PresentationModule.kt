@@ -4,6 +4,9 @@ import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.GraphViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.PresupuestosViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.RecurrentesViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.MetasViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.MetaDetalleViewModel
+import org.koin.core.module.dsl.viewModel
 import bas.orellana.gastostracker.presentation.TareasAlAbrir
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
@@ -18,5 +21,7 @@ val presentationModule = module {
     viewModelOf(::GraphViewModel)
     viewModelOf(::PresupuestosViewModel)
     viewModelOf(::RecurrentesViewModel)
+    viewModelOf(::MetasViewModel)
+    viewModel { (metaId: String) -> MetaDetalleViewModel(metaId, get(), get(), get(), get(), get(), get()) }
     single { TareasAlAbrir(get()) }
 }

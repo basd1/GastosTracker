@@ -313,17 +313,6 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `el ahorro nunca genera alertas`() = runTest {
-        anadir(
-            gasto("a1", monto = 100.0, fecha = inicioMesAnterior, categoria = Categoria.AHORRO),
-            gasto("a2", monto = 300.0, fecha = inicioMes, categoria = Categoria.AHORRO)
-        )
-        val vm = crearViewModel()
-
-        assertTrue(vm.state.value.alerts.isEmpty())
-    }
-
-    @Test
     fun `las alertas de categorias personalizadas llevan la categoria`() = runTest {
         categorias.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
         val id = categorias.datos.value.single().id

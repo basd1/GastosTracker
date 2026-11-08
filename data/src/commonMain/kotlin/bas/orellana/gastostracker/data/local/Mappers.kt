@@ -5,6 +5,8 @@ import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
 import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
 import bas.orellana.gastostracker.data.local.entity.RecurrenteEntity
+import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
+import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.data.local.entity.TotalPorCategoriaRow
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
@@ -13,6 +15,8 @@ import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.model.Presupuesto
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.Recurrente
+import bas.orellana.gastostracker.domain.model.MetaAhorro
+import bas.orellana.gastostracker.domain.model.Aportacion
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 
@@ -117,3 +121,29 @@ internal fun Recurrente.toEntity() = RecurrenteEntity(
     ultimoMesGenerado = ultimoMesGenerado?.toString(),
     activo = activo
 )
+
+internal fun MetaAhorroEntity.toModel(): MetaAhorro? = runCatching {
+    MetaAhorro(
+        id = id,
+        nombre = nombre,
+        objetivo = objetivo,
+        fechaObjetivo = fechaObjetivo,
+        color = color,
+        creada = creada,
+        archivada = archivada
+    )
+}.getOrNull()
+
+internal fun MetaAhorro.toEntity() = MetaAhorroEntity(
+    id = id,
+    nombre = nombre,
+    objetivo = objetivo,
+    fechaObjetivo = fechaObjetivo,
+    color = color,
+    creada = creada,
+    archivada = archivada
+)
+
+internal fun AportacionEntity.toModel() = Aportacion(id = id, metaId = metaId, monto = monto, fecha = fecha, nota = nota)
+
+internal fun Aportacion.toEntity() = AportacionEntity(id = id, metaId = metaId, monto = monto, fecha = fecha, nota = nota)

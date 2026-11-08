@@ -15,11 +15,14 @@ import bas.orellana.gastostracker.data.local.dao.GastoDao
 import bas.orellana.gastostracker.data.local.dao.IngresoDao
 import bas.orellana.gastostracker.data.local.dao.PresupuestoDao
 import bas.orellana.gastostracker.data.local.dao.RecurrenteDao
+import bas.orellana.gastostracker.data.local.dao.AhorroDao
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
 import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
 import bas.orellana.gastostracker.data.local.entity.RecurrenteEntity
+import bas.orellana.gastostracker.data.local.entity.MetaAhorroEntity
+import bas.orellana.gastostracker.data.local.entity.AportacionEntity
 import bas.orellana.gastostracker.domain.model.Categoria
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -30,7 +33,9 @@ import kotlinx.coroutines.IO
         IngresoEntity::class,
         CategoriaPersonalizadaEntity::class,
         PresupuestoEntity::class,
-        RecurrenteEntity::class
+        RecurrenteEntity::class,
+        MetaAhorroEntity::class,
+        AportacionEntity::class
     ],
     version = VERSION_ACTUAL,
     exportSchema = true,
@@ -49,6 +54,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun categoriaPersonalizadaDao(): CategoriaPersonalizadaDao
     abstract fun presupuestoDao(): PresupuestoDao
     abstract fun recurrenteDao(): RecurrenteDao
+    abstract fun ahorroDao(): AhorroDao
 }
 
 // Room genera el `actual` de cada plataforma.
@@ -58,7 +64,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 }
 
 /** Versión actual del esquema (la de @Database). */
-internal const val VERSION_ACTUAL = 4
+internal const val VERSION_ACTUAL = 5
 
 // Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"
@@ -97,4 +103,4 @@ internal fun construirAppDatabase(builder: RoomDatabase.Builder<AppDatabase>): A
         .build()
 
 /** Migraciones manuales (las que solo añaden tablas o columnas son AutoMigration en @Database). */
-internal val MIGRACIONES: List<Migration> = listOf(MIGRACION_1_2)
+internal val MIGRACIONES: List<Migration> = listOf(MIGRACION_1_2, MIGRACION_4_5)

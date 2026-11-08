@@ -1,6 +1,7 @@
 package bas.orellana.gastostracker.data.legacy
 
 import androidx.datastore.preferences.core.Preferences
+import bas.orellana.gastostracker.data.local.CATEGORIA_AHORRO_ANTIGUA
 import bas.orellana.gastostracker.data.local.categoriaDesdeNombre
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
@@ -78,7 +79,7 @@ internal object LegacyJsonParser {
                 nombre = it.nombre,
                 monto = it.monto,
                 fecha = LocalDate.parse(it.fecha),
-                categoria = normalizarCategoria(it.categoria),
+                categoria = normalizarCategoria(it.categoria, admiteAhorro = true),
                 categoriaPersonalizadaId = normalizarTexto(it.categoriaPersonalizadaId)
             )
         }
@@ -90,7 +91,7 @@ internal object LegacyJsonParser {
                 nombre = it.nombre,
                 monto = it.monto,
                 fecha = LocalDate.parse(it.fecha),
-                categoria = normalizarCategoria(it.categoria),
+                categoria = normalizarCategoria(it.categoria, admiteAhorro = false),
                 categoriaPersonalizadaId = normalizarTexto(it.categoriaPersonalizadaId)
             )
         }
@@ -111,7 +112,10 @@ internal object LegacyJsonParser {
      */
     private fun normalizarTexto(valor: String?): String? = valor?.takeIf { it.isNotBlank() && it != "null" }
 
-    /** Una categoría desconocida se guarda como "sin categoría", como hacía la app antes. */
-    private fun normalizarCategoria(nombre: String?): String? =
-        normalizarTexto(nombre)?.takeIf { categoriaDesdeNombre(it) != null }
+    /**
+     * Una categoría desconocida se guarda como "sin categoría", como hacía la app antes. La antigua
+     * categoría "Ahorro" de los gastos se conserva para pasarla después a metas de ahorro.
+     */
+    private fun normalizarCategoria(nombre: String?, admiteAhorro: Boolean): String? =
+        normalizarTexto(nombre)?.takeIf { categoriaDesdeNombre(it) != null || (admiteAhorro && it == CATEGORIA_AHORRO_ANTIGUA) }
 }

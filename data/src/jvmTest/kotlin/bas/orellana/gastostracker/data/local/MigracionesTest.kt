@@ -58,4 +58,49 @@ class MigracionesTest {
             pasoHelper.runMigrationsAndValidate(desde + 1, MIGRACIONES).close()
         }
     }
+
+    @Test
+    fun `la 4 a 5 pasa los gastos de Ahorro a aportaciones de una meta`() {
+        val ruta = directorio.resolve("ahorro.db")
+        val pasoHelper = MigrationTestHelper(Path("schemas"), ruta, BundledSQLiteDriver(), AppDatabase::class)
+        pasoHelper.createDatabase(4).use { conexion ->
+            conexion.execSQL("INSERT INTO gastos VALUES ('a1', 'Hucha', 100, '2026-09-01', 'AHORRO', NULL)")
+            conexion.execSQL("INSERT INTO gastos VALUES ('a2', 'Hucha', 50, '2026-10-01', 'AHORRO', NULL)")
+            conexion.execSQL("INSERT INTO gastos VALUES ('g1', 'Pan', 2, '2026-10-01', 'COMIDA', NULL)")
+        }
+
+        pasoHelper.runMigrationsAndValidate(5, MIGRACIONES).use { conexion ->
+            conexion.prepare("SELECT id FROM gastos").use { st ->
+                st.step()
+                assertEquals("g1", st.getText(0))
+                assertEquals(false, st.step())
+            }
+            conexion.prepare("SELECT COUNT(*), SUM(monto), MIN(meta_id) FROM aportaciones").use { st ->
+                st.step()
+                assertEquals(2, st.getLong(0).toInt())
+                assertEquals(150.0, st.getDouble(1))
+                assertEquals("ahorro-general", st.getText(2))
+            }
+            conexion.prepare("SELECT nombre, creada FROM metas_ahorro").use { st ->
+                st.step()
+                assertEquals("Ahorro", st.getText(0))
+                assertEquals("2026-09-01", st.getText(1))
+            }
+        }
+    }
+
+    @Test
+    fun `la 4 a 5 sin ahorro no crea ninguna meta`() {
+        val ruta = directorio.resolve("sin-ahorro.db")
+        val pasoHelper = MigrationTestHelper(Path("schemas"), ruta, BundledSQLiteDriver(), AppDatabase::class)
+        pasoHelper.createDatabase(4).use { conexion ->
+            conexion.execSQL("INSERT INTO gastos VALUES ('g1', 'Pan', 2, '2026-10-01', 'COMIDA', NULL)")
+        }
+        pasoHelper.runMigrationsAndValidate(5, MIGRACIONES).use { conexion ->
+            conexion.prepare("SELECT COUNT(*) FROM metas_ahorro").use { st ->
+                st.step()
+                assertEquals(0, st.getLong(0).toInt())
+            }
+        }
+    }
 }

@@ -8,7 +8,6 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
-import bas.orellana.gastostracker.domain.model.totalesSinAhorro
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.ContarMovimientosCategoriaUseCase
@@ -445,11 +444,9 @@ class HomeViewModel(
         categoriasPersonalizadas: List<CategoriaPersonalizada>
     ): List<CategoryAlert> {
         val anteriorPorCategoria = totalesMesAnterior
-            .totalesSinAhorro()
             .associate { (it.categoria to it.categoriaPersonalizadaId) to it.total }
 
         return totalesMesActual
-            .totalesSinAhorro()
             .mapNotNull { actual ->
                 val totalAnterior = anteriorPorCategoria[actual.categoria to actual.categoriaPersonalizadaId] ?: 0.0
                 if (totalAnterior <= 0 || actual.total <= totalAnterior) return@mapNotNull null

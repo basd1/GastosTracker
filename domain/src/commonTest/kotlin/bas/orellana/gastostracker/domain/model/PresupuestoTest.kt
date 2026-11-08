@@ -20,7 +20,7 @@ class PresupuestoTest {
     }
 
     @Test
-    fun `cada presupuesto cuenta solo su categoria y el global cuenta todo menos el ahorro`() {
+    fun `cada presupuesto cuenta solo su categoria y el global cuenta todo`() {
         val estados = calcularEstadoPresupuestos(
             presupuestos = listOf(
                 Presupuesto(Categoria.COMIDA, null, 200.0),
@@ -32,7 +32,7 @@ class PresupuestoTest {
                 total(Categoria.COMIDA, 150.0),
                 total(null, 60.0, personalizada = "mascotas"),
                 total(null, 10.0),
-                total(Categoria.AHORRO, 500.0)
+                total(Categoria.OTROS, 0.0)
             )
         )
 
@@ -41,8 +41,7 @@ class PresupuestoTest {
     }
 
     @Test
-    fun `no se puede presupuestar el ahorro ni mezclar categorias`() {
-        assertFailsWith<IllegalArgumentException> { Presupuesto(Categoria.AHORRO, null, 10.0) }
+    fun `no se pueden mezclar categorias`() {
         assertFailsWith<IllegalArgumentException> { Presupuesto(Categoria.COMIDA, "x", 10.0) }
     }
 }

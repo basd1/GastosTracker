@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import bas.orellana.gastostracker.data.EntornoDatos
 import bas.orellana.gastostracker.data.preferences.ClavesPreferencias
 import bas.orellana.gastostracker.domain.model.Categoria
+import bas.orellana.gastostracker.domain.model.MetaAhorro
+import kotlinx.datetime.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import okio.FileSystem
@@ -108,5 +110,27 @@ class MigradorDatosLegacyTest {
 
         assertTrue(entorno.gastos.getGastos().first().isEmpty())
         assertEquals(true, entorno.preferencias.data.first()[ClavesPreferencias.DATOS_MIGRADOS_A_ROOM])
+    }
+
+    @Test
+    fun `los gastos de la antigua categoria Ahorro pasan a la meta Ahorro`() = runTest {
+        val entorno = entorno()
+        escribirLegacy(
+            entorno.rutaLegacy,
+            gastos = """[
+                {"id":"a2","nombre":"Hucha","monto":50,"fecha":"2026-10-15","categoria":"AHORRO"},
+                {"id":"a1","nombre":"Hucha","monto":100,"fecha":"2026-09-01","categoria":"AHORRO"},
+                {"id":"g1","nombre":"Súper","monto":40,"fecha":"2026-10-01","categoria":"COMIDA"}
+            ]""",
+            ingresos = """[{"id":"i1","nombre":"Raro","monto":10,"fecha":"2026-10-01","categoria":"AHORRO"}]"""
+        )
+
+        assertEquals(listOf("g1"), entorno.gastos.getGastos().first().map { it.id })
+        val meta = entorno.ahorro.getProgresoMetas().first().single()
+        assertEquals(MetaAhorro.ID_AHORRO_GENERAL, meta.meta.id)
+        assertEquals(150.0, meta.ahorrado)
+        assertEquals(LocalDate(2026, 9, 1), meta.meta.creada)
+        assertEquals(listOf("a2", "a1"), entorno.ahorro.getAportaciones(MetaAhorro.ID_AHORRO_GENERAL).first().map { it.id })
+        assertEquals(null, entorno.ingresos.getIngresos().first().single().categoria)
     }
 }

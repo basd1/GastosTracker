@@ -10,6 +10,11 @@ import bas.orellana.gastostracker.domain.repository.GastoRepository
 import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import bas.orellana.gastostracker.domain.repository.PresupuestoRepository
 import bas.orellana.gastostracker.domain.repository.RecurrenteRepository
+import bas.orellana.gastostracker.domain.repository.AhorroRepository
+import bas.orellana.gastostracker.domain.model.Aportacion
+import bas.orellana.gastostracker.domain.model.MetaAhorro
+import bas.orellana.gastostracker.domain.model.ProgresoMeta
+import kotlinx.coroutines.flow.combine
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.domain.model.gastoEn
@@ -162,5 +167,42 @@ class FakeRecurrenteRepository(
             recurrente.copy(ultimoMesGenerado = generacion.ultimoMesRevisado)
         }
         return creados
+    }
+}
+
+class FakeAhorroRepository : AhorroRepository {
+    val metas = MutableStateFlow<List<MetaAhorro>>(emptyList())
+    val aportaciones = MutableStateFlow<List<Aportacion>>(emptyList())
+
+    override fun getProgresoMetas(): Flow<List<ProgresoMeta>> =
+        combine(metas, aportaciones) { lista, aportes ->
+            lista.map { meta -> ProgresoMeta(meta, aportes.filter { it.metaId == meta.id }.sumOf { it.monto }) }
+                .sortedBy { it.meta.archivada }
+        }
+
+    override fun getAportaciones(metaId: String): Flow<List<Aportacion>> =
+        aportaciones.map { lista -> lista.filter { it.metaId == metaId }.sortedByDescending { it.fecha } }
+
+    override fun getTodasLasAportaciones(): Flow<List<Aportacion>> = aportaciones.map { it.sortedBy { a -> a.fecha } }
+
+    override fun getTotalAhorrado(desde: LocalDate, hasta: LocalDate): Flow<Double> =
+        aportaciones.map { lista -> lista.filter { it.fecha in desde..hasta }.sumOf { it.monto } }
+
+    override suspend fun guardarMeta(meta: MetaAhorro) {
+        metas.value = if (metas.value.any { it.id == meta.id }) metas.value.map { if (it.id == meta.id) meta else it }
+        else metas.value + meta
+    }
+
+    override suspend fun eliminarMeta(id: String) {
+        aportaciones.value = aportaciones.value.filterNot { it.metaId == id }
+        metas.value = metas.value.filterNot { it.id == id }
+    }
+
+    override suspend fun guardarAportacion(aportacion: Aportacion) {
+        aportaciones.value = aportaciones.value.filterNot { it.id == aportacion.id } + aportacion
+    }
+
+    override suspend fun eliminarAportacion(id: String) {
+        aportaciones.value = aportaciones.value.filterNot { it.id == id }
     }
 }

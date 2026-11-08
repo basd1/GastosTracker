@@ -14,7 +14,6 @@ enum class Categoria(val color: Long) {
     TECNOLOGIA(0xFF4DD0E1),
     SERVICIOS(0xFF9575CD),
     REGALOS(0xFFF06292),
-    AHORRO(0xFFFFD700),
     OTROS(0xFF90A4AE);
 
     companion object {
@@ -25,7 +24,7 @@ enum class Categoria(val color: Long) {
             0xFFFFCC80, 0xFFFFAB91, 0xFFBCAAA4, 0xFFB0BEC5
         )
 
-        /** Categorías que tiene sentido asignar a un ingreso (todas menos el ahorro). */
-        val PARA_INGRESOS: List<Categoria> get() = entries.filterNot { it.esAhorro }
+        /** Categorías que se pueden asignar a un ingreso. */
+        val PARA_INGRESOS: List<Categoria> get() = entries
     }
 }

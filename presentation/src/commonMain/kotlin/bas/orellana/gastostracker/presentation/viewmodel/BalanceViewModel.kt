@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.model.Mes
-import bas.orellana.gastostracker.domain.model.esAhorro
 import bas.orellana.gastostracker.domain.usecase.AddIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosEntreUseCase
@@ -14,6 +13,7 @@ import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUse
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalAhorradoUseCase
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.presentation.state.AddIngresoState
@@ -40,7 +40,8 @@ class BalanceViewModel(
     private val getTotalIngresosUseCase: GetTotalIngresosUseCase,
     private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
     private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
-    private val generarRecurrentesUseCase: GenerarRecurrentesUseCase
+    private val generarRecurrentesUseCase: GenerarRecurrentesUseCase,
+    private val getTotalAhorradoUseCase: GetTotalAhorradoUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BalanceState())
@@ -81,10 +82,10 @@ class BalanceViewModel(
                     val hasta = mes.ultimoDia
                     combine(
                         getTotalIngresosUseCase(desde, hasta),
-                        getTotalesGastosPorCategoriaUseCase(desde, hasta)
-                    ) { totalIngresos, totalesGastos ->
-                        val (ahorro, gastos) = totalesGastos.partition { it.esAhorro }
-                        Triple(totalIngresos, gastos.sumOf { it.total }, ahorro.sumOf { it.total })
+                        getTotalesGastosPorCategoriaUseCase(desde, hasta),
+                        getTotalAhorradoUseCase(desde, hasta)
+                    ) { totalIngresos, totalesGastos, totalAhorro ->
+                        Triple(totalIngresos, totalesGastos.sumOf { it.total }, totalAhorro)
                     }
                 }
                 .catch { }

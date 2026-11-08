@@ -87,13 +87,12 @@ class PresupuestosViewModelTest {
     }
 
     @Test
-    fun `las categorias con presupuesto y el ahorro no se ofrecen al crear otro`() = runTest {
+    fun `las categorias con presupuesto no se ofrecen al crear otro`() = runTest {
         presupuestos.datos.value = listOf(Presupuesto(Categoria.COMIDA, null, 300.0))
         val vm = crearViewModel()
 
         val disponibles = vm.state.value.categoriasDisponibles
         assertFalse(Categoria.COMIDA in disponibles)
-        assertFalse(Categoria.AHORRO in disponibles)
         assertTrue(Categoria.OCIO in disponibles)
     }
 

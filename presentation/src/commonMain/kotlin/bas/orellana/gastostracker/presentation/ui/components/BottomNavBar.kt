@@ -1,9 +1,10 @@
 package bas.orellana.gastostracker.presentation.ui.components
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -15,6 +16,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavController
 import bas.orellana.gastostracker.presentation.navigation.NavRoutes
 import bas.orellana.gastostracker.presentation.resources.Res
+import bas.orellana.gastostracker.presentation.resources.nav_ahorro
 import bas.orellana.gastostracker.presentation.resources.nav_balance
 import bas.orellana.gastostracker.presentation.resources.nav_gastos
 import bas.orellana.gastostracker.presentation.resources.nav_grafico
@@ -28,9 +30,10 @@ private data class NavTab(
 )
 
 private val tabs = listOf(
-    NavTab(NavRoutes.BALANCE, Icons.Default.Star, Res.string.nav_balance),
-    NavTab(NavRoutes.HOME, Icons.Default.Home, Res.string.nav_gastos),
-    NavTab(NavRoutes.GRAPH_SCREEN, Icons.Default.FavoriteBorder, Res.string.nav_grafico)
+    NavTab(NavRoutes.BALANCE, Icons.Default.AccountBalanceWallet, Res.string.nav_balance),
+    NavTab(NavRoutes.HOME, Icons.AutoMirrored.Filled.ReceiptLong, Res.string.nav_gastos),
+    NavTab(NavRoutes.GRAPH_SCREEN, Icons.Default.PieChart, Res.string.nav_grafico),
+    NavTab(NavRoutes.METAS, Icons.Default.Savings, Res.string.nav_ahorro)
 )
 
 @Composable

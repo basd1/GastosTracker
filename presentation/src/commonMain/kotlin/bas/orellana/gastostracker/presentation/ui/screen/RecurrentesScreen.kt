@@ -49,7 +49,6 @@ import androidx.navigation.NavController
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
-import bas.orellana.gastostracker.domain.model.esAhorro
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.accion_cancelar
 import bas.orellana.gastostracker.presentation.resources.accion_eliminar
@@ -304,7 +303,7 @@ private fun EditorRecurrenteDialog(
         else -> Res.string.nuevo_ingreso_fijo
     }
     val predefinidas = if (editor.tipo == TipoMovimiento.GASTO) {
-        Categoria.entries.filterNot { it.esAhorro }
+        Categoria.entries
     } else {
         Categoria.PARA_INGRESOS
     }

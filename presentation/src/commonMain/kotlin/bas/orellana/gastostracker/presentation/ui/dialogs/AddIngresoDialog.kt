@@ -250,7 +250,7 @@ fun AddIngresoDialog(
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = fecha.atStartOfDayIn(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+            initialSelectedDateMillis = fecha.atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
         )
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
@@ -259,7 +259,7 @@ fun AddIngresoDialog(
                     datePickerState.selectedDateMillis?.let { millis ->
                         onFechaChange(
                             Instant.fromEpochMilliseconds(millis)
-                                .toLocalDateTime(TimeZone.currentSystemDefault())
+                                .toLocalDateTime(TimeZone.UTC)
                                 .date
                         )
                     }

@@ -82,7 +82,6 @@ import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
-import bas.orellana.gastostracker.domain.model.sinAhorro
 import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.accion_descartar
 import bas.orellana.gastostracker.presentation.resources.accion_deshacer
@@ -281,8 +280,8 @@ private fun GastosList(
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
         }
     } else {
-        // La lista ya viene filtrada por mes desde SQL; el ahorro no cuenta como gasto.
-        val gastosDelMes = gastos.sinAhorro()
+        // La lista ya viene filtrada por mes desde SQL.
+        val gastosDelMes = gastos
         val totalMes = gastosDelMes.sumOf { it.monto }
 
         LazyColumn(

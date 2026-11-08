@@ -7,7 +7,6 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.EstadoPresupuesto
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.Presupuesto
-import bas.orellana.gastostracker.domain.model.esAhorro
 import bas.orellana.gastostracker.domain.usecase.EliminarPresupuestoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
@@ -47,7 +46,7 @@ data class PresupuestosState(
     /** Categorías que todavía no tienen presupuesto (para el diálogo de nuevo presupuesto). */
     val globalDisponible: Boolean get() = Presupuesto.CLAVE_GLOBAL !in clavesUsadas
     val categoriasDisponibles: List<Categoria>
-        get() = Categoria.entries.filter { !it.esAhorro && Presupuesto.claveDe(it, null) !in clavesUsadas }
+        get() = Categoria.entries.filter { Presupuesto.claveDe(it, null) !in clavesUsadas }
     val personalizadasDisponibles: List<CategoriaPersonalizada>
         get() = categoriasPersonalizadas.filter { Presupuesto.claveDe(null, it.id) !in clavesUsadas }
     val hayCategoriasDisponibles: Boolean

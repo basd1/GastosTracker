@@ -8,6 +8,16 @@ import bas.orellana.gastostracker.data.repository.IngresoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.PreferencesRepository
 import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.RecurrenteRepositoryImpl
+import bas.orellana.gastostracker.data.repository.AhorroRepositoryImpl
+import bas.orellana.gastostracker.domain.repository.AhorroRepository
+import bas.orellana.gastostracker.domain.usecase.EliminarAportacionUseCase
+import bas.orellana.gastostracker.domain.usecase.EliminarMetaUseCase
+import bas.orellana.gastostracker.domain.usecase.GetAportacionesUseCase
+import bas.orellana.gastostracker.domain.usecase.GetProgresoMetasUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTodasLasAportacionesUseCase
+import bas.orellana.gastostracker.domain.usecase.GetTotalAhorradoUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarAportacionUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarMetaUseCase
 import bas.orellana.gastostracker.domain.repository.RecurrenteRepository
 import bas.orellana.gastostracker.domain.usecase.EliminarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
@@ -57,6 +67,7 @@ val sharedModule = module {
     single { PreferencesRepository(get()) }
     single<PresupuestoRepository> { PresupuestoRepositoryImpl(get<AppDatabase>().presupuestoDao(), get()) }
     single<RecurrenteRepository> { RecurrenteRepositoryImpl(get(), get()) }
+    single<AhorroRepository> { AhorroRepositoryImpl(get(), get()) }
 
     factory { GetGastosUseCase(get()) }
     factory { GetGastosEntreUseCase(get()) }
@@ -87,4 +98,13 @@ val sharedModule = module {
     factory { GuardarRecurrenteUseCase(get()) }
     factory { EliminarRecurrenteUseCase(get()) }
     factory { GenerarRecurrentesUseCase(get()) }
+
+    factory { GetProgresoMetasUseCase(get()) }
+    factory { GetAportacionesUseCase(get()) }
+    factory { GetTodasLasAportacionesUseCase(get()) }
+    factory { GetTotalAhorradoUseCase(get()) }
+    factory { GuardarMetaUseCase(get()) }
+    factory { EliminarMetaUseCase(get()) }
+    factory { GuardarAportacionUseCase(get()) }
+    factory { EliminarAportacionUseCase(get()) }
 }

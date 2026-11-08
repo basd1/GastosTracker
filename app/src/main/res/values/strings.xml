@@ -7,4 +7,6 @@
     <string name="atajo_anadir_gasto">Añadir gasto</string>
     <string name="atajo_anadir_gasto_largo">Añadir un gasto</string>
     <string name="widget_descripcion">Lo gastado este mes y un botón para añadir un gasto</string>
+    <string name="widget_gastado_mes">Gastado este mes</string>
+    <string name="widget_anadir">+ Gasto</string>
 </resources>

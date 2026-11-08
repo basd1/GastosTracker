@@ -88,6 +88,7 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.glance.appwidget)
     implementation(libs.kotlinx.datetime)
     implementation(libs.koin.compose)
     implementation(libs.androidx.lifecycle.viewmodel)

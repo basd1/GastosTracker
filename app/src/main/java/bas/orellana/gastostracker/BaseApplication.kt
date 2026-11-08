@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import androidx.glance.appwidget.updateAll
+import bas.orellana.gastostracker.domain.repository.GastoRepository
+import bas.orellana.gastostracker.widget.GastosWidget
 import org.koin.android.ext.android.get
 import org.koin.android.ext.koin.androidContext
 
@@ -25,6 +31,7 @@ class BaseApplication : Application() {
             androidContext(this@BaseApplication)
         }
         programarRecordatorioSegunAjustes()
+        actualizarWidgetAlCambiarDatos()
     }
 
     /** Programa o cancela el aviso diario cada vez que cambia en Ajustes (y al arrancar). */
@@ -39,6 +46,19 @@ class BaseApplication : Application() {
                     if (activo) ProgramadorRecordatorio.programar(this@BaseApplication, hora, minuto)
                     else ProgramadorRecordatorio.cancelar(this@BaseApplication)
                 }
+        }
+    }
+
+    /** Repinta el widget cuando cambian los gastos o los ajustes (moneda, día de inicio del mes). */
+    @OptIn(FlowPreview::class)
+    private fun actualizarWidgetAlCambiarDatos() {
+        val gastos: GastoRepository = get()
+        val ajustes: AjustesRepository = get()
+        ambitoApp.launch {
+            combine(gastos.getGastos(), ajustes.ajustes) { _, _ -> }
+                .debounce(1_000)
+                .catch { }
+                .collect { runCatching { GastosWidget().updateAll(this@BaseApplication) } }
         }
     }
 }

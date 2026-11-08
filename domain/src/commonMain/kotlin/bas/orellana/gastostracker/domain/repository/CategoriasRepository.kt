@@ -15,6 +15,7 @@ interface CategoriasRepository {
     /**
      * Elimina la categoría personalizada [id] y pasa sus gastos e ingresos a [destino],
      * todo en una sola transacción: nunca quedan movimientos apuntando a una categoría que no existe.
+     * Su presupuesto, si tenía, se elimina.
      */
     suspend fun deleteCategoriaPersonalizada(id: String, destino: CategoriaDestino)
 }

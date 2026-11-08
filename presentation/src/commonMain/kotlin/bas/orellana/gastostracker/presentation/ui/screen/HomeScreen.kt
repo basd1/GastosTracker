@@ -66,18 +66,20 @@ import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Mes
+import bas.orellana.gastostracker.domain.model.EstadoPresupuesto
+import bas.orellana.gastostracker.presentation.ui.components.FilaPresupuesto
+import bas.orellana.gastostracker.presentation.resources.presupuestos_del_mes
+import bas.orellana.gastostracker.presentation.resources.ver_todos
 import bas.orellana.gastostracker.presentation.ui.components.SelectorMes
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.resources.sin_gastos_mes
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.SortOrder
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
+import bas.orellana.gastostracker.presentation.navigation.NavRoutes
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
-import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
-import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
-import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
 import bas.orellana.gastostracker.domain.model.sinAhorro
@@ -111,12 +113,10 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun HomeScreen(
     navController: NavController,
-    viewModel: HomeViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
-    val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -136,7 +136,7 @@ fun HomeScreen(
         topBar = {
             GradientTopAppBar(
                 title = stringResource(Res.string.titulo_gastos),
-                onSettingsClick = { viewModel.showSettingsDialog() }
+                onSettingsClick = { navController.navigate(NavRoutes.AJUSTES) }
             )
         },
         bottomBar = {
@@ -199,6 +199,8 @@ fun HomeScreen(
             onMesAnterior = { viewModel.mesAnterior() },
             onMesSiguiente = { viewModel.mesSiguiente() },
             onElegirMes = { viewModel.showMonthPicker() },
+            presupuestos = state.presupuestos,
+            onVerPresupuestos = { navController.navigate(NavRoutes.PRESUPUESTOS) },
             modifier = Modifier.padding(paddingValues)
         )
 
@@ -227,19 +229,6 @@ fun HomeScreen(
                 },
                 onDismiss = { viewModel.hideAddGastoDialog() }
             )
-        }
-
-        if (state.showSettingsDialog) {
-            SettingsDialog(
-                isDarkTheme = isDarkTheme,
-                onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
-                onManageCategorias = { viewModel.showManageCategoriasDialog() },
-                onDismiss = { viewModel.hideSettingsDialog() }
-            )
-        }
-
-        if (state.showManageCategoriasDialog) {
-            ManageCategoriasDialog(viewModel)
         }
 
         if (state.showMonthPicker) {
@@ -278,6 +267,8 @@ private fun GastosList(
     onMesAnterior: () -> Unit = {},
     onMesSiguiente: () -> Unit = {},
     onElegirMes: () -> Unit = {},
+    presupuestos: List<EstadoPresupuesto> = emptyList(),
+    onVerPresupuestos: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (isLoading) {
@@ -307,6 +298,15 @@ private fun GastosList(
                     onMesSiguiente = onMesSiguiente,
                     onElegirMes = onElegirMes
                 )
+            }
+            if (presupuestos.isNotEmpty()) {
+                item {
+                    PresupuestosResumen(
+                        presupuestos = presupuestos,
+                        categoriasPersonalizadas = categoriasPersonalizadas,
+                        onVerTodos = onVerPresupuestos
+                    )
+                }
             }
             if (alerts.isNotEmpty()) {
                 item {
@@ -444,6 +444,47 @@ private fun GastosList(
             }
             }
             item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
+    }
+}
+
+/** Los presupuestos más apurados del mes (máximo 3) y un enlace a la pantalla de presupuestos. */
+@Composable
+private fun PresupuestosResumen(
+    presupuestos: List<EstadoPresupuesto>,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    onVerTodos: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        shape = MaterialTheme.shapes.small
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(Res.string.presupuestos_del_mes),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = onVerTodos) {
+                    Text(stringResource(Res.string.ver_todos), fontSize = 12.sp)
+                }
+            }
+            Column(
+                modifier = Modifier.padding(end = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                presupuestos.take(3).forEach { estado ->
+                    FilaPresupuesto(
+                        estado = estado,
+                        categoriasPersonalizadas = categoriasPersonalizadas,
+                        compacta = true
+                    )
+                }
+            }
         }
     }
 }

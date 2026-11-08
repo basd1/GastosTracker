@@ -8,7 +8,6 @@ data class BalanceState(
     val ingresos: List<IngresoModel> = emptyList(),
     val isLoading: Boolean = false,
     val showAddIngresoDialog: Boolean = false,
-    val showSettingsDialog: Boolean = false,
     val showMonthPicker: Boolean = false,
     val mes: Mes = Mes.actual(),
     val totalIngresosMes: Double = 0.0,

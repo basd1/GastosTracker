@@ -57,14 +57,12 @@ import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
+import bas.orellana.gastostracker.presentation.navigation.NavRoutes
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddGastoDialog
-import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
-import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.GraphViewModel
-import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import org.koin.compose.viewmodel.koinViewModel
 import kotlinx.datetime.DateTimeUnit
@@ -103,14 +101,12 @@ private enum class PeriodFilter {
 fun GraphScreen(
     navController: NavController,
     viewModel: HomeViewModel = koinViewModel(),
-    graphViewModel: GraphViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    graphViewModel: GraphViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addGastoState by viewModel.addGastoState.collectAsState()
     val categoriasPersonalizadas by graphViewModel.categoriasPersonalizadas.collectAsState()
     val todosLosGastos by graphViewModel.gastos.collectAsState()
-    val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
     var selectedMonth by remember { mutableStateOf(todayLocalDate().monthNumber) }
@@ -139,7 +135,7 @@ fun GraphScreen(
                     icon = null,
                     emoji = "\uD83D\uDCCA",
                     title = stringResource(Res.string.titulo_grafico),
-                    onSettingsClick = { viewModel.showSettingsDialog() }
+                    onSettingsClick = { navController.navigate(NavRoutes.AJUSTES) }
                 )
             },
             bottomBar = { BottomNavBar(navController = navController) }
@@ -256,19 +252,6 @@ fun GraphScreen(
                 },
                 onDismiss = { showMonthPicker = false }
             )
-        }
-
-        if (state.showSettingsDialog) {
-            SettingsDialog(
-                isDarkTheme = isDarkTheme,
-                onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
-                onManageCategorias = { viewModel.showManageCategoriasDialog() },
-                onDismiss = { viewModel.hideSettingsDialog() }
-            )
-        }
-
-        if (state.showManageCategoriasDialog) {
-            ManageCategoriasDialog(viewModel)
         }
 
         if (state.showAddGastoDialog) {

@@ -8,6 +8,8 @@ import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import bas.orellana.gastostracker.domain.repository.GastoRepository
 import bas.orellana.gastostracker.domain.repository.IngresoRepository
+import bas.orellana.gastostracker.domain.repository.PresupuestoRepository
+import bas.orellana.gastostracker.domain.model.Presupuesto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -105,5 +107,21 @@ class FakeCategoriasRepository(
             if (it.categoriaPersonalizadaId == id) it.copy(categoria = categoria, categoriaPersonalizadaId = personalizada) else it
         }
         datos.value = datos.value.filterNot { it.id == id }
+    }
+}
+
+class FakePresupuestoRepository : PresupuestoRepository {
+    val datos = MutableStateFlow<List<Presupuesto>>(emptyList())
+
+    override fun getPresupuestos(): Flow<List<Presupuesto>> = datos
+
+    override suspend fun guardarPresupuesto(presupuesto: Presupuesto) {
+        val existe = datos.value.any { it.clave == presupuesto.clave }
+        datos.value = if (existe) datos.value.map { if (it.clave == presupuesto.clave) presupuesto else it }
+        else datos.value + presupuesto
+    }
+
+    override suspend fun eliminarPresupuesto(clave: String) {
+        datos.value = datos.value.filterNot { it.clave == clave }
     }
 }

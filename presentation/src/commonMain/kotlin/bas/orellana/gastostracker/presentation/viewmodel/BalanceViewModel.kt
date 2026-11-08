@@ -115,14 +115,6 @@ class BalanceViewModel(
         _state.update { it.copy(showAddIngresoDialog = false) }
     }
 
-    fun showSettingsDialog() {
-        _state.update { it.copy(showSettingsDialog = true) }
-    }
-
-    fun hideSettingsDialog() {
-        _state.update { it.copy(showSettingsDialog = false) }
-    }
-
     fun showMonthPicker() {
         _state.update { it.copy(showMonthPicker = true) }
     }

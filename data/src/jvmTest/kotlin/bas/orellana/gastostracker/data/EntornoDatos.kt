@@ -9,6 +9,7 @@ import bas.orellana.gastostracker.data.preferences.abrirPreferenciasDataStore
 import bas.orellana.gastostracker.data.repository.CategoriasRepositoryImpl
 import bas.orellana.gastostracker.data.repository.GastoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.IngresoRepositoryImpl
+import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
 import okio.FileSystem
 import okio.Path
 import kotlin.uuid.ExperimentalUuidApi
@@ -36,6 +37,7 @@ internal class EntornoDatos(
     val gastos = GastoRepositoryImpl(db.gastoDao(), migrador)
     val ingresos = IngresoRepositoryImpl(db.ingresoDao(), migrador)
     val categorias = CategoriasRepositoryImpl(db, migrador)
+    val presupuestos = PresupuestoRepositoryImpl(db.presupuestoDao(), migrador)
 
     override fun close() {
         db.close()

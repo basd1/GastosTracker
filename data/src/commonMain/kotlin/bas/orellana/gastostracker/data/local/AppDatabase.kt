@@ -1,5 +1,6 @@
 package bas.orellana.gastostracker.data.local
 
+import androidx.room.AutoMigration
 import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
@@ -12,17 +13,28 @@ import androidx.sqlite.execSQL
 import bas.orellana.gastostracker.data.local.dao.CategoriaPersonalizadaDao
 import bas.orellana.gastostracker.data.local.dao.GastoDao
 import bas.orellana.gastostracker.data.local.dao.IngresoDao
+import bas.orellana.gastostracker.data.local.dao.PresupuestoDao
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
+import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
 import bas.orellana.gastostracker.domain.model.Categoria
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    entities = [GastoEntity::class, IngresoEntity::class, CategoriaPersonalizadaEntity::class],
-    version = 2,
-    exportSchema = true
+    entities = [
+        GastoEntity::class,
+        IngresoEntity::class,
+        CategoriaPersonalizadaEntity::class,
+        PresupuestoEntity::class
+    ],
+    version = VERSION_ACTUAL,
+    exportSchema = true,
+    autoMigrations = [
+        // 2 → 3: tabla de presupuestos.
+        AutoMigration(from = 2, to = 3)
+    ]
 )
 @TypeConverters(Converters::class)
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -30,6 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gastoDao(): GastoDao
     abstract fun ingresoDao(): IngresoDao
     abstract fun categoriaPersonalizadaDao(): CategoriaPersonalizadaDao
+    abstract fun presupuestoDao(): PresupuestoDao
 }
 
 // Room genera el `actual` de cada plataforma.
@@ -37,6 +50,9 @@ abstract class AppDatabase : RoomDatabase() {
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
     override fun initialize(): AppDatabase
 }
+
+/** Versión actual del esquema (la de @Database). */
+internal const val VERSION_ACTUAL = 3
 
 // Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"
@@ -71,5 +87,8 @@ internal fun construirAppDatabase(builder: RoomDatabase.Builder<AppDatabase>): A
     builder
         .setDriver(BundledSQLiteDriver())
         .setQueryCoroutineContext(Dispatchers.IO)
-        .addMigrations(MIGRACION_1_2)
+        .addMigrations(*MIGRACIONES.toTypedArray())
         .build()
+
+/** Migraciones manuales (las que solo añaden tablas o columnas son AutoMigration en @Database). */
+internal val MIGRACIONES: List<Migration> = listOf(MIGRACION_1_2)

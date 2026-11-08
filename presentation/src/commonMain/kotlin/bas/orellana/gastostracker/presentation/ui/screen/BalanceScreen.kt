@@ -60,14 +60,12 @@ import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.presentation.ui.components.SelectorMes
 import bas.orellana.gastostracker.presentation.resources.balance_disponible
 import bas.orellana.gastostracker.presentation.ui.components.BottomNavBar
+import bas.orellana.gastostracker.presentation.navigation.NavRoutes
 import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddIngresoDialog
-import bas.orellana.gastostracker.presentation.ui.dialogs.ManageCategoriasDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
-import bas.orellana.gastostracker.presentation.ui.dialogs.SettingsDialog
 import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
-import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
 import bas.orellana.gastostracker.presentation.resources.Res
@@ -90,14 +88,11 @@ import org.jetbrains.compose.resources.stringResource
 fun BalanceScreen(
     navController: NavController,
     viewModel: BalanceViewModel = koinViewModel(),
-    homeViewModel: HomeViewModel = koinViewModel(),
-    settingsViewModel: SettingsViewModel = koinViewModel()
+    homeViewModel: HomeViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addIngresoState by viewModel.addIngresoState.collectAsState()
-    val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
     val categoriasPersonalizadas by homeViewModel.categoriasPersonalizadas.collectAsState()
-    val homeState by homeViewModel.state.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -118,7 +113,7 @@ fun BalanceScreen(
                     icon = null,
                     emoji = "\uD83D\uDCB0",
                     title = stringResource(Res.string.titulo_balance),
-                    onSettingsClick = { viewModel.showSettingsDialog() }
+                    onSettingsClick = { navController.navigate(NavRoutes.AJUSTES) }
                 )
             },
             bottomBar = {
@@ -250,18 +245,6 @@ fun BalanceScreen(
             )
         }
 
-        if (state.showSettingsDialog) {
-            SettingsDialog(
-                isDarkTheme = isDarkTheme,
-                onToggleDarkTheme = { settingsViewModel.toggleDarkTheme() },
-                onManageCategorias = { homeViewModel.showManageCategoriasDialog() },
-                onDismiss = { viewModel.hideSettingsDialog() }
-            )
-        }
-
-        if (homeState.showManageCategoriasDialog) {
-            ManageCategoriasDialog(homeViewModel)
-        }
     }
 }
 

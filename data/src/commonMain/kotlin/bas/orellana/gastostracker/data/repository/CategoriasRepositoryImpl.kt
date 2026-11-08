@@ -9,6 +9,7 @@ import bas.orellana.gastostracker.data.local.toEntity
 import bas.orellana.gastostracker.data.local.toModel
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
+import bas.orellana.gastostracker.domain.model.Presupuesto
 import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -61,6 +62,7 @@ class CategoriasRepositoryImpl(
             conexion.immediateTransaction {
                 db.gastoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
                 db.ingresoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
+                db.presupuestoDao().eliminar(Presupuesto.claveDe(null, id))
                 dao.eliminar(id)
             }
         }

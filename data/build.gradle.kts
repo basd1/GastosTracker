@@ -44,6 +44,9 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        jvmTest.dependencies {
+            implementation(libs.androidx.room.testing)
+        }
     }
 }
 

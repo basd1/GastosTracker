@@ -117,6 +117,34 @@
         <item quantity="other">Hay %1$d movimientos con esta categoría. ¿A qué categoría quieres pasarlos?</item>
     </plurals>
 
+    <!-- Ajustes -->
+    <string name="titulo_ajustes">Ajustes</string>
+    <string name="accion_volver">Volver</string>
+    <string name="ajustes_seccion_apariencia">Apariencia</string>
+    <string name="ajustes_seccion_organizacion">Organización</string>
+    <string name="ajustes_seccion_datos">Datos</string>
+    <string name="ajustes_seccion_preferencias">Preferencias</string>
+    <string name="ajustes_seccion_seguridad">Seguridad</string>
+    <string name="ajustes_categorias_detalle">Crea, edita o elimina tus categorías</string>
+    <string name="ajustes_presupuestos_detalle">Límites de gasto mensuales por categoría</string>
+    <string name="modo_oscuro_detalle">Tema oscuro en toda la app</string>
+
+    <!-- Presupuestos -->
+    <string name="titulo_presupuestos">Presupuestos</string>
+    <string name="presupuestos_del_mes">Presupuestos del mes</string>
+    <string name="ver_todos">Ver todos</string>
+    <string name="anadir_presupuesto">Añadir presupuesto</string>
+    <string name="nuevo_presupuesto">Nuevo presupuesto</string>
+    <string name="editar_presupuesto">Editar presupuesto</string>
+    <string name="presupuesto_global">Global (todos los gastos)</string>
+    <string name="campo_limite_mensual">Límite mensual</string>
+    <string name="presupuesto_gastado_de">%1$s de %2$s</string>
+    <string name="presupuesto_restante">Quedan %1$s</string>
+    <string name="presupuesto_superado">Te has pasado %1$s</string>
+    <string name="sin_presupuestos_titulo">Sin presupuestos</string>
+    <string name="sin_presupuestos_mensaje">Pon un límite mensual a una categoría o a todos tus gastos y verás cómo vas a lo largo del mes.</string>
+    <string name="todas_categorias_con_presupuesto">Todas las categorías tienen ya presupuesto</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

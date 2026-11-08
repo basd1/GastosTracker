@@ -18,6 +18,7 @@ import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
+import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.presentation.state.AddGastoState
@@ -50,7 +51,8 @@ class HomeViewModel(
     private val updateCategoriaPersonalizadaUseCase: UpdateCategoriaPersonalizadaUseCase,
     private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase,
     private val contarMovimientosCategoriaUseCase: ContarMovimientosCategoriaUseCase,
-    private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase
+    private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
+    private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -71,6 +73,7 @@ class HomeViewModel(
         loadGastos()
         loadCategoriasPersonalizadas()
         observarAlertas()
+        observarPresupuestos()
     }
 
     /** Gastos del mes seleccionado, filtrados en SQL; cambian al cambiar de mes o de datos. */
@@ -130,6 +133,16 @@ class HomeViewModel(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observarPresupuestos() {
+        viewModelScope.launch {
+            mesSeleccionado
+                .flatMapLatest { mes -> getEstadoPresupuestosUseCase(mes.primerDia, mes.ultimoDia) }
+                .catch { }
+                .collect { estados -> _state.update { it.copy(presupuestos = estados) } }
+        }
+    }
+
     fun showAddGastoDialog() {
         _addGastoState.value = AddGastoState()
         _state.update { it.copy(showAddGastoDialog = true) }
@@ -151,16 +164,8 @@ class HomeViewModel(
         _state.update { it.copy(showAddGastoDialog = false) }
     }
 
-    fun showSettingsDialog() {
-        _state.update { it.copy(showSettingsDialog = true) }
-    }
-
-    fun hideSettingsDialog() {
-        _state.update { it.copy(showSettingsDialog = false) }
-    }
-
     fun showManageCategoriasDialog() {
-        _state.update { it.copy(showManageCategoriasDialog = true, showSettingsDialog = false) }
+        _state.update { it.copy(showManageCategoriasDialog = true) }
     }
 
     fun hideManageCategoriasDialog() {

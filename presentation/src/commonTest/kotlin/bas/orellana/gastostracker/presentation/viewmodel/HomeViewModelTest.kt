@@ -11,6 +11,9 @@ import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
+import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
+import bas.orellana.gastostracker.domain.model.Presupuesto
+import bas.orellana.gastostracker.domain.model.NivelPresupuesto
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
@@ -41,6 +44,7 @@ class HomeViewModelTest {
     private val gastos = FakeGastoRepository()
     private val ingresos = FakeIngresoRepository()
     private val categorias = FakeCategoriasRepository(gastos, ingresos)
+    private val presupuestos = FakePresupuestoRepository()
 
     private val hoy = todayLocalDate()
     private val inicioMes = LocalDate(hoy.year, hoy.month, 1)
@@ -63,7 +67,8 @@ class HomeViewModelTest {
         updateCategoriaPersonalizadaUseCase = UpdateCategoriaPersonalizadaUseCase(categorias),
         deleteCategoriaPersonalizadaUseCase = DeleteCategoriaPersonalizadaUseCase(categorias),
         contarMovimientosCategoriaUseCase = ContarMovimientosCategoriaUseCase(categorias),
-        getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos)
+        getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
+        getEstadoPresupuestosUseCase = GetEstadoPresupuestosUseCase(presupuestos, gastos)
     )
 
     private fun gasto(
@@ -238,6 +243,26 @@ class HomeViewModelTest {
         val alerta = vm.state.value.alerts.single()
         assertEquals(Categoria.OCIO, alerta.categoria)
         assertEquals(30.0, alerta.gastoActual)
+    }
+
+
+    // ---------- Presupuestos ----------
+
+    @Test
+    fun `muestra como van los presupuestos en el mes seleccionado`() = runTest {
+        presupuestos.datos.value = listOf(Presupuesto(Categoria.COMIDA, null, 100.0))
+        anadir(
+            gasto("c1", monto = 90.0, fecha = inicioMes, categoria = Categoria.COMIDA),
+            gasto("c0", monto = 20.0, fecha = inicioMesAnterior, categoria = Categoria.COMIDA)
+        )
+        val vm = crearViewModel()
+
+        val estado = vm.state.value.presupuestos.single()
+        assertEquals(90.0, estado.gastado)
+        assertEquals(NivelPresupuesto.AVISO, estado.nivel)
+
+        vm.mesAnterior()
+        assertEquals(NivelPresupuesto.BIEN, vm.state.value.presupuestos.single().nivel)
     }
 
     // ---------- Alertas ----------

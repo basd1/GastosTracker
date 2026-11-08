@@ -181,9 +181,9 @@ private fun TarjetaGrafico(titulo: String, contenido: @Composable () -> Unit) {
 
 /** Ingresos frente a gastos en los 6 meses que terminan en [hasta]. */
 @Composable
-fun IngresosVsGastosCard(gastos: List<GastoModel>, ingresos: List<IngresoModel>, hasta: Mes) {
+fun IngresosVsGastosCard(gastos: List<GastoModel>, ingresos: List<IngresoModel>, hasta: Mes, diaInicio: Int = 1) {
     val meses = remember(hasta) { ultimosMeses(hasta, 6) }
-    val totales = remember(gastos, ingresos, meses) { totalesMensuales(gastos, ingresos, meses) }
+    val totales = remember(gastos, ingresos, meses, diaInicio) { totalesMensuales(gastos, ingresos, meses, diaInicio) }
     TarjetaGrafico(stringResource(Res.string.ingresos_vs_gastos)) {
         GraficoBarras(
             etiquetas = meses.map { nombreMesCorto(it.numero) },
@@ -201,7 +201,8 @@ fun EvolucionCategoriaCard(
     gastos: List<GastoModel>,
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     hasta: Mes,
-    categoriaInicial: Pair<Categoria?, String?>?
+    categoriaInicial: Pair<Categoria?, String?>?,
+    diaInicio: Int = 1
 ) {
     // Solo se ofrecen las categorías que tienen algún gasto.
     val conGastos = remember(gastos) {
@@ -214,7 +215,7 @@ fun EvolucionCategoriaCard(
         mutableStateOf(categoriaInicial?.takeIf { it in conGastos } ?: conGastos.first())
     }
     val meses = remember(hasta) { ultimosMeses(hasta, 12) }
-    val serie = remember(gastos, elegida, meses) { gastoMensualDeCategoria(gastos, elegida.first, elegida.second, meses) }
+    val serie = remember(gastos, elegida, meses, diaInicio) { gastoMensualDeCategoria(gastos, elegida.first, elegida.second, meses, diaInicio) }
 
     TarjetaGrafico(stringResource(Res.string.evolucion_categoria)) {
         Row(
@@ -250,8 +251,8 @@ private fun nombreYColor(clave: Pair<Categoria?, String?>, personalizadas: List<
 
 /** Lo gastado en [mes] frente al mismo mes del año anterior, en total y en las categorías que más cambian. */
 @Composable
-fun ComparativaAnualCard(gastos: List<GastoModel>, categoriasPersonalizadas: List<CategoriaPersonalizada>, mes: Mes) {
-    val comparativa: ComparativaAnual = remember(gastos, mes) { comparativaConAnioAnterior(gastos, mes) }
+fun ComparativaAnualCard(gastos: List<GastoModel>, categoriasPersonalizadas: List<CategoriaPersonalizada>, mes: Mes, diaInicio: Int = 1) {
+    val comparativa: ComparativaAnual = remember(gastos, mes, diaInicio) { comparativaConAnioAnterior(gastos, mes, diaInicio) }
     val anterior = mes.mas(-12)
     TarjetaGrafico(stringResource(Res.string.comparativa_anual, mesYAnio(mes.numero, mes.anio), mesYAnio(anterior.numero, anterior.anio))) {
         if (comparativa.total.actual == 0.0 && comparativa.total.anterior == 0.0) {

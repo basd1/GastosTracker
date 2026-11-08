@@ -3,6 +3,7 @@ package bas.orellana.gastostracker.presentation.viewmodel
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.GastoModel
+import bas.orellana.gastostracker.domain.model.Ajustes
 import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
@@ -51,6 +52,7 @@ class HomeViewModelTest {
     private val categorias = FakeCategoriasRepository(gastos, ingresos)
     private val presupuestos = FakePresupuestoRepository()
     private val recurrentes = FakeRecurrenteRepository(gastos, ingresos)
+    private val ajustes = FakeAjustesRepository()
 
     private val hoy = todayLocalDate()
     private val inicioMes = LocalDate(hoy.year, hoy.month, 1)
@@ -76,7 +78,8 @@ class HomeViewModelTest {
         getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
         getEstadoPresupuestosUseCase = GetEstadoPresupuestosUseCase(presupuestos, gastos),
         guardarRecurrenteUseCase = GuardarRecurrenteUseCase(recurrentes),
-        generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes)
+        generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes),
+        ajustesRepository = ajustes
     )
 
     private fun gasto(
@@ -209,6 +212,27 @@ class HomeViewModelTest {
 
         assertEquals(Mes.de(inicioMesAnterior), vm.state.value.mes)
         assertEquals(listOf("ocio"), vm.idsVisibles)
+    }
+
+
+    // ---------- Día de inicio del mes ----------
+
+    @Test
+    fun `con dia de inicio el mes va de ese dia al anterior del mes siguiente`() = runTest {
+        ajustes.datos.value = Ajustes(diaInicioMes = 25)
+        val noviembre = Mes(2026, 11)
+        anadir(
+            gasto("dentro-ini", fecha = LocalDate(2026, 10, 25)),
+            gasto("dentro-fin", fecha = LocalDate(2026, 11, 24)),
+            gasto("fuera", fecha = LocalDate(2026, 11, 25))
+        )
+        val vm = crearViewModel()
+
+        vm.seleccionarMes(noviembre)
+
+        assertEquals(setOf("dentro-ini", "dentro-fin"), vm.state.value.gastos.map { it.id }.toSet())
+        assertEquals(25, vm.state.value.diaInicioMes)
+        assertEquals(Mes.actual(25), crearViewModel().state.value.mes)
     }
 
     // ---------- Orden ----------

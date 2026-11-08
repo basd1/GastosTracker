@@ -39,6 +39,7 @@ class BalanceViewModelTest {
     private val ingresos = FakeIngresoRepository()
     private val recurrentes = FakeRecurrenteRepository(gastos, ingresos)
     private val ahorro = FakeAhorroRepository()
+    private val ajustes = FakeAjustesRepository()
 
     private val hoy = todayLocalDate()
     private val inicioMes = LocalDate(hoy.year, hoy.month, 1)
@@ -60,7 +61,8 @@ class BalanceViewModelTest {
         getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
         guardarRecurrenteUseCase = GuardarRecurrenteUseCase(recurrentes),
         generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes),
-        getTotalAhorradoUseCase = GetTotalAhorradoUseCase(ahorro)
+        getTotalAhorradoUseCase = GetTotalAhorradoUseCase(ahorro),
+        ajustesRepository = ajustes
     )
 
     private fun ingreso(id: String, monto: Double, fecha: LocalDate) = IngresoModel(id, "Ingreso $id", monto, fecha)

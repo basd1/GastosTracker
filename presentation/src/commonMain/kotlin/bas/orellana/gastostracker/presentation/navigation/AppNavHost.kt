@@ -19,11 +19,17 @@ import bas.orellana.gastostracker.presentation.ui.screen.CuentasScreen
 import bas.orellana.gastostracker.presentation.ui.screen.MetasScreen
 import bas.orellana.gastostracker.presentation.ui.screen.MetaDetalleScreen
 import org.koin.compose.koinInject
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.presentation.util.MonedaActual
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 /** La pantalla de bienvenida es la del sistema (SplashScreen de Android 12+), no un destino de navegación. */
 @Composable
 fun AppNavHost(navController: NavHostController) {
     EjecutarAlPasarAPrimerPlano()
+    SincronizarMoneda()
 
     NavHost(
         navController = navController,
@@ -69,5 +75,14 @@ private fun EjecutarAlPasarAPrimerPlano() {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             tareas.ejecutar()
         }
+    }
+}
+
+/** Mantiene [MonedaActual] al día con la moneda guardada en Ajustes. */
+@Composable
+private fun SincronizarMoneda() {
+    val ajustes = koinInject<AjustesRepository>()
+    LaunchedEffect(ajustes) {
+        ajustes.ajustes.map { it.moneda }.distinctUntilChanged().catch { }.collect { MonedaActual.codigo = it }
     }
 }

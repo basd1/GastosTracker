@@ -11,6 +11,9 @@ import bas.orellana.gastostracker.domain.usecase.GetProgresoMetasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalAhorradoUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarAportacionUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarMetaUseCase
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.presentation.util.diaInicioMes
+import kotlinx.coroutines.flow.flatMapLatest
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.util.parseImporte
 import bas.orellana.gastostracker.presentation.util.randomId
@@ -87,7 +90,8 @@ class MetasViewModel(
     getProgresoMetasUseCase: GetProgresoMetasUseCase,
     getTotalAhorradoUseCase: GetTotalAhorradoUseCase,
     private val guardarMetaUseCase: GuardarMetaUseCase,
-    private val guardarAportacionUseCase: GuardarAportacionUseCase
+    private val guardarAportacionUseCase: GuardarAportacionUseCase,
+    ajustesRepository: AjustesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MetasState())
@@ -98,8 +102,10 @@ class MetasViewModel(
             getProgresoMetasUseCase().catch { }.collect { metas -> _state.update { it.copy(metas = metas) } }
         }
         viewModelScope.launch {
-            val mes = Mes.actual()
-            getTotalAhorradoUseCase(mes.primerDia, mes.ultimoDia).catch { }
+            @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+            ajustesRepository.diaInicioMes(this)
+                .flatMapLatest { dia -> Mes.actual(dia).periodo(dia).let { getTotalAhorradoUseCase(it.start, it.endInclusive) } }
+                .catch { }
                 .collect { total -> _state.update { it.copy(ahorradoEsteMes = total) } }
         }
     }

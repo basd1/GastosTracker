@@ -83,6 +83,7 @@ import bas.orellana.gastostracker.presentation.resources.resumen_ingresos
 import bas.orellana.gastostracker.presentation.resources.titulo_balance
 import bas.orellana.gastostracker.presentation.ui.components.etiquetaCategoria
 import bas.orellana.gastostracker.presentation.util.formatMoney
+import bas.orellana.gastostracker.presentation.util.subtituloPeriodo
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -174,7 +175,8 @@ fun BalanceScreen(
                             balance = state.balanceMes,
                             onMesAnterior = { viewModel.mesAnterior() },
                             onMesSiguiente = { viewModel.mesSiguiente() },
-                            showMonthPicker = { viewModel.showMonthPicker() }
+                            showMonthPicker = { viewModel.showMonthPicker() },
+                            diaInicioMes = state.diaInicioMes
                         )
                     }
 
@@ -268,7 +270,8 @@ private fun BalanceHeader(
     balance: Double,
     onMesAnterior: () -> Unit,
     onMesSiguiente: () -> Unit,
-    showMonthPicker: () -> Unit
+    showMonthPicker: () -> Unit,
+    diaInicioMes: Int = 1
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -286,7 +289,8 @@ private fun BalanceHeader(
                 mes = mes,
                 onAnterior = onMesAnterior,
                 onSiguiente = onMesSiguiente,
-                onElegir = showMonthPicker
+                onElegir = showMonthPicker,
+                subtitulo = subtituloPeriodo(mes, diaInicioMes)
             )
 
             Text(

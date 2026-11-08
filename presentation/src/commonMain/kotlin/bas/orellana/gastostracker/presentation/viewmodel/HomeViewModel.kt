@@ -21,6 +21,8 @@ import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.presentation.util.diaInicioMes
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
@@ -60,7 +62,8 @@ class HomeViewModel(
     private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
     private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase,
     private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
-    private val generarRecurrentesUseCase: GenerarRecurrentesUseCase
+    private val generarRecurrentesUseCase: GenerarRecurrentesUseCase,
+    ajustesRepository: AjustesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -70,6 +73,9 @@ class HomeViewModel(
 
     /** Rango de fechas del filtro; si hay uno, sustituye al mes en la lista. */
     private val rangoPropio = MutableStateFlow<ClosedRange<LocalDate>?>(null)
+
+    /** Día en que empieza el mes contable (Ajustes). */
+    private val diaInicio = ajustesRepository.diaInicioMes(viewModelScope)
 
     private val _categoriasPersonalizadas = MutableStateFlow<List<CategoriaPersonalizada>>(emptyList())
     val categoriasPersonalizadas: StateFlow<List<CategoriaPersonalizada>> = _categoriasPersonalizadas.asStateFlow()
@@ -85,6 +91,7 @@ class HomeViewModel(
         loadCategoriasPersonalizadas()
         observarAlertas()
         observarPresupuestos()
+        seguirDiaInicio()
     }
 
     /** Gastos del mes seleccionado (o del rango de fechas del filtro), filtrados en SQL. */
@@ -93,7 +100,8 @@ class HomeViewModel(
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             mesSeleccionado
-                .combine(rangoPropio) { mes, rango -> rango ?: mes.rango }
+                .combine(diaInicio) { mes, dia -> mes.periodo(dia) }
+                .combine(rangoPropio) { periodo, rango -> rango ?: periodo }
                 .flatMapLatest { rango -> getGastosEntreUseCase(rango.start, rango.endInclusive) }
                 .catch { e ->
                     _state.value = _state.value.copy(
@@ -127,12 +135,12 @@ class HomeViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observarAlertas() {
         viewModelScope.launch {
-            mesSeleccionado
-                .flatMapLatest { mes ->
+            mesSeleccionado.combine(diaInicio) { mes, dia -> mes to dia }
+                .flatMapLatest { (mes, dia) ->
                     val anterior = mes.anterior()
                     combine(
-                        getTotalesGastosPorCategoriaUseCase(mes.primerDia, mes.ultimoDia),
-                        getTotalesGastosPorCategoriaUseCase(anterior.primerDia, anterior.ultimoDia),
+                        mes.periodo(dia).let { getTotalesGastosPorCategoriaUseCase(it.start, it.endInclusive) },
+                        anterior.periodo(dia).let { getTotalesGastosPorCategoriaUseCase(it.start, it.endInclusive) },
                         getCategoriasPersonalizadasUseCase()
                     ) { actual, totalesAnterior, categorias -> calculateAlerts(mes, actual, totalesAnterior, categorias) }
                 }
@@ -148,10 +156,29 @@ class HomeViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observarPresupuestos() {
         viewModelScope.launch {
-            mesSeleccionado
-                .flatMapLatest { mes -> getEstadoPresupuestosUseCase(mes.primerDia, mes.ultimoDia) }
+            mesSeleccionado.combine(diaInicio) { mes, dia -> mes.periodo(dia) }
+                .flatMapLatest { periodo -> getEstadoPresupuestosUseCase(periodo.start, periodo.endInclusive) }
                 .catch { }
                 .collect { estados -> _state.update { it.copy(presupuestos = estados) } }
+        }
+    }
+
+
+    /**
+     * Al leer (o cambiar) el día de inicio del mes: si se estaba viendo el periodo actual, se pasa al
+     * periodo actual con el nuevo día (con el día 25, el 26 de noviembre ya es «diciembre»).
+     */
+    private fun seguirDiaInicio() {
+        viewModelScope.launch {
+            var anterior = 1
+            diaInicio.collect { dia ->
+                _state.update { it.copy(diaInicioMes = dia) }
+                if (mesSeleccionado.value == Mes.actual(anterior) && Mes.actual(dia) != mesSeleccionado.value) {
+                    mesSeleccionado.value = Mes.actual(dia)
+                    _state.update { it.copy(mes = Mes.actual(dia)) }
+                }
+                anterior = dia
+            }
         }
     }
 

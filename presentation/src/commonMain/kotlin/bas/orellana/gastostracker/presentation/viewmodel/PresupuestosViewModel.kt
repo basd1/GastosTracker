@@ -11,6 +11,9 @@ import bas.orellana.gastostracker.domain.usecase.EliminarPresupuestoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarPresupuestoUseCase
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.presentation.util.diaInicioMes
+import kotlinx.coroutines.flow.combine
 import bas.orellana.gastostracker.presentation.util.parseImporte
 import bas.orellana.gastostracker.presentation.util.toPlainStringTrimmed
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,7 +42,8 @@ data class PresupuestosState(
     val estados: List<EstadoPresupuesto> = emptyList(),
     val categoriasPersonalizadas: List<CategoriaPersonalizada> = emptyList(),
     val editor: EditorPresupuesto? = null,
-    val showMonthPicker: Boolean = false
+    val showMonthPicker: Boolean = false,
+    val diaInicioMes: Int = 1
 ) {
     private val clavesUsadas: Set<String> get() = estados.map { it.presupuesto.clave }.toSet()
 
@@ -57,7 +61,8 @@ class PresupuestosViewModel(
     private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase,
     private val guardarPresupuestoUseCase: GuardarPresupuestoUseCase,
     private val eliminarPresupuestoUseCase: EliminarPresupuestoUseCase,
-    getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase
+    getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
+    ajustesRepository: AjustesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(PresupuestosState())
@@ -65,11 +70,15 @@ class PresupuestosViewModel(
 
     private val mesSeleccionado = MutableStateFlow(_state.value.mes)
 
+    private val diaInicio = ajustesRepository.diaInicioMes(viewModelScope)
+
     init {
+        seguirDiaInicio()
         viewModelScope.launch {
             @OptIn(ExperimentalCoroutinesApi::class)
             mesSeleccionado
-                .flatMapLatest { mes -> getEstadoPresupuestosUseCase(mes.primerDia, mes.ultimoDia) }
+                .combine(diaInicio) { mes, dia -> mes.periodo(dia) }
+                .flatMapLatest { periodo -> getEstadoPresupuestosUseCase(periodo.start, periodo.endInclusive) }
                 .catch { }
                 .collect { estados -> _state.update { it.copy(estados = estados) } }
         }
@@ -77,6 +86,25 @@ class PresupuestosViewModel(
             getCategoriasPersonalizadasUseCase()
                 .catch { }
                 .collect { categorias -> _state.update { it.copy(categoriasPersonalizadas = categorias) } }
+        }
+    }
+
+
+    /**
+     * Al leer (o cambiar) el día de inicio del mes: si se estaba viendo el periodo actual, se pasa al
+     * periodo actual con el nuevo día (con el día 25, el 26 de noviembre ya es «diciembre»).
+     */
+    private fun seguirDiaInicio() {
+        viewModelScope.launch {
+            var anterior = 1
+            diaInicio.collect { dia ->
+                _state.update { it.copy(diaInicioMes = dia) }
+                if (mesSeleccionado.value == Mes.actual(anterior) && Mes.actual(dia) != mesSeleccionado.value) {
+                    mesSeleccionado.value = Mes.actual(dia)
+                    _state.update { it.copy(mes = Mes.actual(dia)) }
+                }
+                anterior = dia
+            }
         }
     }
 

@@ -9,9 +9,14 @@ data class TotalMensual(val mes: Mes, val ingresos: Double, val gastos: Double) 
 }
 
 /** Ingresos frente a gastos de cada uno de [meses] (los meses sin movimientos salen a 0). */
-fun totalesMensuales(gastos: List<GastoModel>, ingresos: List<IngresoModel>, meses: List<Mes>): List<TotalMensual> {
-    val gastosPorMes = gastos.groupBy { Mes.de(it.fecha) }.mapValues { (_, lista) -> lista.sumOf { it.monto } }
-    val ingresosPorMes = ingresos.groupBy { Mes.de(it.fecha) }.mapValues { (_, lista) -> lista.sumOf { it.monto } }
+fun totalesMensuales(
+    gastos: List<GastoModel>,
+    ingresos: List<IngresoModel>,
+    meses: List<Mes>,
+    diaInicio: Int = 1
+): List<TotalMensual> {
+    val gastosPorMes = gastos.groupBy { Mes.dePeriodo(it.fecha, diaInicio) }.mapValues { (_, lista) -> lista.sumOf { it.monto } }
+    val ingresosPorMes = ingresos.groupBy { Mes.dePeriodo(it.fecha, diaInicio) }.mapValues { (_, lista) -> lista.sumOf { it.monto } }
     return meses.map { TotalMensual(it, ingresosPorMes[it] ?: 0.0, gastosPorMes[it] ?: 0.0) }
 }
 
@@ -20,11 +25,12 @@ fun gastoMensualDeCategoria(
     gastos: List<GastoModel>,
     categoria: Categoria?,
     categoriaPersonalizadaId: String?,
-    meses: List<Mes>
+    meses: List<Mes>,
+    diaInicio: Int = 1
 ): List<Pair<Mes, Double>> {
     val porMes = gastos
         .filter { it.categoria == categoria && it.categoriaPersonalizadaId == categoriaPersonalizadaId }
-        .groupBy { Mes.de(it.fecha) }
+        .groupBy { Mes.dePeriodo(it.fecha, diaInicio) }
         .mapValues { (_, lista) -> lista.sumOf { it.monto } }
     return meses.map { it to (porMes[it] ?: 0.0) }
 }
@@ -52,10 +58,10 @@ data class ComparativaAnual(
     val porCategoria: List<ComparativaCategoria>
 )
 
-fun comparativaConAnioAnterior(gastos: List<GastoModel>, mes: Mes): ComparativaAnual {
+fun comparativaConAnioAnterior(gastos: List<GastoModel>, mes: Mes, diaInicio: Int = 1): ComparativaAnual {
     val anterior = mes.mas(-12)
-    val delMes = gastos.filter { it.fecha in mes }
-    val delAnterior = gastos.filter { it.fecha in anterior }
+    val delMes = mes.periodo(diaInicio).let { periodo -> gastos.filter { it.fecha in periodo } }
+    val delAnterior = anterior.periodo(diaInicio).let { periodo -> gastos.filter { it.fecha in periodo } }
     fun totales(lista: List<GastoModel>) =
         lista.groupBy { it.categoria to it.categoriaPersonalizadaId }.mapValues { (_, g) -> g.sumOf { it.monto } }
     val actuales = totales(delMes)

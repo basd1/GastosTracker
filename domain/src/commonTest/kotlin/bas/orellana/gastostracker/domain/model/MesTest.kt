@@ -1,6 +1,8 @@
 package bas.orellana.gastostracker.domain.model
 
+import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -36,5 +38,29 @@ class MesTest {
     fun `se ordenan cronologicamente`() {
         assertTrue(Mes(2025, 12) < Mes(2026, 1))
         assertEquals(listOf(Mes(2025, 1), Mes(2025, 7), Mes(2026, 1)), listOf(Mes(2026, 1), Mes(2025, 1), Mes(2025, 7)).sorted())
+    }
+
+    @Test
+    fun `periodos con dia de inicio`() {
+        assertEquals(LocalDate(2026, 11, 1)..LocalDate(2026, 11, 30), Mes(2026, 11).periodo(1))
+        assertEquals(LocalDate(2026, 11, 5)..LocalDate(2026, 12, 4), Mes(2026, 11).periodo(5))
+        assertEquals(LocalDate(2026, 10, 25)..LocalDate(2026, 11, 24), Mes(2026, 11).periodo(25))
+        assertEquals(LocalDate(2025, 12, 25)..LocalDate(2026, 1, 24), Mes(2026, 1).periodo(25))
+        assertEquals(LocalDate(2026, 1, 28)..LocalDate(2026, 2, 27), Mes(2026, 2).periodo(28))
+    }
+
+    @Test
+    fun `cada fecha cae en el periodo que la contiene`() {
+        for (dia in 1..28) {
+            var fecha = LocalDate(2025, 12, 1)
+            while (fecha < LocalDate(2027, 2, 1)) {
+                val mes = Mes.dePeriodo(fecha, dia)
+                assertTrue(fecha in mes.periodo(dia), "día $dia, fecha $fecha → $mes")
+                fecha = fecha.plus(1, DateTimeUnit.DAY)
+            }
+        }
+        assertEquals(Mes(2026, 11), Mes.dePeriodo(LocalDate(2026, 11, 8), 25))
+        assertEquals(Mes(2026, 12), Mes.dePeriodo(LocalDate(2026, 11, 26), 25))
+        assertEquals(Mes(2026, 10), Mes.dePeriodo(LocalDate(2026, 11, 3), 5))
     }
 }

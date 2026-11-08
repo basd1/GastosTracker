@@ -13,6 +13,8 @@ import bas.orellana.gastostracker.domain.repository.PresupuestoRepository
 import bas.orellana.gastostracker.domain.repository.RecurrenteRepository
 import bas.orellana.gastostracker.domain.repository.AhorroRepository
 import bas.orellana.gastostracker.domain.repository.CuentaRepository
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.domain.model.Ajustes
 import bas.orellana.gastostracker.domain.model.Cuenta
 import bas.orellana.gastostracker.domain.model.SaldoCuenta
 import bas.orellana.gastostracker.domain.model.Aportacion
@@ -233,4 +235,18 @@ class FakeCuentaRepository(private val gastos: FakeGastoRepository, private val 
         ingresos.datos.value = ingresos.datos.value.map { if (it.cuentaId == id) it.copy(cuentaId = null) else it }
         cuentas.value = cuentas.value.filterNot { it.id == id }
     }
+}
+
+class FakeAjustesRepository : AjustesRepository {
+    val datos = MutableStateFlow(Ajustes())
+    override val ajustes: Flow<Ajustes> = datos
+
+    override suspend fun setTemaOscuro(activo: Boolean) { datos.value = datos.value.copy(temaOscuro = activo) }
+    override suspend fun setMoneda(codigo: String) { datos.value = datos.value.copy(moneda = codigo) }
+    override suspend fun setDiaInicioMes(dia: Int) { datos.value = datos.value.copy(diaInicioMes = dia) }
+    override suspend fun setRecordatorio(activo: Boolean, hora: Int, minuto: Int) {
+        datos.value = datos.value.copy(recordatorioActivo = activo, recordatorioHora = hora, recordatorioMinuto = minuto)
+    }
+    override suspend fun setBloqueo(activo: Boolean) { datos.value = datos.value.copy(bloqueoActivo = activo) }
+    override suspend fun setUltimoResumenVisto(mes: String) { datos.value = datos.value.copy(ultimoResumenVisto = mes) }
 }

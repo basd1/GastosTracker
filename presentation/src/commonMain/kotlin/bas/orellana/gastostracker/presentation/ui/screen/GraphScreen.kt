@@ -119,23 +119,24 @@ fun GraphScreen(
     val cuentasState by cuentasViewModel.state.collectAsState()
     val categoriasPersonalizadas by graphViewModel.categoriasPersonalizadas.collectAsState()
     val todosLosGastos by graphViewModel.gastos.collectAsState()
+    val diaInicio by graphViewModel.diaInicioMes.collectAsState()
 
     var selectedPeriod by remember { mutableStateOf(PeriodFilter.THIS_MONTH) }
     var selectedMonth by remember { mutableStateOf(todayLocalDate().monthNumber) }
     var selectedYear by remember { mutableStateOf(todayLocalDate().year) }
     var showMonthPicker by remember { mutableStateOf(false) }
 
-    val filteredGastos = remember(todosLosGastos, selectedPeriod, selectedMonth, selectedYear) {
-        filterGastosByPeriod(todosLosGastos, selectedPeriod, selectedMonth, selectedYear)
+    val filteredGastos = remember(todosLosGastos, selectedPeriod, selectedMonth, selectedYear, diaInicio) {
+        filterGastosByPeriod(todosLosGastos, selectedPeriod, selectedMonth, selectedYear, diaInicio)
     }
 
     val gastosDelPeriodo = filteredGastos
     val ingresos by graphViewModel.ingresos.collectAsState()
     val peticionesFiltro = koinInject<PeticionesFiltro>()
     // Mes de referencia para la comparativa y la evolución: el elegido o, si no, el actual.
-    val mesReferencia = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) Mes(selectedYear, selectedMonth) else Mes.actual()
+    val mesReferencia = if (selectedPeriod == PeriodFilter.SPECIFIC_MONTH) Mes(selectedYear, selectedMonth) else Mes.actual(diaInicio)
     val abrirGastosDeCategoria: (CategoriaData) -> Unit = { dato ->
-        peticionesFiltro.pedir(peticionParaCategoria(dato, selectedPeriod, selectedMonth, selectedYear, todosLosGastos))
+        peticionesFiltro.pedir(peticionParaCategoria(dato, selectedPeriod, selectedMonth, selectedYear, todosLosGastos, diaInicio))
         navController.navigate(NavRoutes.HOME) {
             popUpTo(NavRoutes.HOME) { saveState = true }
             launchSingleTop = true
@@ -214,6 +215,7 @@ fun GraphScreen(
                                 selectedPeriod = selectedPeriod,
                                 selectedMonth = selectedMonth,
                                 selectedYear = selectedYear,
+                                diaInicio = diaInicio,
                                 categoriasPersonalizadas = categoriasPersonalizadas
                             )
                         }
@@ -235,7 +237,7 @@ fun GraphScreen(
                         }
 
                         item {
-                            IngresosVsGastosCard(gastos = todosLosGastos, ingresos = ingresos, hasta = mesReferencia)
+                            IngresosVsGastosCard(gastos = todosLosGastos, ingresos = ingresos, hasta = mesReferencia, diaInicio = diaInicio)
                         }
 
                         item {
@@ -243,12 +245,13 @@ fun GraphScreen(
                                 gastos = todosLosGastos,
                                 categoriasPersonalizadas = categoriasPersonalizadas,
                                 hasta = mesReferencia,
-                                categoriaInicial = null
+                                categoriaInicial = null,
+                                diaInicio = diaInicio
                             )
                         }
 
                         item {
-                            ComparativaAnualCard(gastos = todosLosGastos, categoriasPersonalizadas = categoriasPersonalizadas, mes = mesReferencia)
+                            ComparativaAnualCard(gastos = todosLosGastos, categoriasPersonalizadas = categoriasPersonalizadas, mes = mesReferencia, diaInicio = diaInicio)
                         }
 
                         item {
@@ -417,6 +420,7 @@ private fun SummaryCards(
     selectedPeriod: PeriodFilter,
     selectedMonth: Int = todayLocalDate().monthNumber,
     selectedYear: Int = todayLocalDate().year,
+    diaInicio: Int = 1,
     categoriasPersonalizadas: List<CategoriaPersonalizada>
 ) {
     val total = gastos.sumOf { it.monto }
@@ -426,7 +430,7 @@ private fun SummaryCards(
     val daysInPeriod = when (selectedPeriod) {
         PeriodFilter.THIS_MONTH -> {
             val now = todayLocalDate()
-            val startOfMonth = LocalDate(now.year, now.monthNumber, 1)
+            val startOfMonth = Mes.actual(diaInicio).periodo(diaInicio).start
             startOfMonth.daysUntil(now) + 1
         }
         PeriodFilter.LAST_3_MONTHS -> {
@@ -435,7 +439,7 @@ private fun SummaryCards(
             start.daysUntil(now) + 1
         }
         PeriodFilter.SPECIFIC_MONTH -> {
-            daysInMonth(selectedYear, selectedMonth)
+            Mes(selectedYear, selectedMonth).periodo(diaInicio).let { it.start.daysUntil(it.endInclusive) + 1 }
         }
         PeriodFilter.ALL -> {
             if (gastos.isEmpty()) 1
@@ -863,12 +867,13 @@ private fun filterGastosByPeriod(
     gastos: List<GastoModel>,
     period: PeriodFilter,
     selectedMonth: Int = todayLocalDate().monthNumber,
-    selectedYear: Int = todayLocalDate().year
+    selectedYear: Int = todayLocalDate().year,
+    diaInicio: Int = 1
 ): List<GastoModel> {
     val now = todayLocalDate()
     return when (period) {
         PeriodFilter.THIS_MONTH -> {
-            val startOfMonth = LocalDate(now.year, now.monthNumber, 1)
+            val startOfMonth = Mes.actual(diaInicio).periodo(diaInicio).start
             gastos.filter { it.fecha >= startOfMonth && it.fecha <= now }
         }
         PeriodFilter.LAST_3_MONTHS -> {
@@ -877,7 +882,8 @@ private fun filterGastosByPeriod(
         }
         PeriodFilter.ALL -> gastos
         PeriodFilter.SPECIFIC_MONTH -> {
-            gastos.filter { it.fecha.monthNumber == selectedMonth && it.fecha.year == selectedYear }
+            val periodo = Mes(selectedYear, selectedMonth).periodo(diaInicio)
+            gastos.filter { it.fecha in periodo }
         }
     }
 }
@@ -939,7 +945,8 @@ private fun peticionParaCategoria(
     periodo: PeriodFilter,
     mes: Int,
     anio: Int,
-    todos: List<GastoModel>
+    todos: List<GastoModel>,
+    diaInicio: Int
 ): PeticionFiltro {
     val porCategoria = FiltroGastos(
         categorias = setOfNotNull(dato.categoria),
@@ -947,7 +954,7 @@ private fun peticionParaCategoria(
     )
     val hoy = todayLocalDate()
     return when (periodo) {
-        PeriodFilter.THIS_MONTH -> PeticionFiltro(porCategoria, Mes.de(hoy))
+        PeriodFilter.THIS_MONTH -> PeticionFiltro(porCategoria, Mes.actual(diaInicio))
         PeriodFilter.SPECIFIC_MONTH -> PeticionFiltro(porCategoria, Mes(anio, mes))
         PeriodFilter.LAST_3_MONTHS -> PeticionFiltro(porCategoria.copy(desde = hoy.minus(3, DateTimeUnit.MONTH), hasta = hoy))
         PeriodFilter.ALL -> PeticionFiltro(porCategoria.copy(desde = todos.minOfOrNull { it.fecha } ?: hoy, hasta = hoy))

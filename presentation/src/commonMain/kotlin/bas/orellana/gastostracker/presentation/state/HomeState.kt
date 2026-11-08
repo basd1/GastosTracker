@@ -31,7 +31,9 @@ data class HomeState(
     val mes: Mes = Mes.actual(),
     val showMonthPicker: Boolean = false,
     /** Cómo van los presupuestos en el mes seleccionado. */
-    val presupuestos: List<EstadoPresupuesto> = emptyList()
+    val presupuestos: List<EstadoPresupuesto> = emptyList(),
+    /** Día en que empieza el mes contable (Ajustes). */
+    val diaInicioMes: Int = 1
 ) {
     val hayBusquedaOFiltro: Boolean get() = searchQuery.isNotBlank() || filtro.activo
 

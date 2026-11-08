@@ -286,6 +286,14 @@
     <string name="eliminar_cuenta_titulo">¿Eliminar «%1$s»?</string>
     <string name="eliminar_cuenta_mensaje">Sus gastos e ingresos no se borran: se quedan sin cuenta.</string>
 
+    <!-- Preferencias -->
+    <string name="ajustes_moneda">Moneda</string>
+    <string name="ajustes_dia_inicio">Día de inicio del mes</string>
+    <string name="ajustes_dia_inicio_detalle_1">El mes empieza el día 1</string>
+    <string name="ajustes_dia_inicio_detalle">El mes va del día %1$d al %2$d del mes siguiente</string>
+    <string name="dia_inicio_explicacion">Útil si cobras a final de mes: con el día 25, el periodo «noviembre» va del 25 de octubre al 24 de noviembre. Afecta al balance, la lista de gastos, los presupuestos, las alertas y los gráficos.</string>
+    <string name="periodo_rango">%1$s – %2$s</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

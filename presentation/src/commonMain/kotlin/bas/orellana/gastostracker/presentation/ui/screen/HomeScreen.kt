@@ -121,6 +121,7 @@ import bas.orellana.gastostracker.presentation.resources.titulo_gastos
 import bas.orellana.gastostracker.presentation.ui.components.etiquetaCategoria
 import bas.orellana.gastostracker.presentation.ui.components.nombre
 import bas.orellana.gastostracker.presentation.util.formatMoney
+import bas.orellana.gastostracker.presentation.util.subtituloPeriodo
 import bas.orellana.gastostracker.presentation.util.simboloMoneda
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -203,6 +204,7 @@ fun HomeScreen(
             onAlternarCategoria = { viewModel.alternarFiltroCategoria(it) },
             onAbrirFiltros = { viewModel.showFiltrosDialog() },
             onQuitarRango = { viewModel.aplicarFiltro(state.filtro.copy(desde = null, hasta = null)) },
+            diaInicioMes = state.diaInicioMes,
             onAlternarPersonalizada = { viewModel.alternarFiltroPersonalizada(it) },
             onClearFilters = { viewModel.clearFilters() },
             onSortOrderChange = { viewModel.updateSortOrder(it) },
@@ -303,6 +305,7 @@ private fun GastosList(
     onAlternarCategoria: (Categoria) -> Unit = {},
     onAbrirFiltros: () -> Unit = {},
     onQuitarRango: () -> Unit = {},
+    diaInicioMes: Int = 1,
     onAlternarPersonalizada: (String) -> Unit = {},
     onClearFilters: () -> Unit = {},
     onSortOrderChange: (SortOrder) -> Unit = {},
@@ -344,7 +347,8 @@ private fun GastosList(
                     onMesSiguiente = onMesSiguiente,
                     onElegirMes = onElegirMes,
                     rango = filtro.rangoFechas,
-                    onQuitarRango = onQuitarRango
+                    onQuitarRango = onQuitarRango,
+                    diaInicioMes = diaInicioMes
                 )
             }
             if (presupuestos.isNotEmpty()) {
@@ -609,7 +613,8 @@ private fun SummaryHeader(
     onMesSiguiente: () -> Unit,
     onElegirMes: () -> Unit,
     rango: ClosedRange<LocalDate>? = null,
-    onQuitarRango: () -> Unit = {}
+    onQuitarRango: () -> Unit = {},
+    diaInicioMes: Int = 1
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -637,6 +642,7 @@ private fun SummaryHeader(
                 onAnterior = onMesAnterior,
                 onSiguiente = onMesSiguiente,
                 onElegir = onElegirMes,
+                subtitulo = subtituloPeriodo(mes, diaInicioMes),
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }

@@ -40,7 +40,8 @@ class MetasViewModelTest {
         getProgresoMetasUseCase = GetProgresoMetasUseCase(ahorro),
         getTotalAhorradoUseCase = GetTotalAhorradoUseCase(ahorro),
         guardarMetaUseCase = GuardarMetaUseCase(ahorro),
-        guardarAportacionUseCase = GuardarAportacionUseCase(ahorro)
+        guardarAportacionUseCase = GuardarAportacionUseCase(ahorro),
+        ajustesRepository = FakeAjustesRepository()
     )
 
     private fun crearDetalle(id: String) = MetaDetalleViewModel(

@@ -6,6 +6,7 @@ import bas.orellana.gastostracker.data.repository.CategoriasRepositoryImpl
 import bas.orellana.gastostracker.data.repository.GastoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.IngresoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.PreferencesRepository
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
 import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.RecurrenteRepositoryImpl
 import bas.orellana.gastostracker.data.repository.AhorroRepositoryImpl
@@ -74,6 +75,7 @@ val sharedModule = module {
     single<GastoRepository> { GastoRepositoryImpl(get(), get()) }
     single<IngresoRepository> { IngresoRepositoryImpl(get(), get()) }
     single { PreferencesRepository(get()) }
+    single<AjustesRepository> { get<PreferencesRepository>() }
     single<PresupuestoRepository> { PresupuestoRepositoryImpl(get<AppDatabase>().presupuestoDao(), get()) }
     single<RecurrenteRepository> { RecurrenteRepositoryImpl(get(), get()) }
     single<AhorroRepository> { AhorroRepositoryImpl(get(), get()) }

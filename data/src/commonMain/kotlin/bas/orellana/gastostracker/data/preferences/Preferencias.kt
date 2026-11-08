@@ -5,6 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import bas.orellana.gastostracker.data.legacy.ClavesLegacy
 import bas.orellana.gastostracker.data.legacy.FuentesLegacy
 import bas.orellana.gastostracker.data.util.registrarError
@@ -17,6 +19,13 @@ internal const val PREFERENCIAS_FILE_NAME = "preferencias.preferences_pb"
 
 internal object ClavesPreferencias {
     val DARK_THEME = booleanPreferencesKey("dark_theme")
+    val MONEDA = stringPreferencesKey("moneda")
+    val DIA_INICIO_MES = intPreferencesKey("dia_inicio_mes")
+    val RECORDATORIO_ACTIVO = booleanPreferencesKey("recordatorio_activo")
+    val RECORDATORIO_HORA = intPreferencesKey("recordatorio_hora")
+    val RECORDATORIO_MINUTO = intPreferencesKey("recordatorio_minuto")
+    val BLOQUEO_ACTIVO = booleanPreferencesKey("bloqueo_activo")
+    val ULTIMO_RESUMEN_VISTO = stringPreferencesKey("ultimo_resumen_visto")
 
     /** El tema ya se copió desde los ficheros antiguos. */
     val PREFERENCIAS_MIGRADAS = booleanPreferencesKey("preferencias_migradas")

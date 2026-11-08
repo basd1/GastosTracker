@@ -9,6 +9,8 @@ import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseC
 import bas.orellana.gastostracker.domain.usecase.GetGastosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTodasLasAportacionesUseCase
 import bas.orellana.gastostracker.domain.usecase.GetIngresosUseCase
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.presentation.util.diaInicioMes
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +22,8 @@ class GraphViewModel(
     getGastosUseCase: GetGastosUseCase,
     getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
     getTodasLasAportacionesUseCase: GetTodasLasAportacionesUseCase,
-    getIngresosUseCase: GetIngresosUseCase
+    getIngresosUseCase: GetIngresosUseCase,
+    ajustesRepository: AjustesRepository
 ) : ViewModel() {
 
     val gastos: StateFlow<List<GastoModel>> = getGastosUseCase()
@@ -40,4 +43,7 @@ class GraphViewModel(
     val ingresos: StateFlow<List<IngresoModel>> = getIngresosUseCase()
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    /** Día en que empieza el mes contable (Ajustes). */
+    val diaInicioMes: StateFlow<Int> = ajustesRepository.diaInicioMes(viewModelScope)
 }

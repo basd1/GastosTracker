@@ -35,6 +35,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Euro
+import androidx.compose.material.icons.filled.CalendarMonth
+import bas.orellana.gastostracker.presentation.ui.dialogs.MonedaDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.DiaInicioMesDialog
+import bas.orellana.gastostracker.presentation.util.formatMoney
+import bas.orellana.gastostracker.presentation.resources.ajustes_seccion_preferencias
+import bas.orellana.gastostracker.presentation.resources.ajustes_moneda
+import bas.orellana.gastostracker.presentation.resources.ajustes_dia_inicio
+import bas.orellana.gastostracker.presentation.resources.ajustes_dia_inicio_detalle
+import bas.orellana.gastostracker.presentation.resources.ajustes_dia_inicio_detalle_1
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -95,6 +107,9 @@ fun AjustesScreen(
     datosViewModel: DatosViewModel = koinViewModel()
 ) {
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
+    val ajustes by settingsViewModel.ajustes.collectAsState()
+    var mostrarMoneda by remember { mutableStateOf(false) }
+    var mostrarDiaInicio by remember { mutableStateOf(false) }
     val homeState by homeViewModel.state.collectAsState()
     val datos by datosViewModel.state.collectAsState()
     val snackbar = remember { SnackbarHostState() }
@@ -167,6 +182,26 @@ fun AjustesScreen(
                     }
                 }
 
+                SeccionAjustes(stringResource(Res.string.ajustes_seccion_preferencias)) {
+                    AjusteItem(
+                        icono = Icons.Default.Euro,
+                        titulo = stringResource(Res.string.ajustes_moneda),
+                        detalle = "${ajustes.moneda} · ${formatMoney(1234.5)}",
+                        onClick = { mostrarMoneda = true }
+                    )
+                    HorizontalDivider()
+                    AjusteItem(
+                        icono = Icons.Default.CalendarMonth,
+                        titulo = stringResource(Res.string.ajustes_dia_inicio),
+                        detalle = if (ajustes.diaInicioMes == 1) {
+                            stringResource(Res.string.ajustes_dia_inicio_detalle_1)
+                        } else {
+                            stringResource(Res.string.ajustes_dia_inicio_detalle, ajustes.diaInicioMes, ajustes.diaInicioMes - 1)
+                        },
+                        onClick = { mostrarDiaInicio = true }
+                    )
+                }
+
                 SeccionAjustes(stringResource(Res.string.ajustes_seccion_organizacion)) {
                     AjusteItem(
                         icono = Icons.Default.Category,
@@ -229,6 +264,21 @@ fun AjustesScreen(
 
         if (homeState.showManageCategoriasDialog) {
             ManageCategoriasDialog(homeViewModel)
+        }
+
+        if (mostrarMoneda) {
+            MonedaDialog(
+                actual = ajustes.moneda,
+                onElegir = { settingsViewModel.setMoneda(it); mostrarMoneda = false },
+                onCancelar = { mostrarMoneda = false }
+            )
+        }
+        if (mostrarDiaInicio) {
+            DiaInicioMesDialog(
+                actual = ajustes.diaInicioMes,
+                onElegir = { settingsViewModel.setDiaInicioMes(it); mostrarDiaInicio = false },
+                onCancelar = { mostrarDiaInicio = false }
+            )
         }
 
         if (datos.copiaPorRestaurar != null) {

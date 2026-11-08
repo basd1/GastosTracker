@@ -74,6 +74,7 @@ import bas.orellana.gastostracker.presentation.ui.components.nombrePresupuesto
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.util.esEntradaImporteValida
 import bas.orellana.gastostracker.presentation.util.simboloMoneda
+import bas.orellana.gastostracker.presentation.util.subtituloPeriodo
 import bas.orellana.gastostracker.presentation.viewmodel.EditorPresupuesto
 import bas.orellana.gastostracker.presentation.viewmodel.PresupuestosState
 import bas.orellana.gastostracker.presentation.viewmodel.PresupuestosViewModel
@@ -128,6 +129,7 @@ fun PresupuestosScreen(
                         onAnterior = { viewModel.mesAnterior() },
                         onSiguiente = { viewModel.mesSiguiente() },
                         onElegir = { viewModel.showMonthPicker() },
+                        subtitulo = subtituloPeriodo(state.mes, state.diaInicioMes),
                         modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }

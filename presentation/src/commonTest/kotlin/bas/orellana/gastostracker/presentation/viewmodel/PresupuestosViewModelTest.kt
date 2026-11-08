@@ -40,7 +40,8 @@ class PresupuestosViewModelTest {
         getEstadoPresupuestosUseCase = GetEstadoPresupuestosUseCase(presupuestos, gastos),
         guardarPresupuestoUseCase = GuardarPresupuestoUseCase(presupuestos),
         eliminarPresupuestoUseCase = EliminarPresupuestoUseCase(presupuestos),
-        getCategoriasPersonalizadasUseCase = GetCategoriasPersonalizadasUseCase(categorias)
+        getCategoriasPersonalizadasUseCase = GetCategoriasPersonalizadasUseCase(categorias),
+        ajustesRepository = FakeAjustesRepository()
     )
 
     @Test

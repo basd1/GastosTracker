@@ -12,7 +12,8 @@ data class BalanceState(
     val mes: Mes = Mes.actual(),
     val totalIngresosMes: Double = 0.0,
     val totalGastosMes: Double = 0.0,
-    val totalAhorroMes: Double = 0.0
+    val totalAhorroMes: Double = 0.0,
+    val diaInicioMes: Int = 1
 ) {
     val balanceMes: Double get() = totalIngresosMes - totalGastosMes - totalAhorroMes
 }

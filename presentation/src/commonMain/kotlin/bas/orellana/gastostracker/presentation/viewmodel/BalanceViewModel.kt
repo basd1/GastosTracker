@@ -14,6 +14,8 @@ import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalAhorradoUseCase
+import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.presentation.util.diaInicioMes
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.presentation.state.AddIngresoState
@@ -41,7 +43,8 @@ class BalanceViewModel(
     private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
     private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
     private val generarRecurrentesUseCase: GenerarRecurrentesUseCase,
-    private val getTotalAhorradoUseCase: GetTotalAhorradoUseCase
+    private val getTotalAhorradoUseCase: GetTotalAhorradoUseCase,
+    ajustesRepository: AjustesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BalanceState())
@@ -53,9 +56,13 @@ class BalanceViewModel(
     /** Mes seleccionado en el Balance. */
     private val mesSeleccionado = MutableStateFlow(_state.value.mes)
 
+    /** Día en que empieza el mes contable (Ajustes). */
+    private val diaInicio = ajustesRepository.diaInicioMes(viewModelScope)
+
     init {
         loadIngresos()
         observarTotalesDelMes()
+        seguirDiaInicio()
     }
 
     /** Ingresos del mes seleccionado, filtrados en SQL. */
@@ -64,7 +71,8 @@ class BalanceViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             mesSeleccionado
-                .flatMapLatest { mes -> getIngresosEntreUseCase(mes.primerDia, mes.ultimoDia) }
+                .combine(diaInicio) { mes, dia -> mes.periodo(dia) }
+                .flatMapLatest { periodo -> getIngresosEntreUseCase(periodo.start, periodo.endInclusive) }
                 .catch { _state.update { it.copy(isLoading = false) } }
                 .collect { ingresos ->
                     _state.update { it.copy(ingresos = ingresos, isLoading = false) }
@@ -77,9 +85,10 @@ class BalanceViewModel(
     private fun observarTotalesDelMes() {
         viewModelScope.launch {
             mesSeleccionado
-                .flatMapLatest { mes ->
-                    val desde = mes.primerDia
-                    val hasta = mes.ultimoDia
+                .combine(diaInicio) { mes, dia -> mes.periodo(dia) }
+                .flatMapLatest { periodo ->
+                    val desde = periodo.start
+                    val hasta = periodo.endInclusive
                     combine(
                         getTotalIngresosUseCase(desde, hasta),
                         getTotalesGastosPorCategoriaUseCase(desde, hasta),
@@ -98,6 +107,25 @@ class BalanceViewModel(
                         )
                     }
                 }
+        }
+    }
+
+
+    /**
+     * Al leer (o cambiar) el día de inicio del mes: si se estaba viendo el periodo actual, se pasa al
+     * periodo actual con el nuevo día (con el día 25, el 26 de noviembre ya es «diciembre»).
+     */
+    private fun seguirDiaInicio() {
+        viewModelScope.launch {
+            var anterior = 1
+            diaInicio.collect { dia ->
+                _state.update { it.copy(diaInicioMes = dia) }
+                if (mesSeleccionado.value == Mes.actual(anterior) && Mes.actual(dia) != mesSeleccionado.value) {
+                    mesSeleccionado.value = Mes.actual(dia)
+                    _state.update { it.copy(mes = Mes.actual(dia)) }
+                }
+                anterior = dia
+            }
         }
     }
 

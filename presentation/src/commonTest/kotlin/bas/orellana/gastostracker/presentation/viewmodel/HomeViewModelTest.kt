@@ -5,11 +5,8 @@ import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Ajustes
 import bas.orellana.gastostracker.domain.model.MetodoPago
-import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
-import bas.orellana.gastostracker.domain.usecase.ContarMovimientosCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
-import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
@@ -19,7 +16,6 @@ import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
 import bas.orellana.gastostracker.domain.model.Presupuesto
 import bas.orellana.gastostracker.domain.model.NivelPresupuesto
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
-import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.state.SortOrder
@@ -71,10 +67,6 @@ class HomeViewModelTest {
         deleteGastoUseCase = DeleteGastoUseCase(gastos),
         deleteAllGastosUseCase = DeleteAllGastosUseCase(gastos),
         getCategoriasPersonalizadasUseCase = GetCategoriasPersonalizadasUseCase(categorias),
-        addCategoriaPersonalizadaUseCase = AddCategoriaPersonalizadaUseCase(categorias),
-        updateCategoriaPersonalizadaUseCase = UpdateCategoriaPersonalizadaUseCase(categorias),
-        deleteCategoriaPersonalizadaUseCase = DeleteCategoriaPersonalizadaUseCase(categorias),
-        contarMovimientosCategoriaUseCase = ContarMovimientosCategoriaUseCase(categorias),
         getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
         getEstadoPresupuestosUseCase = GetEstadoPresupuestosUseCase(presupuestos, gastos),
         guardarRecurrenteUseCase = GuardarRecurrenteUseCase(recurrentes),
@@ -495,71 +487,7 @@ class HomeViewModelTest {
         assertEquals(1.75, editado.monto)
     }
 
-    // ---------- Borrar categorías personalizadas ----------
-
-    @Test
-    fun `una categoria sin movimientos se borra sin preguntar`() = runTest {
-        categorias.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
-        val vm = crearViewModel()
-
-        vm.solicitarEliminarCategoria(categorias.datos.value.single())
-
-        assertTrue(categorias.datos.value.isEmpty())
-        assertNull(vm.manageCategoriasState.value.categoriaAEliminar)
-    }
-
-    @Test
-    fun `una categoria con movimientos pregunta a donde pasarlos y por defecto los pasa a Otros`() = runTest {
-        categorias.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
-        val mascotas = categorias.datos.value.single()
-        anadir(gasto("g1", personalizada = mascotas.id), gasto("g2", personalizada = mascotas.id))
-        val vm = crearViewModel()
-
-        vm.solicitarEliminarCategoria(mascotas)
-
-        val pregunta = vm.manageCategoriasState.value
-        assertEquals(mascotas, pregunta.categoriaAEliminar)
-        assertEquals(2, pregunta.movimientosCategoriaAEliminar)
-        assertEquals(CategoriaDestino.POR_DEFECTO, pregunta.destinoReasignacion)
-        assertEquals(1, categorias.datos.value.size, "Todavía no se ha borrado")
-
-        vm.confirmarEliminarCategoria()
-
-        assertTrue(categorias.datos.value.isEmpty())
-        assertTrue(gastos.datos.value.all { it.categoria == Categoria.OTROS && it.categoriaPersonalizadaId == null })
-        assertNull(vm.manageCategoriasState.value.categoriaAEliminar)
-    }
-
-    @Test
-    fun `se puede elegir otra categoria personalizada como destino`() = runTest {
-        categorias.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
-        categorias.addCategoriaPersonalizada("Animales", 0xFF80DEEA)
-        val (mascotas, animales) = categorias.datos.value
-        anadir(gasto("g1", personalizada = mascotas.id))
-        val vm = crearViewModel()
-
-        vm.solicitarEliminarCategoria(mascotas)
-        vm.updateDestinoReasignacion(CategoriaDestino.Personalizada(animales.id))
-        vm.confirmarEliminarCategoria()
-
-        assertEquals(listOf(animales), categorias.datos.value)
-        assertEquals(animales.id, gastos.datos.value.single().categoriaPersonalizadaId)
-    }
-
-    @Test
-    fun `cancelar el borrado no toca nada`() = runTest {
-        categorias.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
-        val mascotas = categorias.datos.value.single()
-        anadir(gasto("g1", personalizada = mascotas.id))
-        val vm = crearViewModel()
-
-        vm.solicitarEliminarCategoria(mascotas)
-        vm.cancelarEliminarCategoria()
-
-        assertEquals(listOf(mascotas), categorias.datos.value)
-        assertEquals(mascotas.id, gastos.datos.value.single().categoriaPersonalizadaId)
-        assertNull(vm.manageCategoriasState.value.categoriaAEliminar)
-    }
+    // ---------- Categorías personalizadas ----------
 
     @Test
     fun `al borrar la categoria por la que se filtra se quita el filtro`() = runTest {
@@ -567,8 +495,9 @@ class HomeViewModelTest {
         val mascotas = categorias.datos.value.single()
         val vm = crearViewModel()
         vm.alternarFiltroPersonalizada(mascotas.id)
+        assertTrue(vm.state.value.filtro.activo)
 
-        vm.solicitarEliminarCategoria(mascotas)
+        categorias.deleteCategoriaPersonalizada(mascotas.id, CategoriaDestino.POR_DEFECTO)
 
         assertFalse(vm.state.value.filtro.activo)
     }

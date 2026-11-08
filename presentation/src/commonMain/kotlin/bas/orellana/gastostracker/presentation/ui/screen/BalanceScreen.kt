@@ -66,7 +66,7 @@ import bas.orellana.gastostracker.presentation.ui.components.GradientTopAppBar
 import bas.orellana.gastostracker.presentation.ui.dialogs.AddIngresoDialog
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
 import bas.orellana.gastostracker.presentation.viewmodel.BalanceViewModel
-import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.CategoriasViewModel
 import bas.orellana.gastostracker.presentation.util.formatDDMMYYYY
 import org.koin.compose.viewmodel.koinViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.CuentasViewModel
@@ -92,12 +92,12 @@ fun BalanceScreen(
     navController: NavController,
     viewModel: BalanceViewModel = koinViewModel(),
     cuentasViewModel: CuentasViewModel = koinViewModel(),
-    homeViewModel: HomeViewModel = koinViewModel()
+    categoriasViewModel: CategoriasViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val addIngresoState by viewModel.addIngresoState.collectAsState()
     val cuentasState by cuentasViewModel.state.collectAsState()
-    val categoriasPersonalizadas by homeViewModel.categoriasPersonalizadas.collectAsState()
+    val categoriasPersonalizadas by categoriasViewModel.categoriasPersonalizadas.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()

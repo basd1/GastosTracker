@@ -3,18 +3,13 @@ package bas.orellana.gastostracker.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import bas.orellana.gastostracker.domain.model.Categoria
-import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.MetodoPago
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
-import bas.orellana.gastostracker.domain.usecase.AddCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.AddGastoUseCase
-import bas.orellana.gastostracker.domain.usecase.ContarMovimientosCategoriaUseCase
-import bas.orellana.gastostracker.domain.usecase.DeleteCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteAllGastosUseCase
-import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUseCase
 import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
@@ -34,7 +29,6 @@ import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.presentation.state.AddGastoState
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
-import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
 import bas.orellana.gastostracker.presentation.state.SortOrder
 import bas.orellana.gastostracker.presentation.state.FiltroGastos
 import bas.orellana.gastostracker.presentation.navigation.PeticionFiltro
@@ -59,10 +53,6 @@ class HomeViewModel(
     private val deleteGastoUseCase: DeleteGastoUseCase,
     private val deleteAllGastosUseCase: DeleteAllGastosUseCase,
     private val getCategoriasPersonalizadasUseCase: GetCategoriasPersonalizadasUseCase,
-    private val addCategoriaPersonalizadaUseCase: AddCategoriaPersonalizadaUseCase,
-    private val updateCategoriaPersonalizadaUseCase: UpdateCategoriaPersonalizadaUseCase,
-    private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase,
-    private val contarMovimientosCategoriaUseCase: ContarMovimientosCategoriaUseCase,
     private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
     private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase,
     private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
@@ -86,9 +76,6 @@ class HomeViewModel(
 
     private val _addGastoState = MutableStateFlow(AddGastoState())
     val addGastoState: StateFlow<AddGastoState> = _addGastoState.asStateFlow()
-
-    private val _manageCategoriasState = MutableStateFlow(ManageCategoriasState())
-    val manageCategoriasState: StateFlow<ManageCategoriasState> = _manageCategoriasState.asStateFlow()
 
     init {
         loadGastos()
@@ -132,6 +119,9 @@ class HomeViewModel(
                 .catch { }
                 .collect { categorias ->
                     _categoriasPersonalizadas.value = categorias
+                    // Si se borra una categoría por la que se estaba filtrando, ese filtro ya no tiene sentido.
+                    val ids = categorias.map { it.id }.toSet()
+                    _state.update { it.copy(filtro = it.filtro.copy(personalizadas = it.filtro.personalizadas intersect ids)) }
                 }
         }
     }
@@ -245,14 +235,6 @@ class HomeViewModel(
         _state.update { it.copy(showAddGastoDialog = false) }
     }
 
-    fun showManageCategoriasDialog() {
-        _state.update { it.copy(showManageCategoriasDialog = true) }
-    }
-
-    fun hideManageCategoriasDialog() {
-        _state.update { it.copy(showManageCategoriasDialog = false) }
-    }
-
     fun saveGasto(nombre: String, precio: String, categoria: Categoria?, categoriaPersonalizadaId: String?) {
         val monto = parseImporte(precio) ?: return
         val fecha = _addGastoState.value.fecha
@@ -335,104 +317,6 @@ class HomeViewModel(
         }
     }
 
-    fun addCategoriaPersonalizada(nombre: String, color: Long) {
-        viewModelScope.launch {
-            addCategoriaPersonalizadaUseCase(nombre, color)
-        }
-    }
-
-    /**
-     * Si la categoría no tiene movimientos se borra directamente; si tiene, se pregunta antes
-     * a qué categoría pasarlos (ver [confirmarEliminarCategoria]).
-     */
-    fun solicitarEliminarCategoria(categoria: CategoriaPersonalizada) {
-        viewModelScope.launch {
-            val movimientos = contarMovimientosCategoriaUseCase(categoria.id)
-            if (movimientos == 0) {
-                eliminarCategoria(categoria.id, CategoriaDestino.POR_DEFECTO)
-            } else {
-                _manageCategoriasState.update {
-                    it.copy(
-                        categoriaAEliminar = categoria,
-                        movimientosCategoriaAEliminar = movimientos,
-                        destinoReasignacion = CategoriaDestino.POR_DEFECTO
-                    )
-                }
-            }
-        }
-    }
-
-    fun updateDestinoReasignacion(destino: CategoriaDestino) {
-        _manageCategoriasState.update { it.copy(destinoReasignacion = destino) }
-    }
-
-    fun confirmarEliminarCategoria() {
-        val state = _manageCategoriasState.value
-        val categoria = state.categoriaAEliminar ?: return
-        cancelarEliminarCategoria()
-        viewModelScope.launch { eliminarCategoria(categoria.id, state.destinoReasignacion) }
-    }
-
-    fun cancelarEliminarCategoria() {
-        _manageCategoriasState.update {
-            it.copy(
-                categoriaAEliminar = null,
-                movimientosCategoriaAEliminar = 0,
-                destinoReasignacion = CategoriaDestino.POR_DEFECTO
-            )
-        }
-    }
-
-    private suspend fun eliminarCategoria(id: String, destino: CategoriaDestino) {
-        deleteCategoriaPersonalizadaUseCase(id, destino)
-        _categoriasPersonalizadas.update { categorias -> categorias.filter { it.id != id } }
-        // Si se estaba filtrando o editando esa categoría, ya no tiene sentido.
-        _state.update { it.copy(filtro = it.filtro.copy(personalizadas = it.filtro.personalizadas - id)) }
-        if (_manageCategoriasState.value.editCategoria?.id == id) cancelEditCategoria()
-    }
-
-    fun showEditCategoriaDialog(categoria: CategoriaPersonalizada) {
-        _manageCategoriasState.update {
-            it.copy(
-                editCategoria = categoria,
-                editNombre = categoria.nombre,
-                editColor = categoria.color
-            )
-        }
-    }
-
-    fun updateEditNombre(nombre: String) {
-        _manageCategoriasState.update { it.copy(editNombre = nombre) }
-    }
-
-    fun updateEditColor(color: Long) {
-        _manageCategoriasState.update { it.copy(editColor = color) }
-    }
-
-    fun saveEditCategoria() {
-        val state = _manageCategoriasState.value
-        val categoria = state.editCategoria ?: return
-        val updated = categoria.copy(
-            nombre = state.editNombre,
-            color = state.editColor
-        )
-        viewModelScope.launch {
-            updateCategoriaPersonalizadaUseCase(updated)
-            _categoriasPersonalizadas.value = _categoriasPersonalizadas.value.map {
-                if (it.id == updated.id) updated else it
-            }
-            _manageCategoriasState.update {
-                it.copy(editCategoria = null, editNombre = "", editColor = Categoria.PALETA_COLORES_PERSONALIZADOS.first())
-            }
-        }
-    }
-
-    fun cancelEditCategoria() {
-        _manageCategoriasState.update {
-            it.copy(editCategoria = null, editNombre = "", editColor = Categoria.PALETA_COLORES_PERSONALIZADOS.first())
-        }
-    }
-
     fun updateAddGastoConcepto(concepto: String) {
         _addGastoState.update { it.copy(concepto = concepto) }
     }
@@ -477,22 +361,6 @@ class HomeViewModel(
 
     fun resetAddGastoState() {
         _addGastoState.value = AddGastoState()
-    }
-
-    fun updateNuevaCategoria(nombre: String) {
-        _manageCategoriasState.update { current: ManageCategoriasState ->
-            current.copy(nuevaCategoria = nombre)
-        }
-    }
-
-    fun updateColorSeleccionado(color: Long) {
-        _manageCategoriasState.update { current: ManageCategoriasState ->
-            current.copy(colorSeleccionado = color)
-        }
-    }
-
-    fun resetManageCategoriasState() {
-        _manageCategoriasState.value = ManageCategoriasState()
     }
 
     fun updateSearchQuery(query: String) {

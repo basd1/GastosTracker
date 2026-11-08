@@ -108,7 +108,7 @@ import bas.orellana.gastostracker.presentation.util.rememberAbrirArchivo
 import bas.orellana.gastostracker.presentation.util.rememberGuardarArchivo
 import bas.orellana.gastostracker.presentation.viewmodel.AvisoDatos
 import bas.orellana.gastostracker.presentation.viewmodel.DatosViewModel
-import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.CategoriasViewModel
 import bas.orellana.gastostracker.presentation.viewmodel.SettingsViewModel
 import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
@@ -120,7 +120,7 @@ import org.koin.compose.viewmodel.koinViewModel
 fun AjustesScreen(
     navController: NavController,
     settingsViewModel: SettingsViewModel = koinViewModel(),
-    homeViewModel: HomeViewModel = koinViewModel(),
+    categoriasViewModel: CategoriasViewModel = koinViewModel(),
     datosViewModel: DatosViewModel = koinViewModel()
 ) {
     val isDarkTheme by settingsViewModel.isDarkTheme.collectAsState()
@@ -134,7 +134,7 @@ fun AjustesScreen(
         if (concedido) settingsViewModel.setRecordatorio(true)
         else scope.launch { snackbar.showSnackbar(getString(Res.string.aviso_permiso_notificaciones)) }
     }
-    val homeState by homeViewModel.state.collectAsState()
+    val categoriasState by categoriasViewModel.state.collectAsState()
     val datos by datosViewModel.state.collectAsState()
 
 
@@ -252,7 +252,7 @@ fun AjustesScreen(
                         icono = Icons.Default.Category,
                         titulo = stringResource(Res.string.administrar_categorias),
                         detalle = stringResource(Res.string.ajustes_categorias_detalle),
-                        onClick = { homeViewModel.showManageCategoriasDialog() }
+                        onClick = { categoriasViewModel.mostrarDialogo() }
                     )
                     HorizontalDivider()
                     AjusteItem(
@@ -327,8 +327,8 @@ fun AjustesScreen(
             }
         }
 
-        if (homeState.showManageCategoriasDialog) {
-            ManageCategoriasDialog(homeViewModel)
+        if (categoriasState.visible) {
+            ManageCategoriasDialog(categoriasViewModel)
         }
 
         if (mostrarMoneda) {

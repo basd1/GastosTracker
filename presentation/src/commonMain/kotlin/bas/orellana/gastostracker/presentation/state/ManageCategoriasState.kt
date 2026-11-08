@@ -5,6 +5,7 @@ import bas.orellana.gastostracker.domain.model.CategoriaDestino
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 
 data class ManageCategoriasState(
+    val visible: Boolean = false,
     val nuevaCategoria: String = "",
     val colorSeleccionado: Long = Categoria.PALETA_COLORES_PERSONALIZADOS.first(),
     val editCategoria: CategoriaPersonalizada? = null,

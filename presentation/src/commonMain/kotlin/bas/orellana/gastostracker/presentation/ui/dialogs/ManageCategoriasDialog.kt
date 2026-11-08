@@ -68,7 +68,7 @@ import bas.orellana.gastostracker.presentation.resources.accion_cancelar
 import bas.orellana.gastostracker.presentation.resources.eliminar_categoria_mensaje
 import bas.orellana.gastostracker.presentation.resources.eliminar_categoria_titulo
 import bas.orellana.gastostracker.presentation.ui.components.nombre
-import bas.orellana.gastostracker.presentation.viewmodel.HomeViewModel
+import bas.orellana.gastostracker.presentation.viewmodel.CategoriasViewModel
 import org.jetbrains.compose.resources.pluralStringResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -309,10 +309,10 @@ fun ManageCategoriasDialog(
     }
 }
 
-/** [ManageCategoriasDialog] conectado al [HomeViewModel], incluida la pregunta al borrar una categoría con movimientos. */
+/** [ManageCategoriasDialog] conectado al [CategoriasViewModel], incluida la pregunta al borrar una categoría con movimientos. */
 @Composable
-fun ManageCategoriasDialog(viewModel: HomeViewModel) {
-    val state by viewModel.manageCategoriasState.collectAsState()
+fun ManageCategoriasDialog(viewModel: CategoriasViewModel) {
+    val state by viewModel.state.collectAsState()
     val categoriasPersonalizadas by viewModel.categoriasPersonalizadas.collectAsState()
 
     ManageCategoriasDialog(
@@ -324,17 +324,14 @@ fun ManageCategoriasDialog(viewModel: HomeViewModel) {
         editColor = state.editColor,
         onColorSeleccionado = viewModel::updateColorSeleccionado,
         onNuevaCategoriaChange = viewModel::updateNuevaCategoria,
-        onAddCategoria = {
-            viewModel.addCategoriaPersonalizada(state.nuevaCategoria, state.colorSeleccionado)
-            viewModel.resetManageCategoriasState()
-        },
+        onAddCategoria = viewModel::addCategoria,
         onDeleteCategoria = viewModel::solicitarEliminarCategoria,
         onEditCategoria = viewModel::showEditCategoriaDialog,
         onEditNombreChange = viewModel::updateEditNombre,
         onEditColorChange = viewModel::updateEditColor,
         onSaveEdit = viewModel::saveEditCategoria,
         onCancelEdit = viewModel::cancelEditCategoria,
-        onDismiss = viewModel::hideManageCategoriasDialog
+        onDismiss = viewModel::ocultarDialogo
     )
 
     state.categoriaAEliminar?.let { categoria ->

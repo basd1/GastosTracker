@@ -21,7 +21,6 @@ data class HomeState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val showAddGastoDialog: Boolean = false,
-    val showManageCategoriasDialog: Boolean = false,
     val alerts: List<CategoryAlert> = emptyList(),
     val dismissedAlertKeys: Set<String> = emptySet(),
     val searchQuery: String = "",

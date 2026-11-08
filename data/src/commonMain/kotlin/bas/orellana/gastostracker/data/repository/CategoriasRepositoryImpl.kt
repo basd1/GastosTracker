@@ -62,6 +62,7 @@ class CategoriasRepositoryImpl(
             conexion.immediateTransaction {
                 db.gastoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
                 db.ingresoDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
+                db.recurrenteDao().reasignarCategoriaPersonalizada(id, categoria, categoriaPersonalizadaId)
                 db.presupuestoDao().eliminar(Presupuesto.claveDe(null, id))
                 dao.eliminar(id)
             }

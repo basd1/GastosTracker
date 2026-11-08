@@ -11,7 +11,9 @@ data class AddGastoState(
     val categoriaSeleccionada: Categoria? = null,
     val categoriaPersonalizadaSeleccionada: String? = null,
     val fecha: LocalDate = todayLocalDate(),
-    val gastoToEdit: GastoModel? = null
+    val gastoToEdit: GastoModel? = null,
+    /** Al crear: guardar como gasto fijo que se repite cada mes. */
+    val repetirMensual: Boolean = false
 ) {
     fun reset() = copy(
         concepto = "",
@@ -19,6 +21,7 @@ data class AddGastoState(
         categoriaSeleccionada = null,
         categoriaPersonalizadaSeleccionada = null,
         fecha = todayLocalDate(),
-        gastoToEdit = null
+        gastoToEdit = null,
+        repetirMensual = false
     )
 }

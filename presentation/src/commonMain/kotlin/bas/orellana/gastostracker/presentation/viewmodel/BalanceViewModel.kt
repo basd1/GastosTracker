@@ -12,6 +12,10 @@ import bas.orellana.gastostracker.domain.usecase.GetIngresosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
+import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
+import bas.orellana.gastostracker.domain.model.Recurrente
+import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.presentation.state.AddIngresoState
 import bas.orellana.gastostracker.presentation.state.BalanceState
 import bas.orellana.gastostracker.presentation.util.parseImporte
@@ -34,7 +38,9 @@ class BalanceViewModel(
     private val updateIngresoUseCase: UpdateIngresoUseCase,
     private val deleteIngresoUseCase: DeleteIngresoUseCase,
     private val getTotalIngresosUseCase: GetTotalIngresosUseCase,
-    private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase
+    private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
+    private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
+    private val generarRecurrentesUseCase: GenerarRecurrentesUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BalanceState())
@@ -148,6 +154,10 @@ class BalanceViewModel(
         _addIngresoState.update { it.copy(categoriaPersonalizadaId = id) }
     }
 
+    fun updateRepetir(repetir: Boolean) {
+        _addIngresoState.update { it.copy(repetirMensual = repetir) }
+    }
+
     fun updateFecha(fecha: LocalDate) {
         _addIngresoState.update { it.copy(fecha = fecha) }
     }
@@ -156,6 +166,25 @@ class BalanceViewModel(
         val montoDouble = parseImporte(monto) ?: return
         val ingresoToEdit = _addIngresoState.value.ingresoToEdit
         val fecha = _addIngresoState.value.fecha
+        if (ingresoToEdit == null && _addIngresoState.value.repetirMensual) {
+            // Ingreso fijo: se guarda el recurrente y la generación crea el ingreso de este mes (si ya toca).
+            val recurrente = Recurrente(
+                id = randomId(),
+                tipo = TipoMovimiento.INGRESO,
+                nombre = nombre,
+                monto = montoDouble,
+                categoria = _addIngresoState.value.categoriaSeleccionada,
+                categoriaPersonalizadaId = _addIngresoState.value.categoriaPersonalizadaId,
+                diaDelMes = fecha.dayOfMonth,
+                fechaInicio = fecha
+            )
+            viewModelScope.launch {
+                guardarRecurrenteUseCase(recurrente)
+                generarRecurrentesUseCase()
+                _state.update { it.copy(showAddIngresoDialog = false) }
+            }
+            return
+        }
         val ingreso = if (ingresoToEdit != null) {
             ingresoToEdit.copy(
                 nombre = nombre,

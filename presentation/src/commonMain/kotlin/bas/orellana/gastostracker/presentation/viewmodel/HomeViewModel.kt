@@ -19,6 +19,10 @@ import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
+import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
+import bas.orellana.gastostracker.domain.model.Recurrente
+import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.presentation.state.AddGastoState
@@ -52,7 +56,9 @@ class HomeViewModel(
     private val deleteCategoriaPersonalizadaUseCase: DeleteCategoriaPersonalizadaUseCase,
     private val contarMovimientosCategoriaUseCase: ContarMovimientosCategoriaUseCase,
     private val getTotalesGastosPorCategoriaUseCase: GetTotalesGastosPorCategoriaUseCase,
-    private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase
+    private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase,
+    private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
+    private val generarRecurrentesUseCase: GenerarRecurrentesUseCase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -176,6 +182,25 @@ class HomeViewModel(
         val monto = parseImporte(precio) ?: return
         val fecha = _addGastoState.value.fecha
         val gastoToEdit = _addGastoState.value.gastoToEdit
+        if (gastoToEdit == null && _addGastoState.value.repetirMensual) {
+            // Gasto fijo: se guarda el recurrente y la generación crea el gasto de este mes (si ya toca).
+            val recurrente = Recurrente(
+                id = randomId(),
+                tipo = TipoMovimiento.GASTO,
+                nombre = nombre,
+                monto = monto,
+                categoria = categoria,
+                categoriaPersonalizadaId = categoriaPersonalizadaId,
+                diaDelMes = fecha.dayOfMonth,
+                fechaInicio = fecha
+            )
+            viewModelScope.launch {
+                guardarRecurrenteUseCase(recurrente)
+                generarRecurrentesUseCase()
+                _state.update { it.copy(showAddGastoDialog = false) }
+            }
+            return
+        }
         val gasto = if (gastoToEdit != null) {
             gastoToEdit.copy(
                 nombre = nombre,
@@ -337,6 +362,10 @@ class HomeViewModel(
         _addGastoState.update { current: AddGastoState ->
             current.copy(categoriaPersonalizadaSeleccionada = id, categoriaSeleccionada = null)
         }
+    }
+
+    fun updateAddGastoRepetir(repetir: Boolean) {
+        _addGastoState.update { it.copy(repetirMensual = repetir) }
     }
 
     fun updateAddGastoFecha(fecha: LocalDate) {

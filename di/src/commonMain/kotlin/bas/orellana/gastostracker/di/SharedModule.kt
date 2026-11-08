@@ -7,6 +7,12 @@ import bas.orellana.gastostracker.data.repository.GastoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.IngresoRepositoryImpl
 import bas.orellana.gastostracker.data.repository.PreferencesRepository
 import bas.orellana.gastostracker.data.repository.PresupuestoRepositoryImpl
+import bas.orellana.gastostracker.data.repository.RecurrenteRepositoryImpl
+import bas.orellana.gastostracker.domain.repository.RecurrenteRepository
+import bas.orellana.gastostracker.domain.usecase.EliminarRecurrenteUseCase
+import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
+import bas.orellana.gastostracker.domain.usecase.GetRecurrentesUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.repository.PresupuestoRepository
 import bas.orellana.gastostracker.domain.usecase.EliminarPresupuestoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
@@ -50,6 +56,7 @@ val sharedModule = module {
     single<IngresoRepository> { IngresoRepositoryImpl(get(), get()) }
     single { PreferencesRepository(get()) }
     single<PresupuestoRepository> { PresupuestoRepositoryImpl(get<AppDatabase>().presupuestoDao(), get()) }
+    single<RecurrenteRepository> { RecurrenteRepositoryImpl(get(), get()) }
 
     factory { GetGastosUseCase(get()) }
     factory { GetGastosEntreUseCase(get()) }
@@ -75,4 +82,9 @@ val sharedModule = module {
     factory { GuardarPresupuestoUseCase(get()) }
     factory { EliminarPresupuestoUseCase(get()) }
     factory { GetEstadoPresupuestosUseCase(get(), get()) }
+
+    factory { GetRecurrentesUseCase(get()) }
+    factory { GuardarRecurrenteUseCase(get()) }
+    factory { EliminarRecurrenteUseCase(get()) }
+    factory { GenerarRecurrentesUseCase(get()) }
 }

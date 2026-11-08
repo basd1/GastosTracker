@@ -9,6 +9,11 @@ import bas.orellana.gastostracker.domain.repository.CategoriasRepository
 import bas.orellana.gastostracker.domain.repository.GastoRepository
 import bas.orellana.gastostracker.domain.repository.IngresoRepository
 import bas.orellana.gastostracker.domain.repository.PresupuestoRepository
+import bas.orellana.gastostracker.domain.repository.RecurrenteRepository
+import bas.orellana.gastostracker.domain.model.Recurrente
+import bas.orellana.gastostracker.domain.model.TipoMovimiento
+import bas.orellana.gastostracker.domain.model.gastoEn
+import bas.orellana.gastostracker.domain.model.ingresoEn
 import bas.orellana.gastostracker.domain.model.Presupuesto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -123,5 +128,39 @@ class FakePresupuestoRepository : PresupuestoRepository {
 
     override suspend fun eliminarPresupuesto(clave: String) {
         datos.value = datos.value.filterNot { it.clave == clave }
+    }
+}
+
+/** Genera como el repositorio de Room, escribiendo en los repositorios falsos de gastos e ingresos. */
+class FakeRecurrenteRepository(
+    private val gastos: FakeGastoRepository,
+    private val ingresos: FakeIngresoRepository
+) : RecurrenteRepository {
+    val datos = MutableStateFlow<List<Recurrente>>(emptyList())
+
+    override fun getRecurrentes(): Flow<List<Recurrente>> = datos
+
+    override suspend fun guardarRecurrente(recurrente: Recurrente) {
+        datos.value = datos.value.filterNot { it.id == recurrente.id } + recurrente
+    }
+
+    override suspend fun eliminarRecurrente(id: String) {
+        datos.value = datos.value.filterNot { it.id == id }
+    }
+
+    override suspend fun generarPendientes(hoy: LocalDate): Int {
+        var creados = 0
+        datos.value = datos.value.map { recurrente ->
+            val generacion = recurrente.ocurrenciasPendientes(hoy)
+            generacion.meses.forEach { mes ->
+                when (recurrente.tipo) {
+                    TipoMovimiento.GASTO -> if (gastos.datos.value.none { it.id == recurrente.idMovimiento(mes) }) gastos.addGasto(recurrente.gastoEn(mes))
+                    TipoMovimiento.INGRESO -> if (ingresos.datos.value.none { it.id == recurrente.idMovimiento(mes) }) ingresos.addIngreso(recurrente.ingresoEn(mes))
+                }
+                creados++
+            }
+            recurrente.copy(ultimoMesGenerado = generacion.ultimoMesRevisado)
+        }
+        return creados
     }
 }

@@ -1,18 +1,27 @@
 package bas.orellana.gastostracker.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import bas.orellana.gastostracker.presentation.TareasAlAbrir
 import bas.orellana.gastostracker.presentation.ui.screen.AjustesScreen
 import bas.orellana.gastostracker.presentation.ui.screen.BalanceScreen
 import bas.orellana.gastostracker.presentation.ui.screen.GraphScreen
 import bas.orellana.gastostracker.presentation.ui.screen.HomeScreen
 import bas.orellana.gastostracker.presentation.ui.screen.PresupuestosScreen
+import bas.orellana.gastostracker.presentation.ui.screen.RecurrentesScreen
+import org.koin.compose.koinInject
 
 /** La pantalla de bienvenida es la del sistema (SplashScreen de Android 12+), no un destino de navegación. */
 @Composable
 fun AppNavHost(navController: NavHostController) {
+    EjecutarAlPasarAPrimerPlano()
+
     NavHost(
         navController = navController,
         startDestination = NavRoutes.HOME
@@ -31,6 +40,21 @@ fun AppNavHost(navController: NavHostController) {
         }
         composable(NavRoutes.PRESUPUESTOS) {
             PresupuestosScreen(navController = navController)
+        }
+        composable(NavRoutes.RECURRENTES) {
+            RecurrentesScreen(navController = navController)
+        }
+    }
+}
+
+/** Lanza [TareasAlAbrir] cada vez que la app pasa a primer plano (Android e iOS). */
+@Composable
+private fun EjecutarAlPasarAPrimerPlano() {
+    val tareas = koinInject<TareasAlAbrir>()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, tareas) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            tareas.ejecutar()
         }
     }
 }

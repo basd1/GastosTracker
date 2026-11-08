@@ -11,7 +11,9 @@ data class AddIngresoState(
     val categoriaSeleccionada: Categoria? = null,
     val categoriaPersonalizadaId: String? = null,
     val fecha: LocalDate = todayLocalDate(),
-    val ingresoToEdit: IngresoModel? = null
+    val ingresoToEdit: IngresoModel? = null,
+    /** Al crear: guardar como ingreso fijo que se repite cada mes. */
+    val repetirMensual: Boolean = false
 ) {
     fun reset() = copy(
         concepto = "",
@@ -19,6 +21,7 @@ data class AddIngresoState(
         categoriaSeleccionada = null,
         categoriaPersonalizadaId = null,
         fecha = todayLocalDate(),
-        ingresoToEdit = null
+        ingresoToEdit = null,
+        repetirMensual = false
     )
 }

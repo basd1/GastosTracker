@@ -145,6 +145,27 @@
     <string name="sin_presupuestos_mensaje">Pon un límite mensual a una categoría o a todos tus gastos y verás cómo vas a lo largo del mes.</string>
     <string name="todas_categorias_con_presupuesto">Todas las categorías tienen ya presupuesto</string>
 
+    <!-- Recurrentes -->
+    <string name="titulo_recurrentes">Fijos</string>
+    <string name="ajustes_recurrentes">Gastos e ingresos fijos</string>
+    <string name="ajustes_recurrentes_detalle">Alquiler, nómina, suscripciones… se apuntan solos cada mes</string>
+    <string name="repetir_cada_mes">Repetir cada mes</string>
+    <string name="repetir_cada_mes_detalle">Se apuntará solo el día %1$d de cada mes</string>
+    <string name="gastos_fijos">Gastos fijos</string>
+    <string name="ingresos_fijos">Ingresos fijos</string>
+    <string name="total_al_mes">%1$s/mes</string>
+    <string name="dia_del_mes_n">Día %1$d de cada mes</string>
+    <string name="campo_dia_del_mes">Día del mes (1-31)</string>
+    <string name="dia_invalido">Escribe un día entre 1 y 31</string>
+    <string name="nuevo_gasto_fijo">Nuevo gasto fijo</string>
+    <string name="nuevo_ingreso_fijo">Nuevo ingreso fijo</string>
+    <string name="editar_fijo">Editar fijo</string>
+    <string name="activo">Activo</string>
+    <string name="pausado">Pausado</string>
+    <string name="sin_fijos">Todavía no tienes gastos ni ingresos fijos.</string>
+    <string name="fijos_explicacion">Se apuntan solos al abrir la app el día que toca. Si el mes es más corto, el último día del mes.</string>
+    <string name="sobrante_fijo">Te quedan %1$s al mes después de los fijos</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

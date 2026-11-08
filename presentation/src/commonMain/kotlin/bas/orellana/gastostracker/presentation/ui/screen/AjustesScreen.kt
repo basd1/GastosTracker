@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.EventRepeat
 import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,6 +47,8 @@ import bas.orellana.gastostracker.presentation.resources.Res
 import bas.orellana.gastostracker.presentation.resources.administrar_categorias
 import bas.orellana.gastostracker.presentation.resources.ajustes_categorias_detalle
 import bas.orellana.gastostracker.presentation.resources.ajustes_presupuestos_detalle
+import bas.orellana.gastostracker.presentation.resources.ajustes_recurrentes
+import bas.orellana.gastostracker.presentation.resources.ajustes_recurrentes_detalle
 import bas.orellana.gastostracker.presentation.resources.ajustes_seccion_apariencia
 import bas.orellana.gastostracker.presentation.resources.ajustes_seccion_organizacion
 import bas.orellana.gastostracker.presentation.resources.modo_oscuro
@@ -116,6 +119,13 @@ fun AjustesScreen(
                         titulo = stringResource(Res.string.titulo_presupuestos),
                         detalle = stringResource(Res.string.ajustes_presupuestos_detalle),
                         onClick = { navController.navigate(NavRoutes.PRESUPUESTOS) }
+                    )
+                    HorizontalDivider()
+                    AjusteItem(
+                        icono = Icons.Default.EventRepeat,
+                        titulo = stringResource(Res.string.ajustes_recurrentes),
+                        detalle = stringResource(Res.string.ajustes_recurrentes_detalle),
+                        onClick = { navController.navigate(NavRoutes.RECURRENTES) }
                     )
                 }
 

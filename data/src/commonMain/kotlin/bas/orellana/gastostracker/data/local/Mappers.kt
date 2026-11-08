@@ -4,12 +4,16 @@ import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
 import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
+import bas.orellana.gastostracker.data.local.entity.RecurrenteEntity
 import bas.orellana.gastostracker.data.local.entity.TotalPorCategoriaRow
 import bas.orellana.gastostracker.domain.model.Categoria
 import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.IngresoModel
 import bas.orellana.gastostracker.domain.model.Presupuesto
+import bas.orellana.gastostracker.domain.model.Mes
+import bas.orellana.gastostracker.domain.model.Recurrente
+import bas.orellana.gastostracker.domain.model.TipoMovimiento
 import bas.orellana.gastostracker.domain.model.TotalPorCategoria
 
 internal fun categoriaDesdeNombre(nombre: String?): Categoria? =
@@ -81,4 +85,35 @@ internal fun Presupuesto.toEntity() = PresupuestoEntity(
     categoria = categoria?.name,
     categoriaPersonalizadaId = categoriaPersonalizadaId,
     monto = monto
+)
+
+internal fun RecurrenteEntity.toModel(): Recurrente? {
+    val tipoModelo = TipoMovimiento.entries.find { it.name == tipo } ?: return null
+    return runCatching {
+        Recurrente(
+            id = id,
+            tipo = tipoModelo,
+            nombre = nombre,
+            monto = monto,
+            categoria = categoriaDesdeNombre(categoria),
+            categoriaPersonalizadaId = categoriaPersonalizadaId,
+            diaDelMes = diaDelMes,
+            fechaInicio = fechaInicio,
+            ultimoMesGenerado = ultimoMesGenerado?.let { Mes.parse(it) },
+            activo = activo
+        )
+    }.getOrNull()
+}
+
+internal fun Recurrente.toEntity() = RecurrenteEntity(
+    id = id,
+    tipo = tipo.name,
+    nombre = nombre,
+    monto = monto,
+    categoria = categoria?.name,
+    categoriaPersonalizadaId = categoriaPersonalizadaId,
+    diaDelMes = diaDelMes,
+    fechaInicio = fechaInicio,
+    ultimoMesGenerado = ultimoMesGenerado?.toString(),
+    activo = activo
 )

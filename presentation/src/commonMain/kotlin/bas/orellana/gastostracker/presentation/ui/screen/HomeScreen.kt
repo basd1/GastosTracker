@@ -227,7 +227,9 @@ fun HomeScreen(
                     )
                     viewModel.resetAddGastoState()
                 },
-                onDismiss = { viewModel.hideAddGastoDialog() }
+                onDismiss = { viewModel.hideAddGastoDialog() },
+                repetirMensual = addGastoState.repetirMensual,
+                onRepetirMensualChange = { viewModel.updateAddGastoRepetir(it) }
             )
         }
 

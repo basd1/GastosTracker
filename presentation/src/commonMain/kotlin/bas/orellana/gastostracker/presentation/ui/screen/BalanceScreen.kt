@@ -241,7 +241,9 @@ fun BalanceScreen(
                     )
                     viewModel.resetAddIngresoState()
                 },
-                onDismiss = { viewModel.hideAddIngresoDialog() }
+                onDismiss = { viewModel.hideAddIngresoDialog() },
+                repetirMensual = addIngresoState.repetirMensual,
+                onRepetirMensualChange = { viewModel.updateRepetir(it) }
             )
         }
 

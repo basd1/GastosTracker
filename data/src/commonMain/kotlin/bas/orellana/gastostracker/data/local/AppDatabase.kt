@@ -14,10 +14,12 @@ import bas.orellana.gastostracker.data.local.dao.CategoriaPersonalizadaDao
 import bas.orellana.gastostracker.data.local.dao.GastoDao
 import bas.orellana.gastostracker.data.local.dao.IngresoDao
 import bas.orellana.gastostracker.data.local.dao.PresupuestoDao
+import bas.orellana.gastostracker.data.local.dao.RecurrenteDao
 import bas.orellana.gastostracker.data.local.entity.CategoriaPersonalizadaEntity
 import bas.orellana.gastostracker.data.local.entity.GastoEntity
 import bas.orellana.gastostracker.data.local.entity.IngresoEntity
 import bas.orellana.gastostracker.data.local.entity.PresupuestoEntity
+import bas.orellana.gastostracker.data.local.entity.RecurrenteEntity
 import bas.orellana.gastostracker.domain.model.Categoria
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -27,13 +29,16 @@ import kotlinx.coroutines.IO
         GastoEntity::class,
         IngresoEntity::class,
         CategoriaPersonalizadaEntity::class,
-        PresupuestoEntity::class
+        PresupuestoEntity::class,
+        RecurrenteEntity::class
     ],
     version = VERSION_ACTUAL,
     exportSchema = true,
     autoMigrations = [
         // 2 → 3: tabla de presupuestos.
-        AutoMigration(from = 2, to = 3)
+        AutoMigration(from = 2, to = 3),
+        // 3 → 4: gastos e ingresos recurrentes.
+        AutoMigration(from = 3, to = 4)
     ]
 )
 @TypeConverters(Converters::class)
@@ -43,6 +48,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun ingresoDao(): IngresoDao
     abstract fun categoriaPersonalizadaDao(): CategoriaPersonalizadaDao
     abstract fun presupuestoDao(): PresupuestoDao
+    abstract fun recurrenteDao(): RecurrenteDao
 }
 
 // Room genera el `actual` de cada plataforma.
@@ -52,7 +58,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 }
 
 /** Versión actual del esquema (la de @Database). */
-internal const val VERSION_ACTUAL = 3
+internal const val VERSION_ACTUAL = 4
 
 // Si cambia el nombre o la ruta, revisa app/src/main/res/xml/data_extraction_rules.xml (copia de seguridad).
 internal const val NOMBRE_BASE_DATOS = "gastos_tracker.db"

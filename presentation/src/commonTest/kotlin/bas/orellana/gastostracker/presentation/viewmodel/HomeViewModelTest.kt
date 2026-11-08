@@ -12,6 +12,8 @@ import bas.orellana.gastostracker.domain.usecase.DeleteGastoUseCase
 import bas.orellana.gastostracker.domain.usecase.GetCategoriasPersonalizadasUseCase
 import bas.orellana.gastostracker.domain.usecase.GetGastosEntreUseCase
 import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
+import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
 import bas.orellana.gastostracker.domain.model.Presupuesto
 import bas.orellana.gastostracker.domain.model.NivelPresupuesto
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
@@ -45,6 +47,7 @@ class HomeViewModelTest {
     private val ingresos = FakeIngresoRepository()
     private val categorias = FakeCategoriasRepository(gastos, ingresos)
     private val presupuestos = FakePresupuestoRepository()
+    private val recurrentes = FakeRecurrenteRepository(gastos, ingresos)
 
     private val hoy = todayLocalDate()
     private val inicioMes = LocalDate(hoy.year, hoy.month, 1)
@@ -68,7 +71,9 @@ class HomeViewModelTest {
         deleteCategoriaPersonalizadaUseCase = DeleteCategoriaPersonalizadaUseCase(categorias),
         contarMovimientosCategoriaUseCase = ContarMovimientosCategoriaUseCase(categorias),
         getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
-        getEstadoPresupuestosUseCase = GetEstadoPresupuestosUseCase(presupuestos, gastos)
+        getEstadoPresupuestosUseCase = GetEstadoPresupuestosUseCase(presupuestos, gastos),
+        guardarRecurrenteUseCase = GuardarRecurrenteUseCase(recurrentes),
+        generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes)
     )
 
     private fun gasto(
@@ -263,6 +268,27 @@ class HomeViewModelTest {
 
         vm.mesAnterior()
         assertEquals(NivelPresupuesto.BIEN, vm.state.value.presupuestos.single().nivel)
+    }
+
+
+    // ---------- Recurrentes ----------
+
+    @Test
+    fun `guardar con repetir cada mes crea el recurrente y el gasto de este mes`() = runTest {
+        val vm = crearViewModel()
+        vm.showAddGastoDialog()
+        vm.updateAddGastoFecha(inicioMes)
+        vm.updateAddGastoRepetir(true)
+
+        vm.saveGasto("Netflix", "12,99", Categoria.OCIO, null)
+
+        val recurrente = recurrentes.datos.value.single()
+        assertEquals(1, recurrente.diaDelMes)
+        assertEquals(inicioMes, recurrente.fechaInicio)
+        val gasto = gastos.datos.value.single()
+        assertEquals(12.99, gasto.monto)
+        assertEquals(recurrente.idMovimiento(Mes.actual()), gasto.id)
+        assertFalse(vm.state.value.showAddGastoDialog)
     }
 
     // ---------- Alertas ----------

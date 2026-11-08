@@ -10,6 +10,8 @@ import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.usecase.GetTotalIngresosUseCase
 import bas.orellana.gastostracker.domain.usecase.GetTotalesGastosPorCategoriaUseCase
 import bas.orellana.gastostracker.domain.usecase.UpdateIngresoUseCase
+import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
+import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,6 +35,7 @@ class BalanceViewModelTest {
 
     private val gastos = FakeGastoRepository()
     private val ingresos = FakeIngresoRepository()
+    private val recurrentes = FakeRecurrenteRepository(gastos, ingresos)
 
     private val hoy = todayLocalDate()
     private val inicioMes = LocalDate(hoy.year, hoy.month, 1)
@@ -51,7 +54,9 @@ class BalanceViewModelTest {
         updateIngresoUseCase = UpdateIngresoUseCase(ingresos),
         deleteIngresoUseCase = DeleteIngresoUseCase(ingresos),
         getTotalIngresosUseCase = GetTotalIngresosUseCase(ingresos),
-        getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos)
+        getTotalesGastosPorCategoriaUseCase = GetTotalesGastosPorCategoriaUseCase(gastos),
+        guardarRecurrenteUseCase = GuardarRecurrenteUseCase(recurrentes),
+        generarRecurrentesUseCase = GenerarRecurrentesUseCase(recurrentes)
     )
 
     private fun ingreso(id: String, monto: Double, fecha: LocalDate) = IngresoModel(id, "Ingreso $id", monto, fecha)

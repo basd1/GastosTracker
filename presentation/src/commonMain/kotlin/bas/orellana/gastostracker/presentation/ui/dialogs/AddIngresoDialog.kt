@@ -2,6 +2,9 @@ package bas.orellana.gastostracker.presentation.ui.dialogs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import bas.orellana.gastostracker.presentation.ui.components.OpcionRepetirMensual
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -87,7 +90,9 @@ fun AddIngresoDialog(
     onCategoriaPersonalizadaChange: (String?) -> Unit,
     onFechaChange: (LocalDate) -> Unit,
     onSave: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    repetirMensual: Boolean = false,
+    onRepetirMensualChange: (Boolean) -> Unit = {}
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val importeValido = parseImporte(monto) != null
@@ -100,6 +105,7 @@ fun AddIngresoDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(24.dp)
             ) {
                 Text(
@@ -148,6 +154,11 @@ fun AddIngresoDialog(
                     fecha = fecha,
                     onClick = { showDatePicker = true }
                 )
+
+                if (ingresoToEdit == null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OpcionRepetirMensual(activado = repetirMensual, dia = fecha.dayOfMonth, onCambio = onRepetirMensualChange)
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(

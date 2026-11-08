@@ -6,4 +6,5 @@ object NavRoutes {
     const val GRAPH_SCREEN = "graph_screen"
     const val AJUSTES = "ajustes"
     const val PRESUPUESTOS = "presupuestos"
+    const val RECURRENTES = "recurrentes"
 }

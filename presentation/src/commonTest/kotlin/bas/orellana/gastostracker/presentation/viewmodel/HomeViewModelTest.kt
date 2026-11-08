@@ -22,6 +22,7 @@ import bas.orellana.gastostracker.domain.usecase.UpdateCategoriaPersonalizadaUse
 import bas.orellana.gastostracker.domain.usecase.UpdateGastoUseCase
 import bas.orellana.gastostracker.domain.util.todayLocalDate
 import bas.orellana.gastostracker.presentation.state.SortOrder
+import bas.orellana.gastostracker.presentation.state.FiltroGastos
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -128,7 +129,7 @@ class HomeViewModelTest {
     // ---------- Filtros ----------
 
     @Test
-    fun `filtra por categoria predefinida o personalizada, nunca por las dos a la vez`() = runTest {
+    fun `se puede filtrar por varias categorias a la vez, predefinidas y personalizadas`() = runTest {
         anadir(
             gasto("comida", categoria = Categoria.COMIDA),
             gasto("ocio", categoria = Categoria.OCIO),
@@ -136,16 +137,15 @@ class HomeViewModelTest {
         )
         val vm = crearViewModel()
 
-        vm.updateFilterCategoria(Categoria.COMIDA)
+        vm.alternarFiltroCategoria(Categoria.COMIDA)
         assertEquals(listOf("comida"), vm.idsVisibles)
 
-        vm.updateFilterCategoriaPersonalizada("cat-gato")
-        assertNull(vm.state.value.filterCategoria)
-        assertEquals(listOf("gato"), vm.idsVisibles)
+        vm.alternarFiltroPersonalizada("cat-gato")
+        assertEquals(setOf("comida", "gato"), vm.idsVisibles.toSet())
 
-        vm.updateFilterCategoria(Categoria.OCIO)
-        assertNull(vm.state.value.filterCategoriaPersonalizadaId)
-        assertEquals(listOf("ocio"), vm.idsVisibles)
+        vm.alternarFiltroCategoria(Categoria.COMIDA)
+        assertEquals(listOf("gato"), vm.idsVisibles)
+        assertEquals(1, vm.state.value.filtro.numeroActivos)
     }
 
     @Test
@@ -157,7 +157,7 @@ class HomeViewModelTest {
         )
         val vm = crearViewModel()
 
-        vm.updateFilterCategoria(Categoria.COMIDA)
+        vm.alternarFiltroCategoria(Categoria.COMIDA)
         vm.updateSearchQuery("súper")
         assertEquals(listOf("1"), vm.idsVisibles)
 
@@ -165,7 +165,34 @@ class HomeViewModelTest {
 
         assertEquals(3, vm.idsVisibles.size)
         assertEquals("", vm.state.value.searchQuery)
-        assertFalse(vm.state.value.hayFiltroCategoria)
+        assertFalse(vm.state.value.filtro.activo)
+    }
+
+    @Test
+    fun `el filtro de importe admite minimo, maximo o los dos`() = runTest {
+        anadir(gasto("5", monto = 5.0), gasto("20", monto = 20.0), gasto("50", monto = 50.0))
+        val vm = crearViewModel()
+
+        vm.aplicarFiltro(FiltroGastos(importeMin = 10.0))
+        assertEquals(setOf("20", "50"), vm.idsVisibles.toSet())
+        vm.aplicarFiltro(FiltroGastos(importeMax = 20.0))
+        assertEquals(setOf("5", "20"), vm.idsVisibles.toSet())
+        vm.aplicarFiltro(FiltroGastos(importeMin = 10.0, importeMax = 30.0))
+        assertEquals(listOf("20"), vm.idsVisibles)
+    }
+
+    @Test
+    fun `un rango de fechas sustituye al mes y elegir un mes lo quita`() = runTest {
+        anadir(gasto("actual", fecha = inicioMes), gasto("anterior", fecha = inicioMesAnterior))
+        val vm = crearViewModel()
+        assertEquals(listOf("actual"), vm.state.value.gastos.map { it.id })
+
+        vm.aplicarFiltro(FiltroGastos(desde = inicioMesAnterior, hasta = inicioMes))
+        assertEquals(setOf("actual", "anterior"), vm.state.value.gastos.map { it.id }.toSet())
+
+        vm.seleccionarMes(Mes.actual())
+        assertNull(vm.state.value.filtro.rangoFechas)
+        assertEquals(listOf("actual"), vm.state.value.gastos.map { it.id })
     }
 
     // ---------- Orden ----------
@@ -477,10 +504,10 @@ class HomeViewModelTest {
         categorias.addCategoriaPersonalizada("Mascotas", 0xFFEF9A9A)
         val mascotas = categorias.datos.value.single()
         val vm = crearViewModel()
-        vm.updateFilterCategoriaPersonalizada(mascotas.id)
+        vm.alternarFiltroPersonalizada(mascotas.id)
 
         vm.solicitarEliminarCategoria(mascotas)
 
-        assertNull(vm.state.value.filterCategoriaPersonalizadaId)
+        assertFalse(vm.state.value.filtro.activo)
     }
 }

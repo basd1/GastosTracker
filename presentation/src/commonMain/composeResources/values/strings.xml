@@ -245,6 +245,20 @@
     <string name="csv_nota">Nota</string>
     <string name="csv_metodo_pago">Método de pago</string>
 
+    <!-- Filtros de gastos -->
+    <string name="filtros">Filtros</string>
+    <string name="aplicar">Aplicar</string>
+    <string name="filtro_importe">Importe</string>
+    <string name="filtro_importe_min">Mínimo</string>
+    <string name="filtro_importe_max">Máximo</string>
+    <string name="filtro_rango_fechas">Rango de fechas</string>
+    <string name="filtro_rango_fechas_detalle">Con las dos fechas, la lista muestra ese periodo en lugar del mes.</string>
+    <string name="filtro_desde">Desde</string>
+    <string name="filtro_hasta">Hasta</string>
+    <string name="rango_personalizado">%1$s – %2$s</string>
+    <string name="gastos_del_periodo">Gastos del periodo</string>
+    <string name="quitar_rango">Quitar rango de fechas</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

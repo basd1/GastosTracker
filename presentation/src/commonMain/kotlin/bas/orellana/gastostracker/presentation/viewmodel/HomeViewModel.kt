@@ -30,6 +30,7 @@ import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.HomeState
 import bas.orellana.gastostracker.presentation.state.ManageCategoriasState
 import bas.orellana.gastostracker.presentation.state.SortOrder
+import bas.orellana.gastostracker.presentation.state.FiltroGastos
 import bas.orellana.gastostracker.presentation.util.parseImporte
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +67,9 @@ class HomeViewModel(
 
     private val mesSeleccionado = MutableStateFlow(_state.value.mes)
 
+    /** Rango de fechas del filtro; si hay uno, sustituye al mes en la lista. */
+    private val rangoPropio = MutableStateFlow<ClosedRange<LocalDate>?>(null)
+
     private val _categoriasPersonalizadas = MutableStateFlow<List<CategoriaPersonalizada>>(emptyList())
     val categoriasPersonalizadas: StateFlow<List<CategoriaPersonalizada>> = _categoriasPersonalizadas.asStateFlow()
 
@@ -82,13 +86,14 @@ class HomeViewModel(
         observarPresupuestos()
     }
 
-    /** Gastos del mes seleccionado, filtrados en SQL; cambian al cambiar de mes o de datos. */
+    /** Gastos del mes seleccionado (o del rango de fechas del filtro), filtrados en SQL. */
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun loadGastos() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
             mesSeleccionado
-                .flatMapLatest { mes -> getGastosEntreUseCase(mes.primerDia, mes.ultimoDia) }
+                .combine(rangoPropio) { mes, rango -> rango ?: mes.rango }
+                .flatMapLatest { rango -> getGastosEntreUseCase(rango.start, rango.endInclusive) }
                 .catch { e ->
                     _state.value = _state.value.copy(
                         isLoading = false,
@@ -308,7 +313,7 @@ class HomeViewModel(
         deleteCategoriaPersonalizadaUseCase(id, destino)
         _categoriasPersonalizadas.update { categorias -> categorias.filter { it.id != id } }
         // Si se estaba filtrando o editando esa categoría, ya no tiene sentido.
-        _state.update { if (it.filterCategoriaPersonalizadaId == id) it.copy(filterCategoriaPersonalizadaId = null) else it }
+        _state.update { it.copy(filtro = it.filtro.copy(personalizadas = it.filtro.personalizadas - id)) }
         if (_manageCategoriasState.value.editCategoria?.id == id) cancelEditCategoria()
     }
 
@@ -412,16 +417,23 @@ class HomeViewModel(
         _state.update { it.copy(searchQuery = query) }
     }
 
-    fun updateFilterCategoria(categoria: Categoria?) {
-        _state.update { it.copy(filterCategoria = categoria, filterCategoriaPersonalizadaId = null) }
-    }
+    fun alternarFiltroCategoria(categoria: Categoria) = aplicarFiltro(_state.value.filtro.alternarCategoria(categoria))
 
-    fun updateFilterCategoriaPersonalizada(id: String?) {
-        _state.update { it.copy(filterCategoriaPersonalizadaId = id, filterCategoria = null) }
+    fun alternarFiltroPersonalizada(id: String) = aplicarFiltro(_state.value.filtro.alternarPersonalizada(id))
+
+    fun showFiltrosDialog() = _state.update { it.copy(showFiltrosDialog = true) }
+
+    fun hideFiltrosDialog() = _state.update { it.copy(showFiltrosDialog = false) }
+
+    /** Sustituye todos los filtros. Si trae rango de fechas, la lista pasa a ser de ese rango en vez del mes. */
+    fun aplicarFiltro(filtro: FiltroGastos) {
+        _state.update { it.copy(filtro = filtro, showFiltrosDialog = false) }
+        rangoPropio.value = filtro.rangoFechas
     }
 
     fun clearFilters() {
-        _state.update { it.copy(filterCategoria = null, filterCategoriaPersonalizadaId = null, searchQuery = "") }
+        aplicarFiltro(FiltroGastos())
+        _state.update { it.copy(searchQuery = "") }
     }
 
     fun updateSortOrder(order: SortOrder) {
@@ -447,7 +459,9 @@ class HomeViewModel(
 
     fun seleccionarMes(mes: Mes) {
         mesSeleccionado.value = mes
-        _state.update { it.copy(mes = mes, showMonthPicker = false) }
+        // Elegir un mes quita el rango de fechas del filtro (si lo había).
+        rangoPropio.value = null
+        _state.update { it.copy(mes = mes, showMonthPicker = false, filtro = it.filtro.copy(desde = null, hasta = null)) }
     }
 
     fun mesAnterior() = seleccionarMes(mesSeleccionado.value.anterior())

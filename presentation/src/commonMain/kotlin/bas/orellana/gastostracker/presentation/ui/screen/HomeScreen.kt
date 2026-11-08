@@ -73,6 +73,17 @@ import bas.orellana.gastostracker.presentation.resources.presupuestos_del_mes
 import bas.orellana.gastostracker.presentation.resources.ver_todos
 import bas.orellana.gastostracker.presentation.ui.components.SelectorMes
 import bas.orellana.gastostracker.presentation.ui.dialogs.MonthYearPickerDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.FiltrosGastosDialog
+import bas.orellana.gastostracker.presentation.ui.dialogs.FiltrosRapidos
+import bas.orellana.gastostracker.presentation.state.FiltroGastos
+import bas.orellana.gastostracker.presentation.resources.filtros
+import bas.orellana.gastostracker.presentation.resources.gastos_del_periodo
+import bas.orellana.gastostracker.presentation.resources.quitar_rango
+import bas.orellana.gastostracker.presentation.resources.rango_personalizado
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import kotlinx.datetime.LocalDate
 import bas.orellana.gastostracker.presentation.resources.sin_gastos_mes
 import bas.orellana.gastostracker.presentation.state.CategoryAlert
 import bas.orellana.gastostracker.presentation.state.SortOrder
@@ -170,13 +181,14 @@ fun HomeScreen(
             categoriasPersonalizadas = categoriasPersonalizadas,
             alerts = state.alerts,
             searchQuery = state.searchQuery,
-            filterCategoria = state.filterCategoria,
-            filterCategoriaPersonalizadaId = state.filterCategoriaPersonalizadaId,
+            filtro = state.filtro,
             hayBusquedaOFiltro = state.hayBusquedaOFiltro,
             sortOrder = state.sortOrder,
             onSearchQueryChange = { viewModel.updateSearchQuery(it) },
-            onFilterCategoria = { viewModel.updateFilterCategoria(it) },
-            onFilterCategoriaPersonalizada = { viewModel.updateFilterCategoriaPersonalizada(it) },
+            onAlternarCategoria = { viewModel.alternarFiltroCategoria(it) },
+            onAbrirFiltros = { viewModel.showFiltrosDialog() },
+            onQuitarRango = { viewModel.aplicarFiltro(state.filtro.copy(desde = null, hasta = null)) },
+            onAlternarPersonalizada = { viewModel.alternarFiltroPersonalizada(it) },
             onClearFilters = { viewModel.clearFilters() },
             onSortOrderChange = { viewModel.updateSortOrder(it) },
             onDelete = { gasto ->
@@ -245,6 +257,15 @@ fun HomeScreen(
                 onDismiss = { viewModel.hideMonthPicker() }
             )
         }
+
+        if (state.showFiltrosDialog) {
+            FiltrosGastosDialog(
+                filtroActual = state.filtro,
+                categoriasPersonalizadas = categoriasPersonalizadas,
+                onAplicar = { viewModel.aplicarFiltro(it) },
+                onCancelar = { viewModel.hideFiltrosDialog() }
+            )
+        }
     }
     }
 }
@@ -257,13 +278,14 @@ private fun GastosList(
     categoriasPersonalizadas: List<CategoriaPersonalizada>,
     alerts: List<CategoryAlert> = emptyList(),
     searchQuery: String = "",
-    filterCategoria: Categoria? = null,
-    filterCategoriaPersonalizadaId: String? = null,
+    filtro: FiltroGastos = FiltroGastos(),
     hayBusquedaOFiltro: Boolean = false,
     sortOrder: SortOrder = SortOrder.DATE_DESC,
     onSearchQueryChange: (String) -> Unit = {},
-    onFilterCategoria: (Categoria?) -> Unit = {},
-    onFilterCategoriaPersonalizada: (String?) -> Unit = {},
+    onAlternarCategoria: (Categoria) -> Unit = {},
+    onAbrirFiltros: () -> Unit = {},
+    onQuitarRango: () -> Unit = {},
+    onAlternarPersonalizada: (String) -> Unit = {},
     onClearFilters: () -> Unit = {},
     onSortOrderChange: (SortOrder) -> Unit = {},
     onDelete: (GastoModel) -> Unit,
@@ -302,7 +324,9 @@ private fun GastosList(
                     cantidad = gastosDelMes.size,
                     onMesAnterior = onMesAnterior,
                     onMesSiguiente = onMesSiguiente,
-                    onElegirMes = onElegirMes
+                    onElegirMes = onElegirMes,
+                    rango = filtro.rangoFechas,
+                    onQuitarRango = onQuitarRango
                 )
             }
             if (presupuestos.isNotEmpty()) {
@@ -359,6 +383,21 @@ private fun GastosList(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
+                    trailingIcon = {
+                        IconButton(onClick = onAbrirFiltros) {
+                            BadgedBox(
+                                badge = {
+                                    if (filtro.numeroActivos > 0) Badge { Text(filtro.numeroActivos.toString()) }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.FilterList,
+                                    contentDescription = stringResource(Res.string.filtros),
+                                    tint = if (filtro.activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
@@ -366,59 +405,13 @@ private fun GastosList(
                 )
             }
             item {
-                val hasActiveFilter = filterCategoria != null || filterCategoriaPersonalizadaId != null
-                Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Categoria.entries.take(6).forEach { cat ->
-                            FilterChip(
-                                selected = filterCategoria == cat,
-                                onClick = {
-                                    if (filterCategoria == cat) onFilterCategoria(null)
-                                    else onFilterCategoria(cat)
-                                },
-                                label = { Text(cat.nombre(), fontSize = 11.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            )
-                        }
-                    }
-                    if (categoriasPersonalizadas.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            categoriasPersonalizadas.take(4).forEach { cat ->
-                                FilterChip(
-                                    selected = filterCategoriaPersonalizadaId == cat.id,
-                                    onClick = {
-                                        if (filterCategoriaPersonalizadaId == cat.id) onFilterCategoriaPersonalizada(null)
-                                        else onFilterCategoriaPersonalizada(cat.id)
-                                    },
-                                    label = { Text(cat.nombre, fontSize = 11.sp) },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = Color(cat.color).copy(alpha = 0.4f),
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                )
-                            }
-                        }
-                    }
-                    if (hasActiveFilter) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        TextButton(
-                            onClick = onClearFilters,
-                            modifier = Modifier.padding(0.dp)
-                        ) {
-                            Text(stringResource(Res.string.limpiar_filtros), fontSize = 12.sp, color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
-                }
+                FiltrosRapidos(
+                    filtro = filtro,
+                    categoriasPersonalizadas = categoriasPersonalizadas,
+                    onAlternarCategoria = onAlternarCategoria,
+                    onAlternarPersonalizada = onAlternarPersonalizada,
+                    onLimpiar = onClearFilters
+                )
             }
             if (gastosVisibles.isEmpty() && hayBusquedaOFiltro) {
                 item {
@@ -596,20 +589,39 @@ private fun SummaryHeader(
     cantidad: Int,
     onMesAnterior: () -> Unit,
     onMesSiguiente: () -> Unit,
-    onElegirMes: () -> Unit
+    onElegirMes: () -> Unit,
+    rango: ClosedRange<LocalDate>? = null,
+    onQuitarRango: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         shape = MaterialTheme.shapes.small
     ) {
-        SelectorMes(
-            mes = mes,
-            onAnterior = onMesAnterior,
-            onSiguiente = onMesSiguiente,
-            onElegir = onElegirMes,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
+        if (rango != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(Res.string.rango_personalizado, rango.start.formatDDMMYYYY(), rango.endInclusive.formatDDMMYYYY()),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onQuitarRango) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.quitar_rango))
+                }
+            }
+        } else {
+            SelectorMes(
+                mes = mes,
+                onAnterior = onMesAnterior,
+                onSiguiente = onMesSiguiente,
+                onElegir = onElegirMes,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+        }
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -619,7 +631,7 @@ private fun SummaryHeader(
         ) {
             Column {
                 Text(
-                    text = stringResource(Res.string.gastos_del_mes),
+                    text = stringResource(if (rango != null) Res.string.gastos_del_periodo else Res.string.gastos_del_mes),
                     fontSize = 13.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

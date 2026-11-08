@@ -15,7 +15,6 @@ data class CategoryAlert(
     val gastoActual: Double,
     val gastoAnterior: Double
 )
-
 data class HomeState(
     val gastos: List<GastoModel> = emptyList(),
     val isLoading: Boolean = false,
@@ -25,8 +24,8 @@ data class HomeState(
     val alerts: List<CategoryAlert> = emptyList(),
     val dismissedAlertKeys: Set<String> = emptySet(),
     val searchQuery: String = "",
-    val filterCategoria: Categoria? = null,
-    val filterCategoriaPersonalizadaId: String? = null,
+    val filtro: FiltroGastos = FiltroGastos(),
+    val showFiltrosDialog: Boolean = false,
     val sortOrder: SortOrder = SortOrder.DATE_DESC,
     /** Mes que se ve en la pantalla de Gastos: la lista, el total y las alertas son de este mes. */
     val mes: Mes = Mes.actual(),
@@ -34,28 +33,22 @@ data class HomeState(
     /** Cómo van los presupuestos en el mes seleccionado. */
     val presupuestos: List<EstadoPresupuesto> = emptyList()
 ) {
-    val hayFiltroCategoria: Boolean get() = filterCategoria != null || filterCategoriaPersonalizadaId != null
-
-    val hayBusquedaOFiltro: Boolean get() = searchQuery.isNotBlank() || hayFiltroCategoria
+    val hayBusquedaOFiltro: Boolean get() = searchQuery.isNotBlank() || filtro.activo
 
     /** Los gastos que se ven en la lista: con la búsqueda y el filtro aplicados y en el orden elegido. */
-    val gastosVisibles: List<GastoModel> by lazy {
-        filtrarYOrdenarGastos(gastos, searchQuery, filterCategoria, filterCategoriaPersonalizadaId, sortOrder)
-    }
+    val gastosVisibles: List<GastoModel> by lazy { filtrarYOrdenarGastos(gastos, searchQuery, filtro, sortOrder) }
 }
 
 internal fun filtrarYOrdenarGastos(
     gastos: List<GastoModel>,
     busqueda: String,
-    categoria: Categoria?,
-    categoriaPersonalizadaId: String?,
+    filtro: FiltroGastos,
     orden: SortOrder
 ): List<GastoModel> {
     val texto = busqueda.trim()
     val filtrados = gastos.filter { gasto ->
         (texto.isEmpty() || gasto.nombre.contains(texto, ignoreCase = true) || gasto.nota?.contains(texto, ignoreCase = true) == true) &&
-            (categoria == null || gasto.categoria == categoria) &&
-            (categoriaPersonalizadaId == null || gasto.categoriaPersonalizadaId == categoriaPersonalizadaId)
+            filtro.acepta(gasto)
     }
     // Las ordenaciones son estables: a igualdad, se mantiene el orden del repositorio.
     return when (orden) {

@@ -307,6 +307,15 @@
     <string name="desbloquear">Desbloquear</string>
     <string name="hora_minuto">%1$s:%2$s</string>
 
+    <!-- Resumen mensual -->
+    <string name="resumen_mensual_titulo">Resumen de %1$s</string>
+    <string name="resumen_mensual_total">Gastaste %1$s</string>
+    <string name="resumen_mensual_menos">, un %1$s menos que el mes anterior</string>
+    <string name="resumen_mensual_mas">, un %1$s más que el mes anterior</string>
+    <string name="resumen_mensual_igual">, igual que el mes anterior</string>
+    <string name="resumen_mensual_top">Tu categoría más alta fue %1$s (%2$s).</string>
+    <string name="entendido">Entendido</string>
+
     <!-- Meses -->
     <string-array name="meses">
         <item>Enero</item>

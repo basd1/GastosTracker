@@ -5,6 +5,7 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.EstadoPresupuesto
+import bas.orellana.gastostracker.domain.model.ResumenMensual
 
 /** Una categoría en la que este mes se ha gastado más que el mes pasado. */
 data class CategoryAlert(
@@ -33,7 +34,9 @@ data class HomeState(
     /** Cómo van los presupuestos en el mes seleccionado. */
     val presupuestos: List<EstadoPresupuesto> = emptyList(),
     /** Día en que empieza el mes contable (Ajustes). */
-    val diaInicioMes: Int = 1
+    val diaInicioMes: Int = 1,
+    /** Resumen del mes anterior, solo hasta que se descarta. */
+    val resumenMensual: ResumenMensual? = null
 ) {
     val hayBusquedaOFiltro: Boolean get() = searchQuery.isNotBlank() || filtro.activo
 

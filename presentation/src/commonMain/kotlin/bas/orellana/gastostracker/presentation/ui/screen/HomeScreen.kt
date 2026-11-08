@@ -68,6 +68,16 @@ import bas.orellana.gastostracker.domain.model.CategoriaPersonalizada
 import bas.orellana.gastostracker.domain.model.GastoModel
 import bas.orellana.gastostracker.domain.model.Mes
 import bas.orellana.gastostracker.domain.model.EstadoPresupuesto
+import bas.orellana.gastostracker.domain.model.ResumenMensual
+import bas.orellana.gastostracker.presentation.ui.components.mesYAnio
+import bas.orellana.gastostracker.presentation.util.formatDecimal
+import bas.orellana.gastostracker.presentation.resources.resumen_mensual_titulo
+import bas.orellana.gastostracker.presentation.resources.resumen_mensual_total
+import bas.orellana.gastostracker.presentation.resources.resumen_mensual_menos
+import bas.orellana.gastostracker.presentation.resources.resumen_mensual_mas
+import bas.orellana.gastostracker.presentation.resources.resumen_mensual_igual
+import bas.orellana.gastostracker.presentation.resources.resumen_mensual_top
+import bas.orellana.gastostracker.presentation.resources.entendido
 import bas.orellana.gastostracker.presentation.ui.components.FilaPresupuesto
 import bas.orellana.gastostracker.presentation.resources.presupuestos_del_mes
 import bas.orellana.gastostracker.presentation.resources.ver_todos
@@ -214,6 +224,8 @@ fun HomeScreen(
             onAbrirFiltros = { viewModel.showFiltrosDialog() },
             onQuitarRango = { viewModel.aplicarFiltro(state.filtro.copy(desde = null, hasta = null)) },
             diaInicioMes = state.diaInicioMes,
+            resumenMensual = state.resumenMensual,
+            onDescartarResumen = { viewModel.descartarResumenMensual() },
             onAlternarPersonalizada = { viewModel.alternarFiltroPersonalizada(it) },
             onClearFilters = { viewModel.clearFilters() },
             onSortOrderChange = { viewModel.updateSortOrder(it) },
@@ -315,6 +327,8 @@ private fun GastosList(
     onAbrirFiltros: () -> Unit = {},
     onQuitarRango: () -> Unit = {},
     diaInicioMes: Int = 1,
+    resumenMensual: ResumenMensual? = null,
+    onDescartarResumen: () -> Unit = {},
     onAlternarPersonalizada: (String) -> Unit = {},
     onClearFilters: () -> Unit = {},
     onSortOrderChange: (SortOrder) -> Unit = {},
@@ -359,6 +373,9 @@ private fun GastosList(
                     onQuitarRango = onQuitarRango,
                     diaInicioMes = diaInicioMes
                 )
+            }
+            if (resumenMensual != null) {
+                item { ResumenMensualCard(resumenMensual, categoriasPersonalizadas, onDescartarResumen) }
             }
             if (presupuestos.isNotEmpty()) {
                 item {
@@ -811,6 +828,55 @@ private fun GastoItem(
                     fontWeight = FontWeight.Bold,
                     color = categoriaColor
                 )
+            }
+        }
+    }
+}
+
+/** Tarjeta "Resumen de octubre" que sale una vez al empezar un mes nuevo. */
+@Composable
+private fun ResumenMensualCard(
+    resumen: ResumenMensual,
+    categoriasPersonalizadas: List<CategoriaPersonalizada>,
+    onDescartar: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        shape = MaterialTheme.shapes.small
+    ) {
+        Column(modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp)) {
+            Text(
+                text = "📅 " + stringResource(Res.string.resumen_mensual_titulo, mesYAnio(resumen.mes.numero, resumen.mes.anio)),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            val variacion = resumen.comparativa.variacion
+            val comparacion = when {
+                variacion == null -> ""
+                kotlin.math.abs(variacion) < 0.005 -> stringResource(Res.string.resumen_mensual_igual)
+                variacion < 0 -> stringResource(Res.string.resumen_mensual_menos, formatDecimal(kotlin.math.abs(variacion) * 100, 0) + " %")
+                else -> stringResource(Res.string.resumen_mensual_mas, formatDecimal(variacion * 100, 0) + " %")
+            }
+            Text(
+                text = stringResource(Res.string.resumen_mensual_total, formatMoney(resumen.total)) + comparacion + ".",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            resumen.categoriaTop?.let { top ->
+                val nombre = etiquetaCategoria(top.categoria, top.categoriaPersonalizadaId, categoriasPersonalizadas)?.nombre
+                if (nombre != null) {
+                    Text(
+                        text = stringResource(Res.string.resumen_mensual_top, nombre, formatMoney(top.total)),
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+            TextButton(onClick = onDescartar, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(Res.string.entendido))
             }
         }
     }

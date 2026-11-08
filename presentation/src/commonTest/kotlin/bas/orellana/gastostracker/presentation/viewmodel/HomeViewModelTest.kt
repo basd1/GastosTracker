@@ -235,6 +235,28 @@ class HomeViewModelTest {
         assertEquals(Mes.actual(25), crearViewModel().state.value.mes)
     }
 
+
+    // ---------- Resumen mensual ----------
+
+    @Test
+    fun `al empezar el mes ensena el resumen del anterior hasta que se descarta`() = runTest {
+        anadir(
+            gasto("hogar", monto = 500.0, fecha = inicioMesAnterior, categoria = Categoria.HOGAR),
+            gasto("comida", monto = 100.0, fecha = inicioMesAnterior, categoria = Categoria.COMIDA)
+        )
+        val vm = crearViewModel()
+
+        val resumen = vm.state.value.resumenMensual!!
+        assertEquals(Mes.de(inicioMesAnterior), resumen.mes)
+        assertEquals(600.0, resumen.total)
+        assertEquals(Categoria.HOGAR, resumen.categoriaTop?.categoria)
+
+        vm.descartarResumenMensual()
+        assertNull(vm.state.value.resumenMensual)
+        assertEquals(Mes.de(inicioMesAnterior).toString(), ajustes.datos.value.ultimoResumenVisto)
+        assertNull(crearViewModel().state.value.resumenMensual)
+    }
+
     // ---------- Orden ----------
 
     @Test

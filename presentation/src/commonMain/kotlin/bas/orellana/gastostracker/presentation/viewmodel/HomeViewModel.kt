@@ -22,6 +22,10 @@ import bas.orellana.gastostracker.domain.usecase.GetEstadoPresupuestosUseCase
 import bas.orellana.gastostracker.domain.usecase.GuardarRecurrenteUseCase
 import bas.orellana.gastostracker.domain.usecase.GenerarRecurrentesUseCase
 import bas.orellana.gastostracker.domain.repository.AjustesRepository
+import bas.orellana.gastostracker.domain.model.calcularResumenMensual
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import bas.orellana.gastostracker.presentation.util.diaInicioMes
 import bas.orellana.gastostracker.domain.model.Recurrente
 import bas.orellana.gastostracker.domain.model.TipoMovimiento
@@ -63,7 +67,7 @@ class HomeViewModel(
     private val getEstadoPresupuestosUseCase: GetEstadoPresupuestosUseCase,
     private val guardarRecurrenteUseCase: GuardarRecurrenteUseCase,
     private val generarRecurrentesUseCase: GenerarRecurrentesUseCase,
-    ajustesRepository: AjustesRepository
+    private val ajustesRepository: AjustesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
@@ -92,6 +96,7 @@ class HomeViewModel(
         observarAlertas()
         observarPresupuestos()
         seguirDiaInicio()
+        observarResumenMensual()
     }
 
     /** Gastos del mes seleccionado (o del rango de fechas del filtro), filtrados en SQL. */
@@ -180,6 +185,39 @@ class HomeViewModel(
                 anterior = dia
             }
         }
+    }
+
+
+    /**
+     * Al empezar un mes nuevo, enseña el resumen del mes anterior (una sola vez: al descartarlo se
+     * guarda en Ajustes que ya se vio).
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observarResumenMensual() {
+        viewModelScope.launch {
+            combine(diaInicio, ajustesRepository.ajustes.map { it.ultimoResumenVisto }.distinctUntilChanged()) { dia, visto -> dia to visto }
+                .flatMapLatest { (dia, visto) ->
+                    val mes = Mes.actual(dia).anterior()
+                    if (visto == mes.toString()) {
+                        flowOf(null)
+                    } else {
+                        val periodo = mes.periodo(dia)
+                        val anterior = mes.anterior().periodo(dia)
+                        combine(
+                            getTotalesGastosPorCategoriaUseCase(periodo.start, periodo.endInclusive),
+                            getTotalesGastosPorCategoriaUseCase(anterior.start, anterior.endInclusive)
+                        ) { totales, totalesAnterior -> calcularResumenMensual(mes, totales, totalesAnterior) }
+                    }
+                }
+                .catch { }
+                .collect { resumen -> _state.update { it.copy(resumenMensual = resumen) } }
+        }
+    }
+
+    fun descartarResumenMensual() {
+        val resumen = _state.value.resumenMensual ?: return
+        _state.update { it.copy(resumenMensual = null) }
+        viewModelScope.launch { ajustesRepository.setUltimoResumenVisto(resumen.mes.toString()) }
     }
 
     fun showAddGastoDialog() {
